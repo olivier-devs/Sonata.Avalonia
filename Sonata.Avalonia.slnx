@@ -3,4 +3,7 @@
     <Project Path="src/Sonata.Avalonia.StyletIoC/Sonata.Avalonia.StyletIoC.csproj" />
     <Project Path="src/Sonata.Avalonia/Sonata.Avalonia.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Sonata.Avalonia.Tests/Sonata.Avalonia.Tests.csproj" />
+  </Folder>
 </Solution>
