@@ -1,7 +1,7 @@
 ﻿namespace Stylet.Avalonia;
 
 /// <summary>
-/// StyletApplication to be extended by applications which don't want to use StyletIoC as the IoC container.
+/// Base class for applications which want to use their own IoC container.
 /// </summary>
 public abstract class StyletApplicationBase<T> : Application, IWindowManagerConfig, IDisposable
     where T : class

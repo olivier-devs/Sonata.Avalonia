@@ -1,7 +1,7 @@
 ﻿namespace Stylet.Avalonia;
 
 /// <summary>
-/// Generic version of IValidationArapter. Provided for use with StyletIoC
+/// Generic version of IValidationArapter. Provided for use with generic IoC bindings
 /// </summary>
 /// <remarks>
 /// Having a generic version allows you implement it using a generic ModelValidator (ModelValidator{T} : IModelValidator{T})

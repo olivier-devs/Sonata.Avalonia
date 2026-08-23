@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+        <IsPackable>true</IsPackable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageId>Sonata.Avalonia.StyletIoC</PackageId>
+        <Title>Sonata.Avalonia.StyletIoC</Title>
+        <Description>StyletIoC container support for Sonata.Avalonia, preserving the original Stylet bootstrapper experience.</Description>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Sonata.Avalonia\Sonata.Avalonia.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="..\..\LICENSE.txt" Pack="True" PackagePath="\" />
+        <None Include="..\..\README.md" Pack="True" PackagePath="\" />
+        <None Include="..\..\SonataIcon.png" Pack="True" PackagePath="\" />
+    </ItemGroup>
+</Project>
