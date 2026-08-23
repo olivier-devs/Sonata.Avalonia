@@ -1,0 +1,54 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+        <Nullable>enable</Nullable>
+        <!--Avalonia doesen't support TrimMode=link currently,but we are working on that https://github.com/AvaloniaUI/Avalonia/issues/6892 -->
+        <TrimMode>copyused</TrimMode>
+        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+        <Title>Stylet.Avalonia</Title>
+        <Authors>sealoyal</Authors>
+        <Description>A very lightweight but powerful ViewModel-First MVVM framework for AvaloniaUI, inspired by Caliburn.Micro. </Description>
+        <PackageIcon>StyletIcon.png</PackageIcon>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageProjectUrl>https://github.com/sealoyal2018/Stylet.Avalonia</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/sealoyal2018/Stylet.Avalonia</RepositoryUrl>
+        <Version>0.5.1</Version>
+        <Copyright>Copyright © 2023 Sealoyal</Copyright>
+        <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+        <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+        <PackageId>Stylet.Avalonia</PackageId>
+        <AssemblyVersion>0.5.1</AssemblyVersion>
+        <FileVersion>0.5.1</FileVersion>
+        <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Remove=".gitignore" />
+    </ItemGroup>
+    <ItemGroup>
+        <TrimmableAssembly Include="Avalonia.Themes.Fluent" />
+        <TrimmableAssembly Include="Avalonia.Themes.Default" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="12.1.1" />
+        <PackageReference Include="System.Reactive" Version="7.0.0" />
+    </ItemGroup>
+    <ItemGroup>
+        <AvaloniaResource Include="Assets\**" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="..\LICENSE.txt">
+        <Pack>True</Pack>
+        <PackagePath>\</PackagePath>
+      </None>
+      <None Include="..\README.md">
+        <Pack>True</Pack>
+        <PackagePath>\</PackagePath>
+      </None>
+      <None Include="..\StyletIcon.png">
+        <Pack>True</Pack>
+        <PackagePath>\</PackagePath>
+      </None>
+    </ItemGroup>
+    
+</Project>
