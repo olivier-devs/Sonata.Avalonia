@@ -155,12 +155,12 @@ public abstract class ActionBase : AvaloniaObject
             if (TargetNullBehaviour == ActionUnavailableBehaviour.Throw)
             {
                 var e = new ActionTargetNullException(string.Format("ActionTarget on element {0} is null (method name is {1})", Subject, MethodName));
-                _logger.Error(e);
+                _logger.LogError(e, "ActionTarget is null");
                 throw e;
             }
             else
             {
-                _logger.Info("ActionTarget on element {0} is null (method name is {1}), but NullTarget is not Throw, so carrying on", Subject, MethodName);
+                _logger.LogInformation("ActionTarget on element {0} is null (method name is {1}), but NullTarget is not Throw, so carrying on", Subject, MethodName);
             }
         }
         else
@@ -188,7 +188,7 @@ public abstract class ActionBase : AvaloniaObject
                     var t = Target.GetType();
                     targetMethodInfo = t.GetMethod(MethodName, bindingFlags);
                     if (targetMethodInfo == null)
-                        _logger.Warn("Unable to find{0} method {1} on {2}", newTarget is Type ? " static" : "", MethodName, newTargetType.Name);
+                        _logger.LogWarning("Unable to find{0} method {1} on {2}", newTarget is Type ? " static" : "", MethodName, newTargetType.Name);
                 }
                 else
                     AssertTargetMethodInfo(targetMethodInfo, newTargetType);
@@ -196,7 +196,7 @@ public abstract class ActionBase : AvaloniaObject
             catch (AmbiguousMatchException e)
             {
                 var ex = new AmbiguousMatchException(string.Format("Ambiguous match for {0} method on {1}", MethodName, newTargetType.Name), e);
-                _logger.Error(ex);
+                _logger.LogError(ex, "Ambiguous method match");
                 throw ex;
             }
         }
@@ -232,14 +232,14 @@ public abstract class ActionBase : AvaloniaObject
             var ex = new ActionNotSetException(string.Format("View.ActionTarget not set on control {0} (method {1}). " +
                                                              "This probably means the control hasn't inherited it from a parent, e.g. because a ContextMenu or Popup sits in the visual tree. " +
                                                              "You will need so set 's:View.ActionTarget' explicitly. See the wiki section \"Actions\" for more details.", Subject, MethodName));
-            _logger.Error(ex);
+            _logger.LogError(ex, "View.ActionTarget not set");
             throw ex;
         }
 
         if (TargetMethodInfo == null && ActionNonExistentBehaviour == ActionUnavailableBehaviour.Throw)
         {
             var ex = new ActionNotFoundException(string.Format("Unable to find method {0} on {1}", MethodName, TargetName()));
-            _logger.Error(ex);
+            _logger.LogError(ex, "Action not found");
             throw ex;
         }
     }
@@ -250,7 +250,7 @@ public abstract class ActionBase : AvaloniaObject
     /// <param name="parameters">Parameters to pass to the target method</param>
     private protected void InvokeTargetMethod(object?[]? parameters)
     {
-        _logger.Info("Invoking method {0} on {1} with parameters ({2})", MethodName, TargetName(), parameters == null ? "none" : string.Join(", ", parameters));
+        _logger.LogInformation("Invoking method {0} on {1} with parameters ({2})", MethodName, TargetName(), parameters == null ? "none" : string.Join(", ", parameters));
 
         try
         {
@@ -266,7 +266,7 @@ public abstract class ActionBase : AvaloniaObject
         {
             // Be nice and unwrap this for them
             // They want a stack track for their VM method, not us
-            _logger.Error(e.InnerException, string.Format("Failed to invoke method {0} on {1} with parameters ({2})", MethodName, TargetName(), parameters == null ? "none" : string.Join(", ", parameters)));
+            _logger.LogError(e.InnerException, string.Format("Failed to invoke method {0} on {1} with parameters ({2})", MethodName, TargetName(), parameters == null ? "none" : string.Join(", ", parameters)));
             // http://stackoverflow.com/a/17091351/1086121
             ExceptionDispatchInfo.Capture(e.InnerException).Throw();
         }

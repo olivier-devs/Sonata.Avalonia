@@ -15,7 +15,13 @@ public abstract class SonataApplicationBase<T> : Application, IWindowManagerConf
         base.Initialize();
         Execute.Dispatcher = new ApplicationDispatcher();
         Configure();
+        SonataLogManager.SetFactory(GetLoggerFactory());
     }
+
+    /// <summary>
+    /// Retrieves the <see cref="ILoggerFactory"/> used for framework logging, or null to keep the no-op fallback.
+    /// </summary>
+    protected virtual ILoggerFactory? GetLoggerFactory() => null;
     protected abstract IEnumerable<object> GetInstances(Type service);
 
     /// <summary>

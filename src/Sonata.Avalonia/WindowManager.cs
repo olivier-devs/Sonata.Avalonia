@@ -73,7 +73,7 @@ public interface IWindowManagerConfig
 /// </summary>
 public class WindowManager : IWindowManager
 {
-    private static readonly ILogger logger = LogManager.GetLogger(typeof(WindowManager));
+    private readonly ILogger _logger;
     private readonly IViewManager _viewManager;
     private readonly Func<TopLevel?> _getActiveWindow;
 
@@ -82,10 +82,12 @@ public class WindowManager : IWindowManager
     /// </summary>
     /// <param name="viewManager">IViewManager to use when creating views</param>
     /// <param name="config">Configuration object</param>
-    public WindowManager(IViewManager viewManager, IWindowManagerConfig config)
+    /// <param name="logger">Logger to use</param>
+    public WindowManager(IViewManager viewManager, IWindowManagerConfig config, ILogger<WindowManager> logger)
     {
         _viewManager = viewManager;
         _getActiveWindow = config.GetActiveWindow;
+        _logger = logger;
     }
 
     /// <summary>
@@ -173,7 +175,7 @@ public class WindowManager : IWindowManager
             var e = new SonataInvalidViewTypeException(string.Format("WindowManager.ShowWindow or .ShowDialog tried to show a View of type '{0}', but that View doesn't derive from the Window class. " +
                 "Make sure any Views you display using WindowManager.ShowWindow or .ShowDialog derive from Window (not UserControl, etc)",
                 view == null ? "(null)" : view.GetType().Name));
-            logger.Error(e);
+            _logger.LogError(e, "Located view is not a valid Window");
             throw e;
         }
 
@@ -203,7 +205,7 @@ public class WindowManager : IWindowManager
             }
             catch (InvalidOperationException e)
             {
-                logger.Error(e, "This can occur when the application is closing down");
+                _logger.LogError(e, "This can occur when the application is closing down");
             }
         }
         else if (isDialog)
@@ -226,18 +228,18 @@ public class WindowManager : IWindowManager
                 }
                 catch (InvalidOperationException e)
                 {
-                    logger.Error(e, "This can occur when the application is closing down");
+                    _logger.LogError(e, "This can occur when the application is closing down");
                 }
             }
         }
 
         if (isDialog)
         {
-            logger.Info("Displaying ViewModel {0} with View {1} as a Dialog", viewModel, window);
+            _logger.LogInformation("Displaying ViewModel {0} with View {1} as a Dialog", viewModel, window);
         }
         else
         {
-            logger.Info("Displaying ViewModel {0} with View {1} as a Window", viewModel, window);
+            _logger.LogInformation("Displaying ViewModel {0} with View {1} as a Window", viewModel, window);
         }
 
         // If and only if they haven't tried to position the window themselves...
@@ -253,7 +255,7 @@ public class WindowManager : IWindowManager
 
         // This gets itself retained by the window, by registering events
         // ReSharper disable once ObjectCreationAsStatement
-        new WindowConductor(window, viewModel);
+        new WindowConductor(window, viewModel, _logger);
 
         return window;
     }
@@ -269,11 +271,13 @@ public class WindowManager : IWindowManager
         private readonly Window _window;
         private readonly object _viewModel;
         private readonly IDisposable _windowStateChangedObservable;
-        
-        public WindowConductor(Window window, object viewModel)
+        private readonly ILogger _logger;
+
+        public WindowConductor(Window window, object viewModel, ILogger logger)
         {
             _window = window;
             _viewModel = viewModel;
+            _logger = logger;
 
             // They won't be able to request a close unless they implement IChild anyway...
             var viewModelAsChild = _viewModel as IChild;
@@ -302,12 +306,12 @@ public class WindowManager : IWindowManager
             {
                 case WindowState.Maximized:
                 case WindowState.Normal:
-                    logger.Info("Window {0} maximized/restored: activating", _window);
+                    _logger.LogInformation("Window {0} maximized/restored: activating", _window);
                     ScreenExtensions.TryActivate(_viewModel);
                     break;
 
                 case WindowState.Minimized:
-                    logger.Info("Window {0} minimized: deactivating", _window);
+                    _logger.LogInformation("Window {0} minimized: deactivating", _window);
                     ScreenExtensions.TryDeactivate(_viewModel);
                     break;
             }
@@ -330,7 +334,7 @@ public class WindowManager : IWindowManager
             if (e.Cancel)
                 return;
 
-            logger.Info("ViewModel {0} close requested because its View was closed", _viewModel);
+            _logger.LogInformation("ViewModel {0} close requested because its View was closed", _viewModel);
 
             // See if the task completed synchronously
             var task = ((IGuardClose)_viewModel).CanCloseAsync();
@@ -338,13 +342,13 @@ public class WindowManager : IWindowManager
             {
                 // The closed event handler will take things from here if we don't cancel
                 if (!task.Result)
-                    logger.Info("Close of ViewModel {0} cancelled because CanCloseAsync returned false", _viewModel);
+                    _logger.LogInformation("Close of ViewModel {0} cancelled because CanCloseAsync returned false", _viewModel);
                 e.Cancel = !task.Result;
             }
             else
             {
                 e.Cancel = true;
-                logger.Info("Delaying closing of ViewModel {0} because CanCloseAsync is completing asynchronously", _viewModel);
+                _logger.LogInformation("Delaying closing of ViewModel {0} because CanCloseAsync is completing asynchronously", _viewModel);
                 if (await task)
                 {
                     _window.Closing -= WindowClosing;
@@ -353,7 +357,7 @@ public class WindowManager : IWindowManager
                 }
                 else
                 {
-                    logger.Info("Close of ViewModel {0} cancelled because CanCloseAsync returned false", _viewModel);
+                    _logger.LogInformation("Close of ViewModel {0} cancelled because CanCloseAsync returned false", _viewModel);
                 }
             }
         }
@@ -367,18 +371,18 @@ public class WindowManager : IWindowManager
         {
             if (item != _viewModel)
             {
-                logger.Warn("IChildDelegate.CloseItem called with item {0} which is _not_ our ViewModel {1}", item, _viewModel);
+                _logger.LogWarning("IChildDelegate.CloseItem called with item {0} which is _not_ our ViewModel {1}", item, _viewModel);
                 return;
             }
 
             var guardClose = _viewModel as IGuardClose;
             if (guardClose != null && !await guardClose.CanCloseAsync())
             {
-                logger.Info("Close of ViewModel {0} cancelled because CanCloseAsync returned false", _viewModel);
+                _logger.LogInformation("Close of ViewModel {0} cancelled because CanCloseAsync returned false", _viewModel);
                 return;
             }
 
-            logger.Info("ViewModel {0} close requested with DialogResult {1} because it called RequestClose", _viewModel, dialogResult);
+            _logger.LogInformation("ViewModel {0} close requested with DialogResult {1} because it called RequestClose", _viewModel, dialogResult);
 
             // this.window.StateChanged -= this.WindowStateChanged;
             _windowStateChangedObservable?.Dispose();

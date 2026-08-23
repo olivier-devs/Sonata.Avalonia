@@ -7,7 +7,7 @@
     Justification = "Don't agree with prefixing static method calls with the class name")]
 public class IconToBitmapSourceConverter : IValueConverter
 {
-    private static readonly ILogger Logger = LogManager.GetLogger(typeof(IconToBitmapSourceConverter));
+    private static ILogger Logger => SonataLogManager.GetLogger(typeof(IconToBitmapSourceConverter));
 
     /// <summary>
     /// Singleton instance of this converter. Usage e.g. Converter="{x:Static s:IconToBitmapSourceConverter.Instance}"

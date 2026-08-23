@@ -1,4 +1,7 @@
-﻿namespace Sonata.Avalonia.StyletIoC;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace Sonata.Avalonia.StyletIoC;
 
 /// <summary>
 /// StyletApplication to be extended by any application which wants to use StyletIoC, but doesn't have a root ViewModel
@@ -53,6 +56,11 @@ public abstract class StyletApplication<T> : SonataApplicationBase<T> where T : 
         builder.Bind<IMessageBoxViewModel>().To<MessageBoxViewModel>().AsWeakBinding();
         // Stylet's assembly isn't added to the container, so add this explicitly
         builder.Bind<MessageBoxView>().ToSelf();
+
+        // Logging: MEL integration (weak bindings so users can replace them)
+        builder.Bind<ILoggerFactory>().ToInstance(NullLoggerFactory.Instance).AsWeakBinding();
+        builder.Bind(typeof(ILogger<>)).To(typeof(Logger<>)).AsWeakBinding();
+
         builder.Autobind(GetType().Assembly);
     }
 
@@ -71,6 +79,9 @@ public abstract class StyletApplication<T> : SonataApplicationBase<T> where T : 
     /// </summary>
     /// <param name="type">Type to fetch</param>
     /// <returns>Fetched instance</returns>
+    /// <inheritdoc/>
+    protected override ILoggerFactory? GetLoggerFactory() => Container.Get<ILoggerFactory>();
+
     protected override object GetInstance(Type type)
     {
         return Container.Get(type);

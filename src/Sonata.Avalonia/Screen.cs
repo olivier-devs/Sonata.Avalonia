@@ -5,7 +5,7 @@
 /// </summary>
 public class Screen : ValidatingModelBase, IScreen
 {
-    private readonly ILogger logger;
+    private ILogger Logger => SonataLogManager.GetLogger(GetType());
 
     /// <summary>
     /// Initialises a new instance of the <see cref="Screen"/> class, without setting up a validator
@@ -21,7 +21,6 @@ public class Screen : ValidatingModelBase, IScreen
     {
         var type = GetType();
         DisplayName = type.FullName;
-        logger = LogManager.GetLogger(type);
     }
 
     #region IHaveDisplayName
@@ -143,7 +142,7 @@ public class Screen : ValidatingModelBase, IScreen
         var previousState = ScreenState;
         ScreenState = newState;
 
-        logger.Info("Setting state from {0} to {1}", previousState, newState);
+        Logger.LogInformation("Setting state from {0} to {1}", previousState, newState);
 
         OnStateChanged(previousState, newState);
         changedHandler(previousState, newState);
@@ -229,7 +228,7 @@ public class Screen : ValidatingModelBase, IScreen
 
         View = view;
 
-        logger.Info("Attaching view {0}", view);
+        Logger.LogInformation("Attaching view {0}", view);
 
         var viewAsFrameworkElement = view as Control;
         if (viewAsFrameworkElement != null)
@@ -301,13 +300,13 @@ public class Screen : ValidatingModelBase, IScreen
         var conductor = Parent as IChildDelegate;
         if (conductor != null)
         {
-            logger.Info("RequstClose called. Conductor: {0}; DialogResult: {1}", conductor, dialogResult);
+            Logger.LogInformation("RequstClose called. Conductor: {0}; DialogResult: {1}", conductor, dialogResult);
             conductor.CloseItem(this, dialogResult);
         }
         else
         {
             var e = new InvalidOperationException(string.Format("Unable to close ViewModel {0} as it must have a conductor as a parent (note that windows and dialogs automatically have such a parent)", GetType()));
-            logger.Error(e);
+            Logger.LogError(e, "Unable to close ViewModel — no conductor parent");
             throw e;
         }
     }

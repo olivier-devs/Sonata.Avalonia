@@ -56,7 +56,7 @@ public class ViewManagerConfig
 /// </summary>
 public class ViewManager : IViewManager
 {
-    private static readonly ILogger logger = LogManager.GetLogger(typeof(ViewManager));
+    private readonly ILogger _logger;
 
     private Func<Type, object> _viewFactory; // This is assigned by the ctor
 
@@ -142,7 +142,8 @@ public class ViewManager : IViewManager
     /// Initialises a new instance of the <see cref="ViewManager"/> class, with the given viewFactory
     /// </summary>
     /// <param name="config">Configuration object</param>
-    public ViewManager(ViewManagerConfig config)
+    /// <param name="logger">Logger to use</param>
+    public ViewManager(ViewManagerConfig config, ILogger<ViewManager> logger)
     {
         // Config.ViewAssemblies cannot be null - ViewManagerConfig ensures this
         if (config.ViewFactory == null)
@@ -152,6 +153,7 @@ public class ViewManager : IViewManager
 
         ViewFactory = config.ViewFactory;
         ViewAssemblies = config.ViewAssemblies;
+        _logger = logger;
     }
 
     /// <summary>
@@ -167,19 +169,19 @@ public class ViewManager : IViewManager
 
         if (newValue != null)
         {
-            logger.Info("View.Model changed for {0} from {1} to {2}", targetLocation, oldValue, newValue);
+            _logger.LogInformation("View.Model changed for {0} from {1} to {2}", targetLocation, oldValue, newValue);
             var view = CreateAndBindViewForModelIfNecessary(newValue);
             if (view is Window)
             {
-                var e = new SonataInvalidViewTypeException(@$"s:View.Model=""..."" tried to show a View of type '{view.GetType().Name}', but that View derives from the Window class. Make sure any Views you display using s:View.Model=""..."" do not derive from Window (use UserControl or similar)");
-                logger.Error(e);
-                throw e;
+            var e = new SonataInvalidViewTypeException(@$"s:View.Model=""..."" tried to show a View of type '{view.GetType().Name}', but that View derives from the Window class. Make sure any Views you display using s:View.Model=""..."" do not derive from Window (use UserControl or similar)");
+            _logger.LogError(e, "Located type is not a valid view");
+            throw e;
             }
             View.SetContentProperty(targetLocation, view);
         }
         else
         {
-            logger.Info("View.Model cleared for {0}, from {1}", targetLocation, oldValue);
+            _logger.LogInformation("View.Model cleared for {0}, from {1}", targetLocation, oldValue);
             View.SetContentProperty(targetLocation, null);
         }
     }
@@ -194,7 +196,7 @@ public class ViewManager : IViewManager
         var modelAsViewAware = model as IViewAware;
         if (modelAsViewAware != null && modelAsViewAware.View != null)
         {
-            logger.Info("ViewModel {0} already has a View attached to it. Not attaching another", model);
+            _logger.LogInformation("ViewModel {0} already has a View attached to it. Not attaching another", model);
             return modelAsViewAware.View;
         }
 
@@ -210,7 +212,7 @@ public class ViewManager : IViewManager
     {
         // Need to bind before we initialize the view
         // Otherwise e.g. the Command bindings get evaluated (by InitializeComponent) but the ActionTarget hasn't been set yet
-        logger.Info("Instantiating and binding a new View to ViewModel {0}", model);
+        _logger.LogInformation("Instantiating and binding a new View to ViewModel {0}", model);
         var view = CreateViewForModel(model);
         BindViewToModel(view, model);
         return view;
@@ -273,12 +275,12 @@ public class ViewManager : IViewManager
         if (viewType == null)
         {
             var e = new SonataViewLocationException(string.Format("Unable to find a View with type {0}", viewName), viewName);
-            logger.Error(e);
+            _logger.LogError(e, "View location failed");
             throw e;
         }
         else
         {
-            logger.Info("Searching for a View with name {0}, and found {1}", viewName, viewType);
+            _logger.LogInformation("Searching for a View with name {0}, and found {1}", viewName, viewType);
         }
 
         return viewType;
@@ -296,7 +298,7 @@ public class ViewManager : IViewManager
         if (viewType.IsAbstract || !typeof(Control).IsAssignableFrom(viewType))
         {
             var e = new SonataViewLocationException(string.Format("Found type for view: {0}, but it wasn't a class derived from UIElement", viewType.Name), viewType.Name);
-            logger.Error(e);
+            _logger.LogError(e, "View location failed");
             throw e;
         }
 
@@ -329,20 +331,20 @@ public class ViewManager : IViewManager
     /// <param name="viewModel">ViewModel to bind the View to</param>
     public virtual void BindViewToModel(Control view, object viewModel)
     {
-        logger.Info("Setting {0}'s ActionTarget to {1}", view, viewModel);
+        _logger.LogInformation("Setting {0}'s ActionTarget to {1}", view, viewModel);
         View.SetActionTarget(view, viewModel);
 
         var viewAsFrameworkElement = view as Control;
         if (viewAsFrameworkElement != null)
         {
-            logger.Info("Setting {0}'s DataContext to {1}", view, viewModel);
+            _logger.LogInformation("Setting {0}'s DataContext to {1}", view, viewModel);
             viewAsFrameworkElement.DataContext = viewModel;
         }
 
         var viewModelAsViewAware = viewModel as IViewAware;
         if (viewModelAsViewAware != null)
         {
-            logger.Info("Setting {0}'s View to {1}", viewModel, view);
+            _logger.LogInformation("Setting {0}'s View to {1}", viewModel, view);
             viewModelAsViewAware.AttachView(view);
         }
     }

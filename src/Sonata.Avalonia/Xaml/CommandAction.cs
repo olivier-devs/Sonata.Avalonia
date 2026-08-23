@@ -10,7 +10,7 @@
 /// </remarks>
 public class CommandAction : ActionBase, ICommand
 {
-    private static readonly ILogger Logger = LogManager.GetLogger(typeof(CommandAction));
+    private static ILogger Logger => SonataLogManager.GetLogger(typeof(CommandAction));
 
     /// <summary>
     /// Generated accessor to grab the value of the guard property, or null if there is none
@@ -53,7 +53,7 @@ public class CommandAction : ActionBase, ICommand
         if (methodParameters.Length > 1)
         {
             var e = new ActionSignatureInvalidException(string.Format("Method {0} on {1} must have zero or one parameters", MethodName, newTargetType.Name));
-            Logger.Error(e);
+            Logger.LogError(e, "Invalid command action signature");
             throw e;
         }
     }
@@ -84,7 +84,7 @@ public class CommandAction : ActionBase, ICommand
             }
             else
             {
-                Logger.Warn("Found guard property {0} for action {1} on target {2}, but its return type wasn't bool. Therefore, ignoring", GuardName, MethodName, newTarget);
+                Logger.LogWarning("Found guard property {0} for action {1} on target {2}, but its return type wasn't bool. Therefore, ignoring", GuardName, MethodName, newTarget);
             }
         }
 
@@ -96,7 +96,7 @@ public class CommandAction : ActionBase, ICommand
                 PropertyChangedWeakEventManager.AddHandler(inpc, PropertyChangedHandler);
             }
             else
-                Logger.Warn("Found guard property {0} for action {1} on target {2}, but the target doesn't implement INotifyPropertyChanged, so changes won't be observed", GuardName, MethodName, newTarget);
+                Logger.LogWarning("Found guard property {0} for action {1} on target {2}, but the target doesn't implement INotifyPropertyChanged, so changes won't be observed", GuardName, MethodName, newTarget);
         }
 
         UpdateCanExecute();

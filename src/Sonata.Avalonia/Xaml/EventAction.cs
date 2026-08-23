@@ -5,7 +5,7 @@
 /// </summary>
 public class EventAction : ActionBase
 {
-    private static readonly ILogger Logger = LogManager.GetLogger(typeof(EventAction));
+    private static ILogger Logger => SonataLogManager.GetLogger(typeof(EventAction));
     private static readonly MethodInfo[] InvokeCommandMethodInfos = new[]
     {
         typeof(EventAction).GetMethod("InvokeEventArgsCommand", BindingFlags.NonPublic | BindingFlags.Instance)!,
@@ -69,7 +69,7 @@ public class EventAction : ActionBase
             methodParameters.Length == 2 && (typeof(EventArgs).IsAssignableFrom(methodParameters[1].ParameterType) || methodParameters[1].ParameterType == typeof(AvaloniaPropertyChangedEventArgs))))
         {
             var e = new ActionSignatureInvalidException(string.Format("Method {0} on {1} must have the signatures Method(), Method(EventArgsOrSubClass e), or Method(object sender, EventArgsOrSubClass e)", MethodName, newTargetType.Name));
-            Logger.Error(e);
+            Logger.LogError(e, "Invalid event action signature");
             throw e;
         }
     }
@@ -95,7 +95,7 @@ public class EventAction : ActionBase
                 " - '(object sender, EventArgsOrSubclass e)'\n" +
                 " - '(object sender, DependencyPropertyChangedEventArgs e)'", MethodName, Target);
             var e = new ActionEventSignatureInvalidException(msg);
-            Logger.Error(e);
+            Logger.LogError(e, "Invalid event action signature");
             throw e;
         }
 
