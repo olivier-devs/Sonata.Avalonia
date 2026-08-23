@@ -1,0 +1,16 @@
+<Project>
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <Version>1.0.0-preview.1</Version>
+        <Authors>Sonata Contributors</Authors>
+        <Copyright>Copyright © Sonata Contributors — derived from Stylet.Avalonia (MIT, © sealoyal) and Stylet (MIT, © canton7)</Copyright>
+        <PackageProjectUrl>https://github.com/sonata-avalonia/Sonata.Avalonia</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/sonata-avalonia/Sonata.Avalonia.git</RepositoryUrl>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+        <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+        <PackageIcon>SonataIcon.png</PackageIcon>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+</Project>
