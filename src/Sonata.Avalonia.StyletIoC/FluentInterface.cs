@@ -1,6 +1,6 @@
-﻿using Stylet.Avalonia.StyletIoC.Creation;
+﻿using Sonata.Avalonia.StyletIoC.Creation;
 
-namespace Stylet.Avalonia.StyletIoC;
+namespace Sonata.Avalonia.StyletIoC;
 
 /// <summary>
 /// Interface for selecting what to bind a service to.

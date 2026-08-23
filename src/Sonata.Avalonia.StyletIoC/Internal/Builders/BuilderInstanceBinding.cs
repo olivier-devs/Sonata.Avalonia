@@ -1,6 +1,6 @@
-﻿using Stylet.Avalonia.StyletIoC.Internal.Registrations;
+﻿using Sonata.Avalonia.StyletIoC.Internal.Registrations;
 
-namespace Stylet.Avalonia.StyletIoC.Internal.Builders;
+namespace Sonata.Avalonia.StyletIoC.Internal.Builders;
 
 internal class BuilderInstanceBinding : BuilderBindingBase, IWithKeyOrAsWeakBindingOrDisposeWithContainer
 {

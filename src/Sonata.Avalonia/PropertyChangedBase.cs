@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia;
+﻿namespace Sonata.Avalonia;
 
 /// <summary>
 /// Base class for things which can raise PropertyChanged events

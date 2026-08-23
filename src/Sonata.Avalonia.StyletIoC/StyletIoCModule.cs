@@ -1,6 +1,6 @@
-﻿using Stylet.Avalonia.StyletIoC.Internal.Builders;
+﻿using Sonata.Avalonia.StyletIoC.Internal.Builders;
 
-namespace Stylet.Avalonia.StyletIoC;
+namespace Sonata.Avalonia.StyletIoC;
 
 /// <summary>
 /// Module which contains its own bindings, and can be added to a builder

@@ -1,9 +1,11 @@
-﻿namespace Stylet.Avalonia;
+﻿namespace Sonata.Avalonia;
 
 /// <summary>
-/// Base class for applications which want to use their own IoC container.
+/// Base class for Sonata applications which want to use their own IoC container.
+/// Use <see cref="SonataApplication{T}"/> for Microsoft.Extensions.DependencyInjection,
+/// or StyletApplication{T} from the Sonata.Avalonia.StyletIoC package.
 /// </summary>
-public abstract class StyletApplicationBase<T> : Application, IWindowManagerConfig, IDisposable
+public abstract class SonataApplicationBase<T> : Application, IWindowManagerConfig, IDisposable
     where T : class
 {
     public override void Initialize()

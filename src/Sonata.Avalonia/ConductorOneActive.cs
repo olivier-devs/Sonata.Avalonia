@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia;
+﻿namespace Sonata.Avalonia;
 
 public partial class Conductor<T>
 {

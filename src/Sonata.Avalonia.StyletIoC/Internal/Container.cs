@@ -1,9 +1,9 @@
-﻿using Stylet.Avalonia.StyletIoC.Internal.Creators;
-using Stylet.Avalonia.StyletIoC.Internal.RegistrationCollections;
-using Stylet.Avalonia.StyletIoC.Internal.Registrations;
+﻿using Sonata.Avalonia.StyletIoC.Internal.Creators;
+using Sonata.Avalonia.StyletIoC.Internal.RegistrationCollections;
+using Sonata.Avalonia.StyletIoC.Internal.Registrations;
 
 
-namespace Stylet.Avalonia.StyletIoC.Internal;
+namespace Sonata.Avalonia.StyletIoC.Internal;
 
 [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1611:ElementParametersMustBeDocumented", Justification = "Internal class, but some documentation added for readability. StyleCop ignores 'Internal only' setting if some documentation exists on member")]
 [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1615:ElementReturnValueMustBeDocumented", Justification = "Internal class, but some documentation added for readability. StyleCop ignores 'Internal only' setting if some documentation exists on member")]

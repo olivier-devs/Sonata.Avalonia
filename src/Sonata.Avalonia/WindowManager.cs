@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia;
+﻿namespace Sonata.Avalonia;
 
 /// <summary>
 /// Manager capable of taking a ViewModel instance, instantiating its View and showing it as a dialog or window
@@ -57,7 +57,7 @@ public interface IWindowManager
 }
 
 /// <summary>
-/// Configuration passed to WindowManager (normally implemented by StyletApplicationBase)
+/// Configuration passed to WindowManager (normally implemented by SonataApplicationBase)
 /// </summary>
 public interface IWindowManagerConfig
 {
@@ -170,7 +170,7 @@ public class WindowManager : IWindowManager
         var window = view as Window;
         if (window == null)
         {
-            var e = new StyletInvalidViewTypeException(string.Format("WindowManager.ShowWindow or .ShowDialog tried to show a View of type '{0}', but that View doesn't derive from the Window class. " +
+            var e = new SonataInvalidViewTypeException(string.Format("WindowManager.ShowWindow or .ShowDialog tried to show a View of type '{0}', but that View doesn't derive from the Window class. " +
                 "Make sure any Views you display using WindowManager.ShowWindow or .ShowDialog derive from Window (not UserControl, etc)",
                 view == null ? "(null)" : view.GetType().Name));
             logger.Error(e);

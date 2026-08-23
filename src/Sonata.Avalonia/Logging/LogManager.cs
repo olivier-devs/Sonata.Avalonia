@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.Logging;
+﻿namespace Sonata.Avalonia.Logging;
 
 /// <summary>
 /// Manager for ILoggers. Used to create new ILoggers, and set up how ILoggers are created

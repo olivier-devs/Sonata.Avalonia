@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.Logging;
+﻿namespace Sonata.Avalonia.Logging;
 
 /// <summary>
 /// ILogger implementation which does nothing - used by default

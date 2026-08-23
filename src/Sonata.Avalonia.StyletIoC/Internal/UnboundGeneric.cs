@@ -1,6 +1,6 @@
-﻿using Stylet.Avalonia.StyletIoC.Internal.Creators;
+﻿using Sonata.Avalonia.StyletIoC.Internal.Creators;
 
-namespace Stylet.Avalonia.StyletIoC.Internal;
+namespace Sonata.Avalonia.StyletIoC.Internal;
 
 internal class UnboundGeneric
 {

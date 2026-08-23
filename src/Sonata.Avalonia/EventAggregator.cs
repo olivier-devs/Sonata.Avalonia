@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia;
+﻿namespace Sonata.Avalonia;
 
 /// <summary>
 /// Marker for types which we might be interested in

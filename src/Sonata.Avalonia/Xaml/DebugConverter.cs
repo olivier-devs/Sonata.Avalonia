@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.Xaml;
+﻿namespace Sonata.Avalonia.Xaml;
 
 /// <summary>
 /// Converter which passes through values, but uses Debug.WriteLine to log them. Useful for debugging

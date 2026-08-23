@@ -1,6 +1,6 @@
-﻿using Stylet.Avalonia.StyletIoC.Internal.Builders;
+﻿using Sonata.Avalonia.StyletIoC.Internal.Builders;
 
-namespace Stylet.Avalonia.StyletIoC;
+namespace Sonata.Avalonia.StyletIoC;
 
 /// <summary>
 /// This IStyletIoCBuilder is the only way to create an IContainer. Binding are registered using the builder, than an IContainer generated.

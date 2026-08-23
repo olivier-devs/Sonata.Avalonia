@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC.Internal.Registrations;
+﻿namespace Sonata.Avalonia.StyletIoC.Internal.Registrations;
 
 /// <summary>
 /// Convenience base class for all IRegistrations which want it

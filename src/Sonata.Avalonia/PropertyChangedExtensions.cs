@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace Stylet.Avalonia;
+namespace Sonata.Avalonia;
 
 /// <summary>
 /// Extension of PropertyChangedEventArgs, which includes the new value of the property

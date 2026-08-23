@@ -1,4 +1,4 @@
-﻿using Stylet.Avalonia.StyletIoC.Creation;
+﻿using Sonata.Avalonia.StyletIoC.Creation;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 
-namespace Stylet.Avalonia.StyletIoC.Internal.Creators;
+namespace Sonata.Avalonia.StyletIoC.Internal.Creators;
 
 /// <summary>
 /// Creator which knows how to create an instance of a type, by finding a suitable constructor and calling it

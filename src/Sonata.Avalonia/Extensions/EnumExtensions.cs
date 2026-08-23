@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.Extensions;
+﻿namespace Sonata.Avalonia.Extensions;
 
 internal static class EnumExtensions
 {

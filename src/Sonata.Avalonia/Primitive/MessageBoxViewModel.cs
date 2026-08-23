@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.Primitive;
+﻿namespace Sonata.Avalonia.Primitive;
 
 /// <summary>
 /// Default implementation of IMessageBoxViewModel, and is therefore the ViewModel shown by default by ShowMessageBox
@@ -212,13 +212,13 @@ public enum MessageBoxImage
 {
     [Description("")]
     None = 0,
-    [Description("avares://Stylet.Avalonia/Assets/error.png")]
+    [Description("avares://Sonata.Avalonia/Assets/error.png")]
     Error = 1,
-    [Description("avares://Stylet.Avalonia/Assets/question.png")]
+    [Description("avares://Sonata.Avalonia/Assets/question.png")]
     Question = 2,
-    [Description("avares://Stylet.Avalonia/Assets/warning.png")]
+    [Description("avares://Sonata.Avalonia/Assets/warning.png")]
     Warning = 3,
-    [Description("avares://Stylet.Avalonia/Assets/information.png")]
+    [Description("avares://Sonata.Avalonia/Assets/information.png")]
     Information = 4,
 }
 

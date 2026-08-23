@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia;
+﻿namespace Sonata.Avalonia;
 
 /// <summary>
 /// Generic version of IValidationArapter. Provided for use with generic IoC bindings

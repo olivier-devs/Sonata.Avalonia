@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace Stylet.Avalonia.Primitive;
+namespace Sonata.Avalonia.Primitive;
 
 public partial class MessageBoxView : Window
 {

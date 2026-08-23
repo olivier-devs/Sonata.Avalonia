@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.Logging;
+﻿namespace Sonata.Avalonia.Logging;
 
 /// <summary>
 /// Logger used by Stylet for internal logging

@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC;
+﻿namespace Sonata.Avalonia.StyletIoC;
 
 /// <summary>
 /// Base class for all exceptions describing StyletIoC-specific problems?

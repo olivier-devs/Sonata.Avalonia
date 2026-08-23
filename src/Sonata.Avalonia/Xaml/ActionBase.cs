@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.Xaml;
+﻿namespace Sonata.Avalonia.Xaml;
 
 /// <summary>
 /// Common base class for CommandAction and EventAction

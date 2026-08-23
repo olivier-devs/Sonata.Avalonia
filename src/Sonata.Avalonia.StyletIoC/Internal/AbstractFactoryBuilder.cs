@@ -1,6 +1,6 @@
 ﻿using System.Reflection.Emit;
 
-namespace Stylet.Avalonia.StyletIoC.Internal;
+namespace Sonata.Avalonia.StyletIoC.Internal;
 
 internal class AbstractFactoryBuilder
 {

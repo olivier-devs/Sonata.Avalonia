@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC.Internal.Builders;
+﻿namespace Sonata.Avalonia.StyletIoC.Internal.Builders;
 
 internal class BuilderToAllImplementationsBinding : BuilderBindingBase
 {

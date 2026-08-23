@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC.Internal.Registrations;
+﻿namespace Sonata.Avalonia.StyletIoC.Internal.Registrations;
 
 /// <summary>
 /// Knows how to create a Func{T}, using a given IRegistration

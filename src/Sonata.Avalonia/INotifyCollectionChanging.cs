@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia;
+﻿namespace Sonata.Avalonia;
 
 /// <summary>
 /// Notifies listeners of the intention to perform dynamic changes, such as when items get added and removed or the whole list is refreshed.

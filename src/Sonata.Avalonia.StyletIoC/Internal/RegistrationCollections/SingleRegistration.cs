@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC.Internal.RegistrationCollections;
+﻿namespace Sonata.Avalonia.StyletIoC.Internal.RegistrationCollections;
 
 internal class SingleRegistration : IRegistrationCollection
 {

@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC;
+﻿namespace Sonata.Avalonia.StyletIoC;
 
 /// <summary>
 /// Describes an IoC container, specifically StyletIoC

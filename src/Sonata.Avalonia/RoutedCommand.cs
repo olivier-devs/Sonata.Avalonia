@@ -1,4 +1,4 @@
-namespace Stylet.Avalonia;
+namespace Sonata.Avalonia;
 
 public class RoutedCommand : ICommand
 {

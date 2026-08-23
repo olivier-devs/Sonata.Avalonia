@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.Xaml;
+﻿namespace Sonata.Avalonia.Xaml;
 
 /// <summary>
 /// <see cref="Binding"/> subclass which rethrows exceptions encountered on setting the source

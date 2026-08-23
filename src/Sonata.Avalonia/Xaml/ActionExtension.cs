@@ -1,7 +1,7 @@
 ﻿
 using Avalonia.Metadata;
 
-namespace Stylet.Avalonia.Xaml;
+namespace Sonata.Avalonia.Xaml;
 
 /// <summary>
 /// What to do if the given target is null, or if the given action doesn't exist on the target

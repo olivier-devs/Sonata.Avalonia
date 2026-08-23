@@ -1,6 +1,6 @@
-﻿using Stylet.Avalonia.StyletIoC.Internal.Creators;
+﻿using Sonata.Avalonia.StyletIoC.Internal.Creators;
 
-namespace Stylet.Avalonia.StyletIoC.Internal.Builders;
+namespace Sonata.Avalonia.StyletIoC.Internal.Builders;
 
 internal class BuilderFactoryBinding<TImplementation> : BuilderBindingBase
 {

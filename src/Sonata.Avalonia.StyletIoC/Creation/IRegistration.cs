@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC.Creation;
+﻿namespace Sonata.Avalonia.StyletIoC.Creation;
 
 /// <summary>
 /// Delegate used to create an IRegistration

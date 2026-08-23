@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC.Internal;
+﻿namespace Sonata.Avalonia.StyletIoC.Internal;
 
 internal interface IRegistrationCollection : IReadOnlyRegistrationCollection
 {

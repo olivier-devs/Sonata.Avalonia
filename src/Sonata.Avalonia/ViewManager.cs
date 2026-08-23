@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia;
+﻿namespace Sonata.Avalonia;
 
 /// <summary>
 /// Responsible for managing views. Locates the correct view, instantiates it, attaches it to its ViewModel correctly, and handles the View.Model attached property
@@ -171,7 +171,7 @@ public class ViewManager : IViewManager
             var view = CreateAndBindViewForModelIfNecessary(newValue);
             if (view is Window)
             {
-                var e = new StyletInvalidViewTypeException(@$"s:View.Model=""..."" tried to show a View of type '{view.GetType().Name}', but that View derives from the Window class. Make sure any Views you display using s:View.Model=""..."" do not derive from Window (use UserControl or similar)");
+                var e = new SonataInvalidViewTypeException(@$"s:View.Model=""..."" tried to show a View of type '{view.GetType().Name}', but that View derives from the Window class. Make sure any Views you display using s:View.Model=""..."" do not derive from Window (use UserControl or similar)");
                 logger.Error(e);
                 throw e;
             }
@@ -266,13 +266,13 @@ public class ViewManager : IViewManager
         var modelName = modelType.FullName;
         var viewName = ViewTypeNameForModelTypeName(modelName);
         if (modelName == viewName)
-            throw new StyletViewLocationException(string.Format("Unable to transform ViewModel name {0} into a suitable View name", modelName), viewName);
+            throw new SonataViewLocationException(string.Format("Unable to transform ViewModel name {0} into a suitable View name", modelName), viewName);
 
         // Also include the ViewModel's assembly, to be helpful
         var viewType = ViewTypeForViewName(viewName, new[] { modelType.Assembly });
         if (viewType == null)
         {
-            var e = new StyletViewLocationException(string.Format("Unable to find a View with type {0}", viewName), viewName);
+            var e = new SonataViewLocationException(string.Format("Unable to find a View with type {0}", viewName), viewName);
             logger.Error(e);
             throw e;
         }
@@ -295,7 +295,7 @@ public class ViewManager : IViewManager
 
         if (viewType.IsAbstract || !typeof(Control).IsAssignableFrom(viewType))
         {
-            var e = new StyletViewLocationException(string.Format("Found type for view: {0}, but it wasn't a class derived from UIElement", viewType.Name), viewType.Name);
+            var e = new SonataViewLocationException(string.Format("Found type for view: {0}, but it wasn't a class derived from UIElement", viewType.Name), viewType.Name);
             logger.Error(e);
             throw e;
         }
@@ -352,7 +352,7 @@ public class ViewManager : IViewManager
 /// Exception raised while attempting to locate a View for a ViewModel
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2237:MarkISerializableTypesWithSerializable")]
-public class StyletViewLocationException : Exception
+public class SonataViewLocationException : Exception
 {
     /// <summary>
     /// Name of the View in question
@@ -360,11 +360,11 @@ public class StyletViewLocationException : Exception
     public readonly string ViewTypeName;
 
     /// <summary>
-    /// Initialises a new instance of the <see cref="StyletViewLocationException"/> class
+    /// Initialises a new instance of the <see cref="SonataViewLocationException"/> class
     /// </summary>
     /// <param name="message">Message associated with the Exception</param>
     /// <param name="viewTypeName">Name of the View this question was thrown for</param>
-    public StyletViewLocationException(string message, string viewTypeName)
+    public SonataViewLocationException(string message, string viewTypeName)
         : base(message)
     {
         ViewTypeName = viewTypeName;
@@ -375,13 +375,13 @@ public class StyletViewLocationException : Exception
 /// Exception raise when the located View is of the wrong type (Window when expected UserControl, etc)
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2237:MarkISerializableTypesWithSerializable")]
-public class StyletInvalidViewTypeException : Exception
+public class SonataInvalidViewTypeException : Exception
 {
     /// <summary>
-    /// Initialises a new instance of the <see cref="StyletInvalidViewTypeException"/> class
+    /// Initialises a new instance of the <see cref="SonataInvalidViewTypeException"/> class
     /// </summary>
     /// <param name="message">Message associated with the Exception</param>
-    public StyletInvalidViewTypeException(string message)
+    public SonataInvalidViewTypeException(string message)
         : base(message)
     { }
 }

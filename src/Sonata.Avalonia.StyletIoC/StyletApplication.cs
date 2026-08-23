@@ -1,14 +1,14 @@
-﻿namespace Stylet.Avalonia.StyletIoC;
+﻿namespace Sonata.Avalonia.StyletIoC;
 
 /// <summary>
 /// StyletApplication to be extended by any application which wants to use StyletIoC, but doesn't have a root ViewModel
 /// </summary>
 /// <remarks>
 /// You would normally use <see cref="StyletApplication"/>, which lets you specify the root ViewModel
-/// to display. If you don't want to show a window on startup, override <see cref="StyletApplicationBase"/>
-/// but don't call <see cref="StyletApplicationBase.DisplayRootView()"/>. 
+/// to display. If you don't want to show a window on startup, override <see cref="SonataApplicationBase"/>
+/// but don't call <see cref="SonataApplicationBase.DisplayRootView()"/>. 
 /// </remarks>
-public abstract class StyletApplication<T> : StyletApplicationBase<T> where T : class
+public abstract class StyletApplication<T> : SonataApplicationBase<T> where T : class
 {
     /// <summary>
     /// Gets or sets the StyletApplication's IoC container. This is created after ConfigureIoC has been run.
@@ -16,7 +16,7 @@ public abstract class StyletApplication<T> : StyletApplicationBase<T> where T : 
     protected IContainer Container { get; private set; }
 
     /// <summary>
-    /// Overridden from StyletApplicationBase, this sets up the IoC container
+    /// Overridden from SonataApplicationBase, this sets up the IoC container
     /// </summary>
     protected sealed override void Configure()
     {

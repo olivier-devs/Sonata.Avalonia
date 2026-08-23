@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.Xaml;
+﻿namespace Sonata.Avalonia.Xaml;
 
 /// <summary>
 /// ICommand returned by ActionExtension for binding buttons, etc, to methods on a ViewModel.

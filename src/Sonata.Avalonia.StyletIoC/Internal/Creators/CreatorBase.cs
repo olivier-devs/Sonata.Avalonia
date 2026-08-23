@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC.Internal.Creators;
+﻿namespace Sonata.Avalonia.StyletIoC.Internal.Creators;
 
 /// <summary>
 /// Base class for all ICreators (which want to use it). Provides convenience

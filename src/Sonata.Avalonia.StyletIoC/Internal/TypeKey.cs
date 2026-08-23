@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC.Internal;
+﻿namespace Sonata.Avalonia.StyletIoC.Internal;
 
 /// <summary>
 /// Type + key tuple, used as a dictionary key

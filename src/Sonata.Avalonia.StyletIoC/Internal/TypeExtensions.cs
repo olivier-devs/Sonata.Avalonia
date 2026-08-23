@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC.Internal;
+﻿namespace Sonata.Avalonia.StyletIoC.Internal;
 
 /// <summary>
 /// Useful extension methods on Type

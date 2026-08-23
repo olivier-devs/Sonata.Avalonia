@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.Primitive;
+﻿namespace Sonata.Avalonia.Primitive;
 
 /// <summary>
 /// Interface for a MessageBoxViewModel. MessageBoxWindowManagerExtensions.ShowMessageBox will use the configured implementation of this

@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.Xaml;
+﻿namespace Sonata.Avalonia.Xaml;
 
 /// <summary>
 /// Converter to compare a number of values, and return true (or false if Invert is true) if they are all equal

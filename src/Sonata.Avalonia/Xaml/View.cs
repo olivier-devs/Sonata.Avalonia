@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.Xaml;
+﻿namespace Sonata.Avalonia.Xaml;
 
 /// <summary>
 /// Holds attached properties relating to various bits of the View which are used by Stylet
@@ -119,7 +119,7 @@ public static class View
             }
             else
             {
-                throw new InvalidOperationException("The ViewManager resource is unassigned. This should have been set by the StyletApplication");
+                throw new InvalidOperationException("The ViewManager resource is unassigned. This should have been set by the SonataApplication");
             }
         });
     }

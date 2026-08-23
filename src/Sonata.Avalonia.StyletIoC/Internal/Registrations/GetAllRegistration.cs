@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace Stylet.Avalonia.StyletIoC.Internal.Registrations;
+namespace Sonata.Avalonia.StyletIoC.Internal.Registrations;
 
 /// <summary>
 /// Knows how to generate an IEnumerable{T}, which contains all implementations of T

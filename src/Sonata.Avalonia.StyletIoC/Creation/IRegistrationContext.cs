@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC.Creation;
+﻿namespace Sonata.Avalonia.StyletIoC.Creation;
 
 /// <summary>
 /// Context used by IRegistration and ICreator to get things needed to create instances, etc

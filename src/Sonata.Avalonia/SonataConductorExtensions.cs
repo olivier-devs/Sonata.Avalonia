@@ -1,11 +1,11 @@
-﻿namespace Stylet.Avalonia;
+﻿namespace Sonata.Avalonia;
 
 // Don't name ConductorExtensions, otherwise it's too obvious when someone types 'Conductor'
 
 /// <summary>
 /// Extension methods used by the Conductor classes
 /// </summary>
-public static class StyletConductorExtensions
+public static class SonataConductorExtensions
 {
     /// <summary>
     /// For each item in a list, set the parent to the current conductor

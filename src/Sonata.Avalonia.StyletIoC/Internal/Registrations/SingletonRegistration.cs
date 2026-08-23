@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC.Internal.Registrations;
+﻿namespace Sonata.Avalonia.StyletIoC.Internal.Registrations;
 
 /// <summary>
 /// Registration which generates a single instance, and returns that instance thereafter

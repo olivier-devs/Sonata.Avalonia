@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia;
+﻿namespace Sonata.Avalonia;
 
 /// <summary>
 /// Static class providing methods to easily run an action on the UI thread in various ways, and some other things
@@ -12,7 +12,7 @@ public static class Execute
     /// </summary>
     /// <remarks>
     /// Should be set a <see cref="ApplicationDispatcher"/> wrapping the current application's dispatcher, which is
-    /// normally done by the StyletApplication. Can also be set to <see cref="SynchronousDispatcher.Instance"/>, or a
+    /// normally done by the Sonata bootstrapper. Can also be set to <see cref="SynchronousDispatcher.Instance"/>, or a
     /// custom <see cref="IDispatcher"/> implementation.
     /// </remarks>
     public static IDispatcher Dispatcher

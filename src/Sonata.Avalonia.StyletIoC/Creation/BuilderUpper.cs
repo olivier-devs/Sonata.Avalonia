@@ -1,4 +1,4 @@
-﻿namespace Stylet.Avalonia.StyletIoC.Creation;
+﻿namespace Sonata.Avalonia.StyletIoC.Creation;
 
 /// <summary>
 /// A BuilderUpper knows how to build up an object - that is, populate all parameters decorated with [Inject]

@@ -1,7 +1,7 @@
-﻿using Stylet.Avalonia.StyletIoC.Internal.Creators;
-using Stylet.Avalonia.StyletIoC.Internal.Registrations;
+﻿using Sonata.Avalonia.StyletIoC.Internal.Creators;
+using Sonata.Avalonia.StyletIoC.Internal.Registrations;
 
-namespace Stylet.Avalonia.StyletIoC.Internal.Builders;
+namespace Sonata.Avalonia.StyletIoC.Internal.Builders;
 
 internal abstract class BuilderBindingBase : IInScopeOrWithKeyOrAsWeakBinding, IWithKeyOrAsWeakBinding
 {
