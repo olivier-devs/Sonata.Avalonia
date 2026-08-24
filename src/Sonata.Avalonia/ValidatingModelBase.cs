@@ -64,28 +64,11 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
     }
 
     /// <summary>
-    /// Validate all properties, synchronously
-    /// </summary>
-    /// <returns>True if all properties validated successfully</returns>
-    protected bool Validate()
-    {
-        try
-        {
-            return ValidateAsync().Result;
-        }
-        catch (AggregateException e)
-        {
-            // We're only ever going to get one InnerException here - let's be nice and unwrap it
-            throw e.InnerException;
-        }
-    }
-
-    /// <summary>
     /// Validate all properties.
     /// </summary>
     /// <returns>True if all properties validated successfully</returns>
     /// <remarks>If you override this, you MUST fire ErrorsChanged as appropriate, and call ValidationStateChanged</remarks>
-    protected virtual async Task<bool> ValidateAsync()
+    public virtual async Task<bool> ValidateAsync(CancellationToken ct = default)
     {
         if (Validator == null)
             throw new InvalidOperationException("Can't run validation if a validator hasn't been set");
@@ -99,7 +82,7 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
             results = new Dictionary<string, IEnumerable<string>>();
 
         var changedProperties = new List<string>();
-        await propertyErrorsLock.WaitAsync().ConfigureAwait(false);
+        await propertyErrorsLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             foreach (var kvp in results)
@@ -199,43 +182,14 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
     }
 
     /// <summary>
-    /// Validate a single property synchronously, by name
+    /// Validate a single property asynchronously, by name
     /// </summary>
     /// <typeparam name="TProperty">Type of property to validate</typeparam>
     /// <param name="property">Expression describing the property to validate</param>
     /// <returns>True if the property validated successfully</returns>
-    protected virtual bool ValidateProperty<TProperty>(Expression<Func<TProperty>> property)
+    public virtual Task<bool> ValidatePropertyAsync<TProperty>(Expression<Func<TProperty>> property, CancellationToken ct = default)
     {
-        return ValidateProperty(property.NameForProperty());
-    }
-
-    /// <summary>
-    /// Validate a single property asynchronously, by name
-    /// </summary>
-    /// <typeparam name="TProperty">Type ofproperty to validate</typeparam>
-    /// <param name="property">Expression describing the property to validate</param>
-    /// <returns>True if the property validated successfully</returns>
-    protected virtual Task<bool> ValidatePropertyAsync<TProperty>(Expression<Func<TProperty>> property)
-    {
-        return ValidatePropertyAsync(property.NameForProperty());
-    }
-
-    /// <summary>
-    /// Validate a single property synchronously, by name.
-    /// </summary>
-    /// <param name="propertyName">Property to validate</param>
-    /// <returns>True if the property validated successfully</returns>
-    protected bool ValidateProperty([CallerMemberName] string propertyName = null)
-    {
-        try
-        {
-            return ValidatePropertyAsync(propertyName).Result;
-        }
-        catch (AggregateException e)
-        {
-            // We're only ever going to get one InnerException here. Let's be nice and unwrap it
-            throw e.InnerException;
-        }
+        return ValidatePropertyAsync(property.NameForProperty(), ct);
     }
 
     /// <summary>
@@ -244,7 +198,7 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
     /// <param name="propertyName">Property to validate. Validates the entire model if null or <see cref="string.Empty"/></param>
     /// <returns>True if the property validated successfully</returns>
     /// <remarks>If you override this, you MUST fire ErrorsChanged and call OnValidationStateChanged() if appropriate</remarks>
-    protected virtual async Task<bool> ValidatePropertyAsync([CallerMemberName] string propertyName = null)
+    public virtual async Task<bool> ValidatePropertyAsync([CallerMemberName] string propertyName = null, CancellationToken ct = default)
     {
         if (Validator == null)
             throw new InvalidOperationException("Can't run validation if a validator hasn't been set");
@@ -258,7 +212,7 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
         var newErrors = newErrorsRaw == null ? null : newErrorsRaw.ToArray();
         bool propertyErrorsChanged = false;
 
-        await propertyErrorsLock.WaitAsync().ConfigureAwait(false);
+        await propertyErrorsLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             if (!propertyErrors.ContainsKey(propertyName))
@@ -286,14 +240,14 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
     /// </summary>
     /// <param name="propertyName">Name of the property which has changed</param>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    protected override async void OnPropertyChanged(string propertyName)
+    protected override void OnPropertyChanged(string propertyName)
     {
         base.OnPropertyChanged(propertyName);
 
-        // Save ourselves a little bit of work every time HasErrors is fired as the result of 
+        // Save ourselves a little bit of work every time HasErrors is fired as the result of
         // the validation results changing.
         if (Validator != null && AutoValidate && propertyName != "HasErrors")
-            await ValidatePropertyAsync(propertyName);
+            FireAndForget.Run(ValidatePropertyAsync(propertyName), SonataLogManager.GetLogger(GetType()));
     }
 
     /// <summary>

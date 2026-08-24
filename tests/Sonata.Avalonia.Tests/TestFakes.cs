@@ -132,3 +132,38 @@ public class TestOneActiveConductor : Conductor<TestScreen>.Collection.OneActive
 {
     public TestScreen DetermineNext(TestScreen itemToRemove) => DetermineNextItemToActivate(itemToRemove);
 }
+
+public class TestValidator : IModelValidator
+{
+    public Dictionary<string, string[]> Errors { get; } = new();
+    public string LastValidatedProperty { get; private set; }
+
+    public void Initialize(object subject) { }
+
+    public Task<IEnumerable<string>> ValidatePropertyAsync(string propertyName)
+    {
+        LastValidatedProperty = propertyName;
+        return Task.FromResult<IEnumerable<string>>(
+            Errors.TryGetValue(propertyName, out var e) ? e : null);
+    }
+
+    public Task<Dictionary<string, IEnumerable<string>>> ValidateAllPropertiesAsync()
+    {
+        return Task.FromResult(Errors.ToDictionary(k => k.Key, v => (IEnumerable<string>)v.Value));
+    }
+}
+
+public class ValidatingScreen : Screen
+{
+    public ValidatingScreen(IModelValidator validator) : base(validator) { }
+
+    private string _name;
+    public string Name
+    {
+        get => _name;
+        set => SetAndNotify(ref _name, value);
+    }
+
+    public void RecordError(string propertyName, string[] errors) => RecordPropertyError(propertyName, errors);
+    public void ClearErrors() => ClearAllPropertyErrors();
+}
