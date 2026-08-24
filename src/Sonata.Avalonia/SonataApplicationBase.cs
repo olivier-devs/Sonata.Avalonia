@@ -46,14 +46,10 @@ public abstract class SonataApplicationBase<T> : Application, IWindowManagerConf
     /// <summary>
     /// Returns the currently-displayed window, or null if there is none (or it can't be determined)
     /// </summary>
-    /// <returns>The currently-displayed window, or null</returns>
     public virtual TopLevel? GetActiveWindow()
     {
         if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desk)
-        {
-            // return win ?? desk.MainWindow;
-            throw new NotImplementedException("Mobile terminal adaptation is not implemented"); // 移动端暂未支持
-        }
+            return null;
 
         var win = desk.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive);
         return TopLevel.GetTopLevel(win);
@@ -61,20 +57,38 @@ public abstract class SonataApplicationBase<T> : Application, IWindowManagerConf
 
     public sealed override void OnFrameworkInitializationCompleted()
     {
-        var vm = IoC.Get<T>();
         OnStart();
+
+        T vm;
+        try
+        {
+            vm = IoC.Get<T>();
+        }
+        catch (Exception e)
+        {
+            throw new InvalidOperationException(
+                $"Unable to resolve the root ViewModel of type '{typeof(T).Name}'. " +
+                $"Make sure it is registered with your IoC container (e.g. services.AddSingleton<{typeof(T).Name}>() in ConfigureServices), " +
+                "and that base.Initialize() is called from your App's Initialize() method.", e);
+        }
+
         var viewManager = IoC.Get<IViewManager>();
         var view = viewManager.CreateAndBindViewForModelIfNecessary(vm);
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
             desktop.MainWindow = view as Window;
-        }
-        if(ApplicationLifetime is ISingleViewApplicationLifetime single)
-        {
-            single.MainView = vm as Control;
-        }
+        if (ApplicationLifetime is ISingleViewApplicationLifetime single)
+            single.MainView = view;
+
+        OnFrameworkInitialized();
+
         base.OnFrameworkInitializationCompleted();
     }
+
+    /// <summary>
+    /// Called at the end of framework initialization, after the root view has been displayed.
+    /// </summary>
+    protected virtual void OnFrameworkInitialized() { }
 
     /// <summary>
     /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
