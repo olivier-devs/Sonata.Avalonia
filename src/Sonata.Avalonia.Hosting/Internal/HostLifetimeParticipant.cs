@@ -7,8 +7,10 @@ namespace Sonata.Avalonia.Hosting.Internal;
 
 /// <summary>
 /// Starts the host after framework initialization, and stops/disposes it when a
-/// desktop application exits. The stop at exit is best-effort: long-running hosted
-/// services should honor their cancellation tokens.
+/// desktop application exits. Lifecycle operations are serialized by <see cref="HostRunner"/>,
+/// so an exit racing with host startup waits for the start to complete. The stop at
+/// exit is best-effort: long-running hosted services should honor their cancellation
+/// tokens, as the process may terminate before disposal completes.
 /// </summary>
 internal sealed class HostLifetimeParticipant : IApplicationLifetimeParticipant
 {

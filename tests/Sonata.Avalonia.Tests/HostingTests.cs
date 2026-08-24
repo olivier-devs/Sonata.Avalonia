@@ -60,6 +60,49 @@ public class HostingTests
         Assert.IsType<HostLifetimeParticipant>(participant);
     }
 
+    private sealed class SlowStartingHostedService : IHostedService
+    {
+        private readonly TaskCompletionSource _started = new();
+        private readonly TaskCompletionSource _releaseStart = new();
+
+        public Task WaitForStartedAsync() => _started.Task;
+
+        public void ReleaseStart() => _releaseStart.TrySetResult();
+
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            _started.TrySetResult();
+            await _releaseStart.Task;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    [Fact]
+    public async Task HostRunner_DisposeDuringStart_WaitsForStartToComplete()
+    {
+        var service = new SlowStartingHostedService();
+        var host = new HostBuilder()
+            .ConfigureServices(s => s.AddSingleton<IHostedService>(service))
+            .Build();
+        var runner = new HostRunner(host);
+
+        var startTask = runner.StartAsync();
+        await service.WaitForStartedAsync();   // start is in flight, blocked on release
+
+        var disposeTask = runner.DisposeAsync();
+        // Give the dispose a chance to (incorrectly) run before start completes —
+        // with the fix it must be waiting on the lifecycle lock.
+        await Task.Delay(50);
+
+        service.ReleaseStart();                 // let start finish
+        await startTask;
+        await disposeTask;                      // dispose proceeds after start
+
+        // The host was stopped+disposed without ObjectDisposedException mid-start
+        Assert.True(startTask.IsCompletedSuccessfully);
+    }
+
     [Fact]
     public void SonataHostedApplication_StartsHostOnFrameworkInitialized()
     {
