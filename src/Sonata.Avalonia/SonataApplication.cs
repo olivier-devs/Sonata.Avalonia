@@ -1,3 +1,5 @@
+using Sonata.Avalonia.Internal;
+
 namespace Sonata.Avalonia;
 
 /// <summary>
@@ -76,6 +78,12 @@ public abstract class SonataApplication<T> : SonataApplicationBase<T> where T : 
     }
 
     protected override ILoggerFactory? GetLoggerFactory() => Services.GetRequiredService<ILoggerFactory>();
+
+    protected override void OnFrameworkInitialized()
+    {
+        foreach (var participant in Services.GetServices<IApplicationLifetimeParticipant>())
+            participant.OnFrameworkInitialized();
+    }
 
     /// <inheritdoc/>
     public override void Dispose()

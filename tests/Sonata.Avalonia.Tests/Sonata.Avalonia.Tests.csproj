@@ -7,10 +7,12 @@
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
         <PackageReference Include="xunit" />
         <PackageReference Include="xunit.runner.visualstudio" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" />
         <PackageReference Include="Microsoft.Extensions.Logging" />
         <PackageReference Include="Moq" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\src\Sonata.Avalonia\Sonata.Avalonia.csproj" />
+        <ProjectReference Include="..\..\src\Sonata.Avalonia.Hosting\Sonata.Avalonia.Hosting.csproj" />
     </ItemGroup>
 </Project>
