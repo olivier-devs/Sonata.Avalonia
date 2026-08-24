@@ -133,17 +133,20 @@ public partial class Conductor<T>
             /// <summary>
             /// Activate the given item, and add it to the Items collection
             /// </summary>
-            public override async Task ActivateItemAsync(T item, CancellationToken ct = default)
+            public override Task ActivateItemAsync(T item, CancellationToken ct = default)
             {
                 if (item == null)
-                    return;
+                    return Task.CompletedTask;
 
-                EnsureItem(item);
+                return ExecuteTransitionAsync(async () =>
+                {
+                    EnsureItem(item);
 
-                if (IsActive)
-                    await ScreenExtensions.TryActivateAsync(item, ct);
-                else
-                    await ScreenExtensions.TryDeactivateAsync(item, ct);
+                    if (IsActive)
+                        await ScreenExtensions.TryActivateAsync(item, ct);
+                    else
+                        await ScreenExtensions.TryDeactivateAsync(item, ct);
+                }, ct);
             }
 
             /// <summary>
@@ -162,11 +165,14 @@ public partial class Conductor<T>
                 if (item == null)
                     return;
 
-                if (await CanCloseItem(item, ct))
+                await ExecuteTransitionAsync(async () =>
                 {
-                    await this.CloseAndCleanUpAsync(item, DisposeChildren, ct);
-                    _items.Remove(item);
-                }
+                    if (await CanCloseItem(item, ct))
+                    {
+                        await this.CloseAndCleanUpAsync(item, DisposeChildren, ct);
+                        _items.Remove(item);
+                    }
+                }, ct);
             }
 
             /// <summary>

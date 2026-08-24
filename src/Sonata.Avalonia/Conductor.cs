@@ -9,7 +9,13 @@ public partial class Conductor<T> : ConductorBaseWithActiveItem<T> where T : cla
     /// <summary>
     /// Activate the given item, discarding the previous ActiveItem
     /// </summary>
-    public override async Task ActivateItemAsync(T item, CancellationToken ct = default)
+    public override Task ActivateItemAsync(T item, CancellationToken ct = default)
+    {
+        EnsureNotReentrant();
+        return ActivateItemCoreAsync(item, ct);
+    }
+
+    private async Task ActivateItemCoreAsync(T item, CancellationToken ct)
     {
         if (item != null && item.Equals(ActiveItem))
         {

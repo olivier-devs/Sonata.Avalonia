@@ -29,25 +29,28 @@ public abstract class ConductorBaseWithActiveItem<T> : ConductorBase<T>, IHaveAc
     /// <summary>
     /// Switch the active item to the given item
     /// </summary>
-    protected virtual async Task ChangeActiveItemAsync(T newItem, bool closePrevious, CancellationToken ct = default)
+    protected Task ChangeActiveItemAsync(T newItem, bool closePrevious, CancellationToken ct = default)
     {
-        await ScreenExtensions.TryDeactivateAsync(ActiveItem, ct);
-        if (closePrevious)
-            await this.CloseAndCleanUpAsync(ActiveItem, DisposeChildren, ct);
-
-        _activeItem = newItem;
-
-        if (newItem is not null)
+        return ExecuteTransitionAsync(async () =>
         {
-            EnsureItem(newItem);
+            await ScreenExtensions.TryDeactivateAsync(ActiveItem, ct);
+            if (closePrevious)
+                await this.CloseAndCleanUpAsync(ActiveItem, DisposeChildren, ct);
 
-            if (IsActive)
-                await ScreenExtensions.TryActivateAsync(newItem, ct);
-            else
-                await ScreenExtensions.TryDeactivateAsync(newItem, ct);
-        }
+            _activeItem = newItem;
 
-        NotifyOfPropertyChange("ActiveItem");
+            if (newItem is not null)
+            {
+                EnsureItem(newItem);
+
+                if (IsActive)
+                    await ScreenExtensions.TryActivateAsync(newItem, ct);
+                else
+                    await ScreenExtensions.TryDeactivateAsync(newItem, ct);
+            }
+
+            NotifyOfPropertyChange("ActiveItem");
+        }, ct);
     }
 
     /// <summary>

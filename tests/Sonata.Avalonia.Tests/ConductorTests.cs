@@ -143,4 +143,74 @@ public class ConductorTests
 
         Assert.False(child.Disposed);
     }
+
+    [Fact]
+    public async Task ConcurrentActivateItemAsync_DoNotInterleave()
+    {
+        var a = new TestScreen { ActivateGate = new TaskCompletionSource<bool>() };
+        var b = new TestScreen();
+        var conductor = new Conductor<TestScreen>();
+        await ((IScreenState)conductor).ActivateAsync();
+
+        var first = conductor.ActivateItemAsync(a);
+        var second = conductor.ActivateItemAsync(b);
+
+        // first is still in-flight (blocked on a's gate): b must not have been activated yet
+        Assert.Same(a, conductor.ActiveItem);
+
+        a.ActivateGate.SetResult(true);
+        await first;
+        await second;
+
+        Assert.Same(b, conductor.ActiveItem);
+        Assert.Equal(ScreenState.Closed, a.ScreenState);
+    }
+
+    [Fact]
+    public async Task ActiveItemTransition_CompletesAfterTransition()
+    {
+        var a = new TestScreen { ActivateGate = new TaskCompletionSource<bool>() };
+        var conductor = new Conductor<TestScreen>();
+        await ((IScreenState)conductor).ActivateAsync();
+
+        var pending = conductor.ActivateItemAsync(a);
+        Assert.False(pending.IsCompleted);
+
+        a.ActivateGate.SetResult(true);
+        await conductor.ActiveItemTransition;
+
+        Assert.True(pending.IsCompleted);
+        Assert.Same(a, conductor.ActiveItem);
+    }
+
+    [Fact]
+    public async Task ReentrantActivateItemAsync_ThrowsClearException()
+    {
+        var conductor = new Conductor<ReentrantScreen>();
+        await ((IScreenState)conductor).ActivateAsync();
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => conductor.ActivateItemAsync(new ReentrantScreen(conductor)));
+
+        Assert.Contains("transition", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private class ReentrantScreen : Screen
+    {
+        private readonly IConductor<ReentrantScreen> _conductor;
+
+        public ReentrantScreen() { }
+
+        public ReentrantScreen(IConductor<ReentrantScreen> conductor)
+        {
+            _conductor = conductor;
+        }
+
+        protected override Task OnActivateAsync(CancellationToken ct)
+        {
+            // Re-entrant call: this hook runs inside the conductor's transition
+            if (_conductor != null)
+                _ = _conductor.ActivateItemAsync(this);
+            return Task.CompletedTask;
+        }
+    }
 }
