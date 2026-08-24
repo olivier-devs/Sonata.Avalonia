@@ -7,4 +7,9 @@
   <Folder Name="/tests/">
     <Project Path="tests/Sonata.Avalonia.Tests/Sonata.Avalonia.Tests.csproj" />
   </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/Sonata.Samples.DryIoC/Sonata.Samples.DryIoC.csproj" />
+    <Project Path="samples/Sonata.Samples.Hello/Sonata.Samples.Hello.csproj" />
+    <Project Path="samples/Sonata.Samples.MSIoC/Sonata.Samples.MSIoC.csproj" />
+  </Folder>
 </Solution>
