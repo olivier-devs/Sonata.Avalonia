@@ -167,3 +167,10 @@ public class ValidatingScreen : Screen
     public void RecordError(string propertyName, string[] errors) => RecordPropertyError(propertyName, errors);
     public void ClearErrors() => ClearAllPropertyErrors();
 }
+
+public class TestMessageHandler : IHandle<string>
+{
+    public int Received { get; private set; }
+
+    public void Handle(string message) => Received++;
+}
