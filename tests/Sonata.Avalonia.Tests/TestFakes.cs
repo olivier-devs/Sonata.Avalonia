@@ -29,3 +29,17 @@ public class TestApp : SonataApplication<TestRootViewModel>
         base.ConfigureSonataServices(services);
     }
 }
+
+public class TestAppNoConvention : SonataApplication<TestRootViewModel>
+{
+    public IServiceProvider? PublicServices
+    {
+        get
+        {
+            try { return Services; }
+            catch (InvalidOperationException) { return null; }
+        }
+    }
+
+    protected override bool EnableConventionRegistration => false;
+}

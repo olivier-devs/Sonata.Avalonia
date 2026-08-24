@@ -28,11 +28,17 @@ public abstract class SonataApplication<T> : SonataApplicationBase<T> where T : 
     protected virtual void ConfigureServices(IServiceCollection services) { }
 
     /// <summary>
+    /// Set to false to disable convention-based registration of Views (transient)
+    /// and ViewModels (singleton).
+    /// </summary>
+    protected virtual bool EnableConventionRegistration => true;
+
+    /// <summary>
     /// Override to replace Sonata's default service registrations.
     /// </summary>
     protected virtual void ConfigureSonataServices(IServiceCollection services)
     {
-        services.AddSonata(this, ViewAssemblies);
+        services.AddSonata(this, ViewAssemblies, EnableConventionRegistration);
     }
 
     /// <summary>

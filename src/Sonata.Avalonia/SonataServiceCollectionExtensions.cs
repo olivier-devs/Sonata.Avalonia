@@ -14,10 +14,14 @@ public static class SonataServiceCollectionExtensions
     /// <param name="services">Service collection to add registrations to.</param>
     /// <param name="windowManagerConfig">The application, used to resolve the active window.</param>
     /// <param name="viewAssemblies">Assemblies searched for Views and ViewModels.</param>
+    /// <param name="enableConventionRegistration">When true, scans assemblies for Views (transient) and ViewModels (singleton) and registers them.</param>
+    /// <param name="viewModelNameSuffix">Suffix used to identify ViewModel types during convention scanning.</param>
     public static IServiceCollection AddSonata(
         this IServiceCollection services,
         IWindowManagerConfig windowManagerConfig,
-        IEnumerable<Assembly> viewAssemblies)
+        IEnumerable<Assembly> viewAssemblies,
+        bool enableConventionRegistration = true,
+        string viewModelNameSuffix = "ViewModel")
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(windowManagerConfig);
@@ -40,6 +44,32 @@ public static class SonataServiceCollectionExtensions
         services.TryAddSingleton<ILoggerFactory, LoggerFactory>();
         services.TryAdd(ServiceDescriptor.Transient(typeof(ILogger<>), typeof(Logger<>)));
 
+        if (enableConventionRegistration)
+        {
+            foreach (var type in assemblies.SelectMany(GetLoadableTypes))
+            {
+                if (type.IsAbstract || type.IsInterface)
+                    continue;
+
+                if (typeof(Control).IsAssignableFrom(type))
+                    services.TryAddTransient(type);
+                else if (type.Name.EndsWith(viewModelNameSuffix, StringComparison.Ordinal))
+                    services.TryAddSingleton(type);
+            }
+        }
+
         return services;
+    }
+
+    private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+    {
+        try
+        {
+            return assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException e)
+        {
+            return e.Types.Where(t => t is not null).Select(t => t!);
+        }
     }
 }
