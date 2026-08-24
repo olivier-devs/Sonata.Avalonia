@@ -1,102 +1,40 @@
-![Project Icon](./StyletIcon.png) Stylet.Avalonia
-======================================
+# Sonata.Avalonia
 
-[英文文档](./README-EN.md)
+A lightweight, powerful ViewModel-first MVVM framework for [Avalonia UI](https://avaloniaui.net/),
+modernized from [Stylet.Avalonia](https://github.com/sealoyal2018/Stylet.Avalonia) (itself a port of
+[Stylet](https://github.com/canton7/Stylet)) for .NET 8/9/10 and Avalonia 12.
 
->  请注意本项目需要 AvaloniaUI 版本 >= 11.x
+**Status: 1.0.0-preview.1 — modernization in progress.**
 
-## 项目介绍
+## Packages
 
-`Stylet.Avalonia`是原来[Stylet](https://github.com/canton7/Stylet)项目对[AvaloniaUI](https://github.com/AvaloniaUI/Avalonia) 框架的适配。具体介绍请查看[Stylet项目介绍](https://github.com/canton7/Stylet)
+| Package | Purpose |
+|---------|---------|
+| `Sonata.Avalonia` | Core framework — Screen, Conductors, ViewManager, WindowManager, actions, validation. DI via Microsoft.Extensions.DependencyInjection. |
+| `Sonata.Avalonia.StyletIoC` | Legacy StyletIoC container support (original Stylet bootstrapper experience). |
+| `Sonata.Avalonia.Hosting` | Generic Host (`IHost`/`IHostedService`) integration. |
 
-## 快速开始
-
-第一步：创建一个Avalonia框架类型的项目
-
-第二步：nuget 管理器安装 `Stylet.Avalonia`包
-
-第三步：创建`ShellViewModel`类，以及名为`ShellView`的窗口组件（`Avalonia Window`类型），其内容如下【其实啥也没动】
-
-- ShellViewModel.cs
-
-```c#
-public class ShellViewModel
-{
-    
-}
-```
-
-- ShellView.axaml
-
-```xaml
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="Avalonia.NETCoreApp1.ShellView"
-        Title="ShellView">
-    Welcome to Avalonia!
-</Window>
-```
-
-- ShellView.axaml.cs
+## Quick start
 
 ```csharp
-public partial class ShellView : Window
-{
-    public ShellView()
-    {
-        InitializeComponent();
-    }
-}
-```
-
-
-第四步：找到并打开`App.axaml.cs`文件，使其继承于`StyletApplication<T>`其中`T`为任一`ViewModel`，当前设置为第三步创建的`ShellViewModel`，修改后内容如下
-
-```c#
-public partial class App : StyletApplication<ShellViewModel>
+public partial class App : SonataApplication<ShellViewModel>
 {
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
-        base.Initialize(); // 初始化stylet，不能去掉
+        base.Initialize(); // required — builds the service provider
+    }
+
+    protected override void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton<IMyService, MyService>();
+        // ShellViewModel is registered automatically by convention
     }
 }
 ```
 
-第五步：运行。快乐的写代码吧！
+See the `samples/` directory for complete examples (MS.DI, StyletIoC, DryIoC).
 
-## 其他
+## License
 
-更多资料点击[这里](https://github.com/canton7/Stylet/wiki)跳转查看。同时，可以查看本仓库中存放的示例项目。
-
-
-
-## 从 0.0.1升级？
-
-> 请将avalonia 升级到11.x，[升级指南](https://docs.avaloniaui.net/docs/next/stay-up-to-date/upgrade-from-0.10)
-
-0.将`nuget`包`XamlNameReferenceGenerator`移除(新版本已内置)
-
-1.找到并打开`App.axaml`文件，移除`AppBootstrapper`资源，即：
-
-```xaml
-<Application.Resources>
-    <ResourceDictionary>
-        <ResourceDictionary.MergedDictionaries>
-            <s:ApplicationLoader>
-                <s:ApplicationLoader.Bootstrapper>
-                    <local:AppBootstrapper  />
-                </s:ApplicationLoader.Bootstrapper>
-            </s:ApplicationLoader>
-        </ResourceDictionary.MergedDictionaries>
-    </ResourceDictionary>
-</Application.Resources>
-```
-
-2.找到并打开`App.axaml.cs`文件，使其继承于`StyletApplication<T>`, 此时`App.axaml.cs`成为了原来`AppBootstrapper<ShellViewModel>`, 将原来的`AppBootstrapper.cs`的内容移到`App.axaml.cs`文件中即可。
-
-***其注意***：`App.axaml.cs`文件内`Initialize()`方法必须调用`base.Initialize();`
-
+MIT — see [LICENSE.txt](LICENSE.txt). Includes copyright notices from Stylet and Stylet.Avalonia.
