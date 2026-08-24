@@ -10,11 +10,7 @@ public static class SonataConductorExtensions
     /// <summary>
     /// For each item in a list, set the parent to the current conductor
     /// </summary>
-    /// <typeparam name="T">Type of conductor</typeparam>
-    /// <param name="parent">Parent to set the items' parent to</param>
-    /// <param name="items">Items to manipulate</param>
-    /// <param name="active">True to active the item, false to deactive it</param>
-    public static void SetParentAndSetActive<T>(this IConductor<T> parent, IEnumerable items, bool active)
+    public static async Task SetParentAndSetActiveAsync<T>(this IConductor<T> parent, IEnumerable items, bool active, CancellationToken ct = default)
     {
         foreach (var item in items)
         {
@@ -23,43 +19,35 @@ public static class SonataConductorExtensions
                 itemAsChild.Parent = parent;
 
             if (active)
-                ScreenExtensions.TryActivate(item);
+                await ScreenExtensions.TryActivateAsync(item, ct);
             else
-                ScreenExtensions.TryDeactivate(item);
+                await ScreenExtensions.TryDeactivateAsync(item, ct);
         }
     }
 
     /// <summary>
     /// Close an item, and clear its parent if it's set to the current parent
     /// </summary>
-    /// <typeparam name="T">Type of conductor</typeparam>
-    /// <param name="parent">Parent</param>
-    /// <param name="item">Item to close and clean up</param>
-    /// <param name="dispose">True to dispose children as well as close them</param>
-    public static void CloseAndCleanUp<T>(this IConductor<T> parent, T item, bool dispose)
+    public static async Task CloseAndCleanUpAsync<T>(this IConductor<T> parent, T item, bool dispose, CancellationToken ct = default)
     {
-        ScreenExtensions.TryClose(item);
+        await ScreenExtensions.TryCloseAsync(item, ct);
 
         var itemAsChild = item as IChild;
         if (itemAsChild != null && itemAsChild.Parent == parent)
             itemAsChild.Parent = null;
 
         if (dispose)
-            ScreenExtensions.TryDispose(item);
+            await ScreenExtensions.TryDisposeAsync(item);
     }
 
     /// <summary>
     /// For each item in a list, close it, and if its parent is set to the given parent, clear that parent
     /// </summary>
-    /// <typeparam name="T">Type of conductor</typeparam>
-    /// <param name="parent">Parent</param>
-    /// <param name="items">List of items to close and clean up</param>
-    /// <param name="dispose">True to dispose children as well as close them</param>
-    public static void CloseAndCleanUp<T>(this IConductor<T> parent, IEnumerable items, bool dispose)
+    public static async Task CloseAndCleanUpAsync<T>(this IConductor<T> parent, IEnumerable items, bool dispose, CancellationToken ct = default)
     {
         foreach (var item in items.OfType<T>())
         {
-            parent.CloseAndCleanUp(item, dispose);
+            await parent.CloseAndCleanUpAsync(item, dispose, ct);
         }
     }
 }

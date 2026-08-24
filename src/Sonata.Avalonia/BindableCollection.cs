@@ -99,7 +99,7 @@ public class BindableCollection<T> : ObservableCollection<T>, IObservableCollect
     /// <param name="items">Items to add</param>
     public virtual void AddRange(IEnumerable<T> items)
     {
-        Dispatcher.UIThread.Invoke(() =>
+        Execute.OnUIThread(() =>
         {
             OnCollectionChanging(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
             var previousNotificationSetting = isNotifying;
@@ -125,7 +125,7 @@ public class BindableCollection<T> : ObservableCollection<T>, IObservableCollect
     /// <param name="items">Items to remove</param>
     public virtual void RemoveRange(IEnumerable<T> items)
     {
-        Dispatcher.UIThread.Invoke(() =>
+        Execute.OnUIThread(() =>
         {
             OnCollectionChanging(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 
@@ -151,7 +151,7 @@ public class BindableCollection<T> : ObservableCollection<T>, IObservableCollect
     /// </summary>
     public void Refresh()
     {
-        Dispatcher.UIThread.Invoke(() =>
+        Execute.OnUIThread(() =>
         {
             OnPropertyChanged(new PropertyChangedEventArgs("Count"));
             OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
@@ -168,7 +168,7 @@ public class BindableCollection<T> : ObservableCollection<T>, IObservableCollect
     /// <param name="item">Item to insert</param>
     protected override void InsertItem(int index, T item)
     {
-        Dispatcher.UIThread.Invoke(() =>
+        Execute.OnUIThread(() =>
         {
             OnCollectionChanging(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item, index));
             base.InsertItem(index, item);
@@ -183,7 +183,7 @@ public class BindableCollection<T> : ObservableCollection<T>, IObservableCollect
     /// <param name="item">Item to set</param>
     protected override void SetItem(int index, T item)
     {
-        Dispatcher.UIThread.Invoke(() =>
+        Execute.OnUIThread(() =>
         {
             OnCollectionChanging(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, this[index], index));
             base.SetItem(index, item);
@@ -197,7 +197,7 @@ public class BindableCollection<T> : ObservableCollection<T>, IObservableCollect
     /// <param name="index">Index of the item to remove</param>
     protected override void RemoveItem(int index)
     {
-        Dispatcher.UIThread.Invoke(() =>
+        Execute.OnUIThread(() =>
         {
             OnCollectionChanging(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, this[index], index));
             base.RemoveItem(index);
@@ -210,7 +210,7 @@ public class BindableCollection<T> : ObservableCollection<T>, IObservableCollect
     /// </summary>
     protected override void ClearItems()
     {
-        Dispatcher.UIThread.Invoke(() =>
+        Execute.OnUIThread(() =>
         {
             OnCollectionChanging(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
             base.ClearItems();

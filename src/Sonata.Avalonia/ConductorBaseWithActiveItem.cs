@@ -9,18 +9,18 @@ public abstract class ConductorBaseWithActiveItem<T> : ConductorBase<T>, IHaveAc
     private T _activeItem;
 
     /// <summary>
-    /// Gets or sets the item which is currently active
+    /// Gets or sets the item which is currently active.
+    /// Setting this fire-and-forgets the activation; exceptions are logged.
     /// </summary>
     public T ActiveItem
     {
         get => _activeItem;
-        set => ActivateItem(value);
+        set => FireAndForget.Run(ActivateItemAsync(value), SonataLogManager.GetLogger(GetType()));
     }
 
     /// <summary>
     /// From IParent, fetch all items
     /// </summary>
-    /// <returns>Children of this conductor</returns>
     public override IEnumerable<T> GetChildren()
     {
         return new[] { ActiveItem };
@@ -29,13 +29,11 @@ public abstract class ConductorBaseWithActiveItem<T> : ConductorBase<T>, IHaveAc
     /// <summary>
     /// Switch the active item to the given item
     /// </summary>
-    /// <param name="newItem">New item to activate</param>
-    /// <param name="closePrevious">Whether the previously-active item should be closed</param>
-    protected virtual void ChangeActiveItem(T newItem, bool closePrevious)
+    protected virtual async Task ChangeActiveItemAsync(T newItem, bool closePrevious, CancellationToken ct = default)
     {
-        ScreenExtensions.TryDeactivate(ActiveItem);
+        await ScreenExtensions.TryDeactivateAsync(ActiveItem, ct);
         if (closePrevious)
-            this.CloseAndCleanUp(ActiveItem, DisposeChildren);
+            await this.CloseAndCleanUpAsync(ActiveItem, DisposeChildren, ct);
 
         _activeItem = newItem;
 
@@ -44,9 +42,9 @@ public abstract class ConductorBaseWithActiveItem<T> : ConductorBase<T>, IHaveAc
             EnsureItem(newItem);
 
             if (IsActive)
-                ScreenExtensions.TryActivate(newItem);
+                await ScreenExtensions.TryActivateAsync(newItem, ct);
             else
-                ScreenExtensions.TryDeactivate(newItem);
+                await ScreenExtensions.TryDeactivateAsync(newItem, ct);
         }
 
         NotifyOfPropertyChange("ActiveItem");
@@ -55,24 +53,24 @@ public abstract class ConductorBaseWithActiveItem<T> : ConductorBase<T>, IHaveAc
     /// <summary>
     /// When we're activated, also activate the ActiveItem
     /// </summary>
-    protected override void OnActivate()
+    protected override Task OnActivateAsync(CancellationToken ct)
     {
-        ScreenExtensions.TryActivate(ActiveItem);
+        return ScreenExtensions.TryActivateAsync(ActiveItem, ct);
     }
 
     /// <summary>
     /// When we're deactivated, also deactivate the ActiveItem
     /// </summary>
-    protected override void OnDeactivate()
+    protected override Task OnDeactivateAsync(CancellationToken ct)
     {
-        ScreenExtensions.TryDeactivate(ActiveItem);
+        return ScreenExtensions.TryDeactivateAsync(ActiveItem, ct);
     }
 
     /// <summary>
     /// When we're closed, also close the ActiveItem
     /// </summary>
-    protected override void OnClose()
+    protected override Task OnCloseAsync(CancellationToken ct)
     {
-        this.CloseAndCleanUp(ActiveItem, DisposeChildren);
+        return this.CloseAndCleanUpAsync(ActiveItem, DisposeChildren, ct);
     }
 }

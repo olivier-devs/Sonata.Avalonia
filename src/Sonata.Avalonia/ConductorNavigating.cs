@@ -13,102 +13,93 @@ public partial class Conductor<T>
         /// <summary>
         /// Activate the given item. This deactivates the previous item, and pushes it onto the history stack
         /// </summary>
-        /// <param name="item">Item to activate</param>
-        public override void ActivateItem(T item)
+        public override async Task ActivateItemAsync(T item, CancellationToken ct = default)
         {
-            if (item != null && item.Equals(this.ActiveItem))
+            if (item != null && item.Equals(ActiveItem))
             {
-                if (this.IsActive)
-                    ScreenExtensions.TryActivate(this.ActiveItem);
+                if (IsActive)
+                    await ScreenExtensions.TryActivateAsync(ActiveItem, ct);
             }
             else
             {
-                if (this.ActiveItem != null)
-                    this._history.Add(this.ActiveItem);
-                this.ChangeActiveItem(item, false);
+                if (ActiveItem != null)
+                    _history.Add(ActiveItem);
+                await ChangeActiveItemAsync(item, false, ct);
             }
         }
 
         /// <summary>
         /// Deactivate the given item
         /// </summary>
-        /// <param name="item">Item to deactivate</param>
-        public override void DeactivateItem(T item)
+        public override Task DeactivateItemAsync(T item, CancellationToken ct = default)
         {
-            ScreenExtensions.TryDeactivate(item);
+            return ScreenExtensions.TryDeactivateAsync(item, ct);
         }
 
         /// <summary>
         /// Close the active item, and re-activate the top item in the history stack
         /// </summary>
-        public void GoBack()
+        public Task GoBackAsync(CancellationToken ct = default)
         {
-            this.CloseItem(this.ActiveItem);
+            return CloseItemAsync(ActiveItem, ct);
         }
 
         /// <summary>
         /// Close and remove all items in the history stack, leaving the ActiveItem
         /// </summary>
-        public void Clear()
+        public async Task ClearAsync(CancellationToken ct = default)
         {
-            foreach (var item in this._history)
+            foreach (var item in _history)
             {
-                this.CloseAndCleanUp(item, this.DisposeChildren);
+                await this.CloseAndCleanUpAsync(item, DisposeChildren, ct);
             }
-            this._history.Clear();
+            _history.Clear();
         }
 
         /// <summary>
         /// Close the given item. If it was the ActiveItem, activate the top item in the history stack
         /// </summary>
-        /// <param name="item">Item to close</param>
-        public override async void CloseItem(T item)
+        public override async Task CloseItemAsync(T item, CancellationToken ct = default)
         {
-            if (item == null || !await this.CanCloseItem(item))
+            if (item == null || !await CanCloseItem(item, ct))
                 return;
 
-            if (item.Equals(this.ActiveItem))
+            if (item.Equals(ActiveItem))
             {
                 var newItem = default(T);
-                if (this._history.Count > 0)
+                if (_history.Count > 0)
                 {
-                    newItem = this._history.Last();
-                    this._history.RemoveAt(this._history.Count - 1);
+                    newItem = _history.Last();
+                    _history.RemoveAt(_history.Count - 1);
                 }
-                this.ChangeActiveItem(newItem, true);
+                await ChangeActiveItemAsync(newItem, true, ct);
             }
-            else if (this._history.Contains(item))
+            else if (_history.Contains(item))
             {
-                this.CloseAndCleanUp(item, this.DisposeChildren);
-                this._history.Remove(item);
+                await this.CloseAndCleanUpAsync(item, DisposeChildren, ct);
+                _history.Remove(item);
             }
         }
 
         /// <summary>
         /// Returns true if and when all items (ActiveItem + everything in the history stack) can close
         /// </summary>
-        /// <returns>A task indicating whether this conductor can close</returns>
-        public override Task<bool> CanCloseAsync()
+        public override Task<bool> CanCloseAsync(CancellationToken ct = default)
         {
-            // Temporarily, until we remove CanClose
-#pragma warning disable CS0618 // Type or member is obsolete
-            if (!this.CanClose())
-#pragma warning restore CS0618 // Type or member is obsolete
-                return Task.FromResult(false);
-            return this.CanAllItemsCloseAsync(this._history.Concat(new[] { this.ActiveItem }));
+            return CanAllItemsCloseAsync(_history.Concat(new[] { ActiveItem }), ct);
         }
 
         /// <summary>
         /// Ensures that all children are closed when this conductor is closed
         /// </summary>
-        protected override void OnClose()
+        protected override async Task OnCloseAsync(CancellationToken ct)
         {
             // We've already been deactivated by this point
-            foreach (var item in this._history)
-                this.CloseAndCleanUp(item, this.DisposeChildren);
-            this._history.Clear();
+            foreach (var item in _history)
+                await this.CloseAndCleanUpAsync(item, DisposeChildren, ct);
+            _history.Clear();
 
-            this.CloseAndCleanUp(this.ActiveItem, this.DisposeChildren);
+            await this.CloseAndCleanUpAsync(ActiveItem, DisposeChildren, ct);
         }
     }
 }

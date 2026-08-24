@@ -83,17 +83,17 @@ public interface IScreenState
     /// <summary>
     /// Activate the object. May not actually cause activation (e.g. if it's already active)
     /// </summary>
-    void Activate();
+    Task ActivateAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Deactivate the object. May not actually cause deactivation (e.g. if it's already deactive)
     /// </summary>
-    void Deactivate();
+    Task DeactivateAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Close the object. May not actually cause closure (e.g. if it's already closed)
     /// </summary>
-    void Close();
+    Task CloseAsync(CancellationToken ct = default);
 }
 
 /// <summary>
@@ -127,8 +127,9 @@ public interface IGuardClose
     /// <summary>
     /// Returns whether or not the object can close, potentially asynchronously
     /// </summary>
+    /// <param name="ct">Cancellation token to observe</param>
     /// <returns>A task indicating whether the object can close</returns>
-    Task<bool> CanCloseAsync();
+    Task<bool> CanCloseAsync(CancellationToken ct = default);
 }
 
 /// <summary>

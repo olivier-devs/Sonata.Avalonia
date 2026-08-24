@@ -36,7 +36,7 @@ public interface IChildDelegate
     /// </summary>
     /// <param name="item">Child object, which is passed by the child itself</param>
     /// <param name="dialogResult">DialogResult to use to close, if any</param>
-    void CloseItem(object item, bool? dialogResult = null);
+    Task CloseItemAsync(object item, bool? dialogResult = null, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -55,18 +55,15 @@ public interface IConductor<T>
     /// <summary>
     /// Activate the given item
     /// </summary>
-    /// <param name="item">Item to activate</param>
-    void ActivateItem(T item);
+    Task ActivateItemAsync(T item, CancellationToken ct = default);
 
     /// <summary>
     /// Deactivate the given item
     /// </summary>
-    /// <param name="item">Item to deactivate</param>
-    void DeactivateItem(T item);
+    Task DeactivateItemAsync(T item, CancellationToken ct = default);
 
     /// <summary>
     /// Close the given item
     /// </summary>
-    /// <param name="item">Item to close</param>
-    void CloseItem(T item);
+    Task CloseItemAsync(T item, CancellationToken ct = default);
 }

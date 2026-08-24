@@ -3,9 +3,12 @@
 /// <summary>
 /// Implementation of IScreen. Useful as a base class for your ViewModels
 /// </summary>
-public class Screen : ValidatingModelBase, IScreen
+public class Screen : ValidatingModelBase, IScreen, IAsyncDisposable
 {
-    private ILogger Logger => SonataLogManager.GetLogger(GetType());
+    /// <summary>
+    /// Logger used by this screen and derived conductor types.
+    /// </summary>
+    protected ILogger Logger => SonataLogManager.GetLogger(GetType());
 
     /// <summary>
     /// Initialises a new instance of the <see cref="Screen"/> class, without setting up a validator
@@ -46,16 +49,6 @@ public class Screen : ValidatingModelBase, IScreen
     /// <summary>
     /// Gets or sets the current state of the Screen
     /// </summary>
-    [Obsolete("State is deprecated, please use ScreenState instead")]
-    public virtual ScreenState State
-    {
-        get { return ScreenState; }
-        protected set { ScreenState = value; }
-    }
-
-    /// <summary>
-    /// Gets or sets the current state of the Screen
-    /// </summary>
     public virtual ScreenState ScreenState
     {
         get { return _screenState; }
@@ -63,12 +56,8 @@ public class Screen : ValidatingModelBase, IScreen
         {
             if (SetAndNotify(ref _screenState, value))
             {
-                // Temporary, until we remove 'State'
-#pragma warning disable CS0618 // Type or member is obsolete
-                NotifyOfPropertyChange("State");
-#pragma warning restore CS0618 // Type or member is obsolete
+                NotifyOfPropertyChange("IsActive");
             }
-            NotifyOfPropertyChange("IsActive");
         }
     }
 
@@ -105,36 +94,36 @@ public class Screen : ValidatingModelBase, IScreen
     /// <summary>
     /// Called the very first time this Screen is activated, and never again
     /// </summary>
-    protected virtual void OnInitialActivate() { }
+    protected virtual Task OnInitialActivateAsync(CancellationToken ct) => Task.CompletedTask;
 
     /// <summary>
     /// Called every time this screen is activated
     /// </summary>
-    protected virtual void OnActivate() { }
+    protected virtual Task OnActivateAsync(CancellationToken ct) => Task.CompletedTask;
 
     /// <summary>
     /// Called every time this screen is deactivated
     /// </summary>
-    protected virtual void OnDeactivate() { }
+    protected virtual Task OnDeactivateAsync(CancellationToken ct) => Task.CompletedTask;
 
     /// <summary>
     /// Called when this screen is closed
     /// </summary>
-    protected virtual void OnClose() { }
+    protected virtual Task OnCloseAsync(CancellationToken ct) => Task.CompletedTask;
 
     /// <summary>
     /// Called on any state transition
     /// </summary>
     /// <param name="previousState">Previous state state</param>
     /// <param name="newState">New state</param>
-    protected virtual void OnStateChanged(ScreenState previousState, ScreenState newState) { }
+    protected virtual Task OnStateChangedAsync(ScreenState previousState, ScreenState newState, CancellationToken ct) => Task.CompletedTask;
 
     /// <summary>
     /// Sets the screen's state to the given state, if it differs from the current state
     /// </summary>
     /// <param name="newState">State to transition to</param>
-    /// <param name="changedHandler">Called if the transition occurs. Arguments are (newState, previousState)</param>
-    protected virtual void SetState(ScreenState newState, Action<ScreenState, ScreenState> changedHandler)
+    /// <param name="changedHandler">Called if the transition occurs. Arguments are (previousState, newState)</param>
+    protected virtual async Task SetStateAsync(ScreenState newState, Func<ScreenState, ScreenState, Task> changedHandler, CancellationToken ct)
     {
         if (newState == ScreenState)
             return;
@@ -144,71 +133,71 @@ public class Screen : ValidatingModelBase, IScreen
 
         Logger.LogInformation("Setting state from {0} to {1}", previousState, newState);
 
-        OnStateChanged(previousState, newState);
-        changedHandler(previousState, newState);
+        await OnStateChangedAsync(previousState, newState, ct);
+        await changedHandler(previousState, newState);
 
         var handler = StateChanged;
         if (handler != null)
-            Dispatcher.UIThread.Invoke(
-                () => handler.Invoke(this, new ScreenStateChangedEventArgs(newState, previousState)));
+            Execute.PostToUIThread(() => handler(this, new ScreenStateChangedEventArgs(newState, previousState)));
     }
 
     [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "As this is a framework type, don't want to make it too easy for users to call this method")]
-    void IScreenState.Activate()
+    async Task IScreenState.ActivateAsync(CancellationToken ct)
     {
-        SetState(ScreenState.Active, (oldState, newState) =>
+        await SetStateAsync(ScreenState.Active, async (oldState, newState) =>
         {
             bool isInitialActivate = !haveActivated;
             if (!haveActivated)
             {
-                OnInitialActivate();
+                await OnInitialActivateAsync(ct);
                 haveActivated = true;
             }
 
-            OnActivate();
+            await OnActivateAsync(ct);
 
             var handler = Activated;
             if (handler != null)
-                Dispatcher.UIThread.Invoke(() => handler(this, new ActivationEventArgs(oldState, isInitialActivate)));
-        });
+                Execute.PostToUIThread(() => handler(this, new ActivationEventArgs(oldState, isInitialActivate)));
+        }, ct);
     }
 
     [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "As this is a framework type, don't want to make it too easy for users to call this method")]
-    void IScreenState.Deactivate()
+    async Task IScreenState.DeactivateAsync(CancellationToken ct)
     {
         // Avoid going from Closed -> Deactivated without going via Activated
         if (ScreenState == ScreenState.Closed)
-            ((IScreenState)this).Activate();
+            await ((IScreenState)this).ActivateAsync(ct);
 
-        SetState(ScreenState.Deactivated, (oldState, newState) =>
+        await SetStateAsync(ScreenState.Deactivated, async (oldState, newState) =>
         {
-            OnDeactivate();
+            await OnDeactivateAsync(ct);
 
             var handler = Deactivated;
             if (handler != null)
-                Dispatcher.UIThread.Invoke(() => handler(this, new DeactivationEventArgs(oldState)));
-        });
+                Execute.PostToUIThread(() => handler(this, new DeactivationEventArgs(oldState)));
+        }, ct);
     }
 
     [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "As this is a framework type, don't want to make it too easy for users to call this method")]
-    void IScreenState.Close()
+    async Task IScreenState.CloseAsync(CancellationToken ct)
     {
         // Avoid going from Activated -> Closed without going via Deactivated
         if (ScreenState != ScreenState.Closed)
-            ((IScreenState)this).Deactivate();
+            await ((IScreenState)this).DeactivateAsync(ct);
 
-        View = null;
+        DetachView();
+
         // Reset, so we can initially activate again
         haveActivated = false;
 
-        SetState(ScreenState.Closed, (oldState, newState) =>
+        await SetStateAsync(ScreenState.Closed, async (oldState, newState) =>
         {
-            OnClose();
+            await OnCloseAsync(ct);
 
             var handler = Closed;
             if (handler != null)
-                Dispatcher.UIThread.Invoke(() => handler(this, new CloseEventArgs(oldState)));
-        });
+                Execute.PostToUIThread(() => handler(this, new CloseEventArgs(oldState)));
+        }, ct);
     }
 
     #endregion
@@ -230,13 +219,12 @@ public class Screen : ValidatingModelBase, IScreen
 
         Logger.LogInformation("Attaching view {0}", view);
 
-        var viewAsFrameworkElement = view as Control;
-        if (viewAsFrameworkElement != null)
+        if (view is Control viewAsFrameworkElement)
         {
             if (viewAsFrameworkElement.IsLoaded)
                 OnViewLoaded();
             else
-                viewAsFrameworkElement.Loaded += (o, e) => OnViewLoaded();
+                viewAsFrameworkElement.Loaded += OnViewLoadedHandler;
         }
     }
 
@@ -244,6 +232,21 @@ public class Screen : ValidatingModelBase, IScreen
     /// Called when the view attaches to the Screen loads
     /// </summary>
     protected virtual void OnViewLoaded() { }
+
+    private void OnViewLoadedHandler(object? sender, RoutedEventArgs e)
+    {
+        // One-shot: remove ourselves so a surviving view never keeps this ViewModel alive
+        if (sender is Control control)
+            control.Loaded -= OnViewLoadedHandler;
+        OnViewLoaded();
+    }
+
+    private void DetachView()
+    {
+        if (View is Control view)
+            view.Loaded -= OnViewLoadedHandler;
+        View = null;
+    }
 
     #endregion
 
@@ -267,24 +270,11 @@ public class Screen : ValidatingModelBase, IScreen
     /// <summary>
     /// Called when a conductor wants to know whether this screen can close.
     /// </summary>
-    /// <remarks>Internally, this calls CanClose, and wraps the response in a Task</remarks>
+    /// <param name="ct">Cancellation token to observe</param>
     /// <returns>A task returning true (can close) or false (can't close)</returns>
-    public virtual Task<bool> CanCloseAsync()
+    public virtual Task<bool> CanCloseAsync(CancellationToken ct = default)
     {
-        // Temporary, before we remove CanClose()
-#pragma warning disable CS0618 // Type or member is obsolete
-        return Task.FromResult(CanClose());
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
-    /// <summary>
-    /// Synchronous alternative to CanClose
-    /// </summary>
-    /// <returns>True if this screen can close, or false otherwise</returns>
-    [Obsolete("This method is deprecated, please use CanCloseAsync() instead")]
-    protected virtual bool CanClose()
-    {
-        return true;
+        return Task.FromResult(true);
     }
 
     #endregion
@@ -301,7 +291,7 @@ public class Screen : ValidatingModelBase, IScreen
         if (conductor != null)
         {
             Logger.LogInformation("RequstClose called. Conductor: {0}; DialogResult: {1}", conductor, dialogResult);
-            conductor.CloseItem(this, dialogResult);
+            FireAndForget.Run(conductor.CloseItemAsync(this, dialogResult), Logger);
         }
         else
         {
@@ -313,13 +303,17 @@ public class Screen : ValidatingModelBase, IScreen
 
     #endregion
 
+    #region IAsyncDisposable
+
     /// <summary>
-    /// Obselete - use RequestClose
+    /// Closes the screen if it's still open, then releases its resources.
+    /// Idempotent: disposing an already-closed screen is a no-op.
     /// </summary>
-    /// <param name="dialogResult">DialogResult to return, if this is a dialog</param>
-    [Obsolete("Obseleted by RequestClose")]
-    public virtual void TryClose(bool? dialogResult = null)
+    public async ValueTask DisposeAsync()
     {
-        RequestClose(dialogResult);
+        if (ScreenState != ScreenState.Closed)
+            await ((IScreenState)this).CloseAsync();
     }
+
+    #endregion
 }

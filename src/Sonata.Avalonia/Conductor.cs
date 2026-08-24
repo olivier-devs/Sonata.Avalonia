@@ -9,56 +9,46 @@ public partial class Conductor<T> : ConductorBaseWithActiveItem<T> where T : cla
     /// <summary>
     /// Activate the given item, discarding the previous ActiveItem
     /// </summary>
-    /// <param name="item">Item to active</param>
-    public override async void ActivateItem(T item)
+    public override async Task ActivateItemAsync(T item, CancellationToken ct = default)
     {
-        if (item != null && item.Equals(this.ActiveItem))
+        if (item != null && item.Equals(ActiveItem))
         {
-            if (this.IsActive)
-                ScreenExtensions.TryActivate(item);
+            if (IsActive)
+                await ScreenExtensions.TryActivateAsync(item, ct);
         }
-        else if (await this.CanCloseItem(this.ActiveItem)) 
+        else if (await CanCloseItem(ActiveItem, ct))
         {
             // CanCloseItem is null-safe
-
-            this.ChangeActiveItem(item, true);
+            await ChangeActiveItemAsync(item, true, ct);
         }
     }
 
     /// <summary>
     /// Deactive the given item
     /// </summary>
-    /// <param name="item">Item to deactivate</param>
-    public override void DeactivateItem(T item)
+    public override async Task DeactivateItemAsync(T item, CancellationToken ct = default)
     {
-        if (item != null && item.Equals(this.ActiveItem))
-            ScreenExtensions.TryDeactivate(this.ActiveItem);
+        if (item != null && item.Equals(ActiveItem))
+            await ScreenExtensions.TryDeactivateAsync(ActiveItem, ct);
     }
 
     /// <summary>
     /// Close the given item
     /// </summary>
-    /// <param name="item">Item to close</param>
-    public override async void CloseItem(T item)
+    public override async Task CloseItemAsync(T item, CancellationToken ct = default)
     {
-        if (item == null || !item.Equals(this.ActiveItem))
+        if (item == null || !item.Equals(ActiveItem))
             return;
 
-        if (await this.CanCloseItem(item))
-             this.ChangeActiveItem(default(T), true);
+        if (await CanCloseItem(item, ct))
+            await ChangeActiveItemAsync(default, true, ct);
     }
 
     /// <summary>
     /// Determine if this conductor can close. Depends on whether the ActiveItem can close
     /// </summary>
-    /// <returns>Task indicating whether this can be closed</returns>
-    public override Task<bool> CanCloseAsync()
+    public override Task<bool> CanCloseAsync(CancellationToken ct = default)
     {
-        // Temporarily, until we remove CanClose
-#pragma warning disable CS0618 // Type or member is obsolete
-        if (!this.CanClose())
-#pragma warning restore CS0618 // Type or member is obsolete
-            return Task.FromResult(false);
-        return this.CanCloseItem(this.ActiveItem);
+        return CanCloseItem(ActiveItem, ct);
     }
 }

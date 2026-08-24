@@ -6,55 +6,58 @@
 public static class ScreenExtensions
 {
     /// <summary>
-    /// Attempt to activate the screen, if it implements IActivate
+    /// Attempt to activate the screen, if it implements IScreenState
     /// </summary>
-    /// <param name="screen">Screen to activate</param>
-    public static void TryActivate(object screen)
+    public static Task TryActivateAsync(object screen, CancellationToken ct = default)
     {
         var screenAsScreenState = screen as IScreenState;
         if (screenAsScreenState != null)
-            screenAsScreenState.Activate();
+            return screenAsScreenState.ActivateAsync(ct);
+        return Task.CompletedTask;
     }
 
     /// <summary>
-    /// Attempt to deactivate the screen, if it implements IDeactivate
+    /// Attempt to deactivate the screen, if it implements IScreenState
     /// </summary>
-    /// <param name="screen">Screen to deactivate</param>
-    public static void TryDeactivate(object screen)
+    public static Task TryDeactivateAsync(object screen, CancellationToken ct = default)
     {
         var screenAsScreenState = screen as IScreenState;
         if (screenAsScreenState != null)
-            screenAsScreenState.Deactivate();
+            return screenAsScreenState.DeactivateAsync(ct);
+        return Task.CompletedTask;
     }
 
     /// <summary>
-    /// Try to close the screen, if it implements IClose
+    /// Try to close the screen, if it implements IScreenState
     /// </summary>
-    /// <param name="screen">Screen to close</param>
-    public static void TryClose(object screen)
+    public static Task TryCloseAsync(object screen, CancellationToken ct = default)
     {
         var screenAsScreenState = screen as IScreenState;
         if (screenAsScreenState != null)
-            screenAsScreenState.Close();
+            return screenAsScreenState.CloseAsync(ct);
+        return Task.CompletedTask;
     }
 
     /// <summary>
-    /// Try to dispose a screen, if it implements IDisposable
+    /// Try to dispose a screen, if it implements IAsyncDisposable (or IDisposable)
     /// </summary>
-    /// <param name="screen">Screen to dispose</param>
-    public static void TryDispose(object screen)
+    public static async ValueTask TryDisposeAsync(object screen)
     {
-        var screenAsDispose = screen as IDisposable;
-        if (screenAsDispose != null)
-            screenAsDispose.Dispose();
+        switch (screen)
+        {
+            case IAsyncDisposable asyncDisposable:
+                await asyncDisposable.DisposeAsync();
+                break;
+            case IDisposable disposable:
+                disposable.Dispose();
+                break;
+        }
     }
 
     /// <summary>
     /// Activate the child whenever the parent is activated
     /// </summary>
     /// <example>child.ActivateWith(this)</example>
-    /// <param name="child">Child to activate whenever the parent is activated</param>
-    /// <param name="parent">Parent to observe</param>
     public static void ActivateWith(this IScreenState child, IScreenState parent)
     {
         var weakChild = new WeakReference<IScreenState>(child);
@@ -63,7 +66,7 @@ public static class ScreenExtensions
         {
             IScreenState strongChild;
             if (weakChild.TryGetTarget(out strongChild))
-                strongChild.Activate();
+                FireAndForget.Run(strongChild.ActivateAsync(), SonataLogManager.GetLogger(typeof(ScreenExtensions)));
             else
                 parent.Activated -= handler;
         };
@@ -74,8 +77,6 @@ public static class ScreenExtensions
     /// Deactivate the child whenever the parent is deactivated
     /// </summary>
     /// <example>child.DeactivateWith(this)</example>
-    /// <param name="child">Child to deactivate whenever the parent is deacgtivated</param>
-    /// <param name="parent">Parent to observe</param>
     public static void DeactivateWith(this IScreenState child, IScreenState parent)
     {
         var weakChild = new WeakReference<IScreenState>(child);
@@ -84,7 +85,7 @@ public static class ScreenExtensions
         {
             IScreenState strongChild;
             if (weakChild.TryGetTarget(out strongChild))
-                strongChild.Deactivate();
+                FireAndForget.Run(strongChild.DeactivateAsync(), SonataLogManager.GetLogger(typeof(ScreenExtensions)));
             else
                 parent.Deactivated -= handler;
         };
@@ -95,8 +96,6 @@ public static class ScreenExtensions
     /// Close the child whenever the parent is closed
     /// </summary>
     /// <example>child.CloseWith(this)</example>
-    /// <param name="child">Child to close when the parent is closed</param>
-    /// <param name="parent">Parent to observe</param>
     public static void CloseWith(this IScreenState child, IScreenState parent)
     {
         var weakChild = new WeakReference<IScreenState>(child);
@@ -105,7 +104,7 @@ public static class ScreenExtensions
         {
             IScreenState strongChild;
             if (weakChild.TryGetTarget(out strongChild))
-                TryClose(strongChild);
+                FireAndForget.Run(TryCloseAsync(strongChild), SonataLogManager.GetLogger(typeof(ScreenExtensions)));
             else
                 parent.Closed -= handler;
         };
@@ -116,8 +115,6 @@ public static class ScreenExtensions
     /// Activate, Deactivate, or Close the child whenever the parent is Activated, Deactivated, or Closed
     /// </summary>
     /// <example>child.ConductWith(this)</example>
-    /// <param name="child">Child to conduct with the parent</param>
-    /// <param name="parent">Parent to observe</param>
     public static void ConductWith(this IScreenState child, IScreenState parent)
     {
         child.ActivateWith(parent);
