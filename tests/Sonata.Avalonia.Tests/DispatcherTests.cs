@@ -23,15 +23,19 @@ public class DispatcherTests
     {
         var recording = new RecordingDispatcher();
         UiThreadDispatch.Dispatcher = recording;
+        try
+        {
+            var executed = false;
+            UiThreadDispatch.PostToUIThread(() => executed = true);
 
-        var executed = false;
-        UiThreadDispatch.PostToUIThread(() => executed = true);
-
-        Assert.Single(recording.Posted);
-        recording.Posted[0]();
-        Assert.True(executed);
-
-        UiThreadDispatch.Dispatcher = null;
+            Assert.Single(recording.Posted);
+            recording.Posted[0]();
+            Assert.True(executed);
+        }
+        finally
+        {
+            UiThreadDispatch.Dispatcher = null;
+        }
     }
 
     [Fact]
@@ -39,13 +43,36 @@ public class DispatcherTests
     {
         var recording = new RecordingDispatcher { IsCurrent = true };
         UiThreadDispatch.Dispatcher = recording;
+        try
+        {
+            var executed = false;
+            UiThreadDispatch.OnUIThread(() => executed = true);
 
-        var executed = false;
-        UiThreadDispatch.OnUIThread(() => executed = true);
+            Assert.Empty(recording.Posted);   // no Post: runs inline
+            Assert.True(executed);
+        }
+        finally
+        {
+            UiThreadDispatch.Dispatcher = null;
+        }
+    }
 
-        Assert.Empty(recording.Posted);   // pas de Post : execution inline
-        Assert.True(executed);
+    [Fact]
+    public void UiThreadDispatch_OnUIThread_PostsWhenNotCurrent()
+    {
+        var recording = new RecordingDispatcher { IsCurrent = false };
+        UiThreadDispatch.Dispatcher = recording;
+        try
+        {
+            var executed = false;
+            UiThreadDispatch.OnUIThread(() => executed = true);
 
-        UiThreadDispatch.Dispatcher = null;
+            Assert.Single(recording.Posted);
+            Assert.False(executed);   // not run inline: queued on the dispatcher
+        }
+        finally
+        {
+            UiThreadDispatch.Dispatcher = null;
+        }
     }
 }

@@ -29,10 +29,11 @@ internal static class UiThreadDispatch
     /// </summary>
     internal static void OnUIThread(Action action)
     {
-        if (Dispatcher.IsCurrent)
+        var dispatcher = Dispatcher;
+        if (dispatcher.IsCurrent)
             action();
         else
-            Dispatcher.Post(action);
+            dispatcher.Post(action);
     }
 
     private static bool? _inDesignMode;
