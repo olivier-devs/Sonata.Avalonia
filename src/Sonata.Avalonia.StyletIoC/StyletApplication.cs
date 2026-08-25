@@ -47,6 +47,8 @@ public abstract class StyletApplication<T> : SonataApplicationBase<T> where T : 
         };
         builder.Bind<ViewManagerConfig>().ToInstance(viewManagerConfig).AsWeakBinding();
 
+        builder.Bind<IDispatcher>().ToInstance(new ApplicationDispatcher()).DisposeWithContainer(false).AsWeakBinding();
+
         // Bind it to both IViewManager and to itself, so that people can get it with Container.Get<ViewManager>()
         builder.Bind<IViewManager>().And<ViewManager>().To<ViewManager>().InSingletonScope().AsWeakBinding();
 

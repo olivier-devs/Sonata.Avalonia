@@ -13,9 +13,22 @@ public abstract class SonataApplicationBase<T> : Application, IWindowManagerConf
         IoC.GetInstance = GetInstance;
         IoC.GetInstances = GetInstances;
         base.Initialize();
-        Execute.Dispatcher = new ApplicationDispatcher();
         Configure();
+        UiThreadDispatch.Dispatcher = ResolveDispatcher();
         SonataLogManager.SetFactory(GetLoggerFactory());
+    }
+
+    private IDispatcher ResolveDispatcher()
+    {
+        try
+        {
+            return (IDispatcher)GetInstance(typeof(IDispatcher));
+        }
+        catch
+        {
+            // Custom container without an IDispatcher registration: fall back to the default.
+            return new ApplicationDispatcher();
+        }
     }
 
     /// <summary>

@@ -71,7 +71,7 @@ public class ActionExtension : MarkupExtension
         Method = method;
     }
 
-    private ActionUnavailableBehaviour CommandNullTargetBehaviour => NullTarget == ActionUnavailableBehaviour.Default ? Execute.InDesignMode ? ActionUnavailableBehaviour.Enable : ActionUnavailableBehaviour.Disable : NullTarget;
+    private ActionUnavailableBehaviour CommandNullTargetBehaviour => NullTarget == ActionUnavailableBehaviour.Default ? UiThreadDispatch.InDesignMode ? ActionUnavailableBehaviour.Enable : ActionUnavailableBehaviour.Disable : NullTarget;
 
     private ActionUnavailableBehaviour CommandActionNotFoundBehaviour => ActionNotFound == ActionUnavailableBehaviour.Default ? ActionUnavailableBehaviour.Throw : ActionNotFound;
 

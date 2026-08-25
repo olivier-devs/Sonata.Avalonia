@@ -1,4 +1,5 @@
 using Sonata.Avalonia;
+using Sonata.Avalonia.Internal;
 using Xunit;
 
 namespace Sonata.Avalonia.Tests;
@@ -8,7 +9,7 @@ public class ScreenTests
     public ScreenTests()
     {
         // Ensure lifecycle events are raised synchronously in unit tests
-        Execute.Dispatcher = SynchronousDispatcher.Instance;
+        UiThreadDispatch.Dispatcher = SynchronousDispatcher.Instance;
     }
 
     [Fact]

@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Sonata.Avalonia;
+using Sonata.Avalonia.Internal;
 using Xunit;
 
 namespace Sonata.Avalonia.Tests;
@@ -15,7 +16,7 @@ public class EventHygieneTests
         // Execute.Dispatcher to an ApplicationDispatcher (async); without this
         // guard, the ActivateWith test's PostToUIThread(Activated) would be
         // queued but never pumped headlessly. Matches ScreenTests/ConductorTests.
-        Execute.Dispatcher = SynchronousDispatcher.Instance;
+        UiThreadDispatch.Dispatcher = SynchronousDispatcher.Instance;
     }
 
     [Fact]

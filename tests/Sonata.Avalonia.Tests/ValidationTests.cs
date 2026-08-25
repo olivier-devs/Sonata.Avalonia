@@ -1,10 +1,17 @@
 using Sonata.Avalonia;
+using Sonata.Avalonia.Internal;
 using Xunit;
 
 namespace Sonata.Avalonia.Tests;
 
 public class ValidationTests
 {
+    public ValidationTests()
+    {
+        // Ensure validation property-change notifications run synchronously in unit tests.
+        UiThreadDispatch.Dispatcher = SynchronousDispatcher.Instance;
+    }
+
     [Fact]
     public async Task ValidateAsync_RecordsErrors_RaisesErrorsChanged()
     {

@@ -1,4 +1,5 @@
 using Sonata.Avalonia;
+using Sonata.Avalonia.Internal;
 using Xunit;
 
 namespace Sonata.Avalonia.Tests;
@@ -8,7 +9,7 @@ public class ConductorTests
     public ConductorTests()
     {
         // Ensure collection/lifecycle handlers run synchronously in unit tests
-        Execute.Dispatcher = SynchronousDispatcher.Instance;
+        UiThreadDispatch.Dispatcher = SynchronousDispatcher.Instance;
     }
 
     [Fact]

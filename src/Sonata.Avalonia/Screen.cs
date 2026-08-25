@@ -138,7 +138,7 @@ public class Screen : ValidatingModelBase, IScreen, IAsyncDisposable
 
         var handler = StateChanged;
         if (handler != null)
-            Execute.PostToUIThread(() => handler(this, new ScreenStateChangedEventArgs(newState, previousState)));
+            UiThreadDispatch.PostToUIThread(() => handler(this, new ScreenStateChangedEventArgs(newState, previousState)));
     }
 
     [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "As this is a framework type, don't want to make it too easy for users to call this method")]
@@ -157,7 +157,7 @@ public class Screen : ValidatingModelBase, IScreen, IAsyncDisposable
 
             var handler = Activated;
             if (handler != null)
-                Execute.PostToUIThread(() => handler(this, new ActivationEventArgs(oldState, isInitialActivate)));
+                UiThreadDispatch.PostToUIThread(() => handler(this, new ActivationEventArgs(oldState, isInitialActivate)));
         }, ct);
     }
 
@@ -174,7 +174,7 @@ public class Screen : ValidatingModelBase, IScreen, IAsyncDisposable
 
             var handler = Deactivated;
             if (handler != null)
-                Execute.PostToUIThread(() => handler(this, new DeactivationEventArgs(oldState)));
+                UiThreadDispatch.PostToUIThread(() => handler(this, new DeactivationEventArgs(oldState)));
         }, ct);
     }
 
@@ -196,7 +196,7 @@ public class Screen : ValidatingModelBase, IScreen, IAsyncDisposable
 
             var handler = Closed;
             if (handler != null)
-                Execute.PostToUIThread(() => handler(this, new CloseEventArgs(oldState)));
+                UiThreadDispatch.PostToUIThread(() => handler(this, new CloseEventArgs(oldState)));
         }, ct);
     }
 

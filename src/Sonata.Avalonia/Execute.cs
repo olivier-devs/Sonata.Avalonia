@@ -1,149 +1,47 @@
 ﻿namespace Sonata.Avalonia;
 
 /// <summary>
-/// Static class providing methods to easily run an action on the UI thread in various ways, and some other things
+/// Deprecated facade over the ambient UI-thread dispatch. Inject <see cref="IDispatcher"/>
+/// instead; this facade will be removed in a future version. Framework base classes
+/// (Screen, BindableCollection, PropertyChangedBase) use the internal <c>UiThreadDispatch</c>.
 /// </summary>
 public static class Execute
 {
-    private static IDispatcher _dispatcher;
-
     /// <summary>
-    /// Gets or sets Execute's dispatcher
+    /// Gets or sets the ambient dispatcher.
     /// </summary>
-    /// <remarks>
-    /// Should be set a <see cref="ApplicationDispatcher"/> wrapping the current application's dispatcher, which is
-    /// normally done by the Sonata bootstrapper. Can also be set to <see cref="SynchronousDispatcher.Instance"/>, or a
-    /// custom <see cref="IDispatcher"/> implementation.
-    /// </remarks>
+    [Obsolete("Inject IDispatcher instead. This facade will be removed in a future version.")]
     public static IDispatcher Dispatcher
     {
-        get => _dispatcher ?? SynchronousDispatcher.Instance;
-
-        set => _dispatcher = value ?? throw new ArgumentNullException();
-    }
-
-    private static bool? _inDesignMode;
-
-    /// <summary>
-    /// Gets or sets the default dispatcher used by PropertyChanged events.
-    /// Defaults to OnUIThread
-    /// </summary>
-    public static Action<Action> DefaultPropertyChangedDispatcher { get; set; }
-
-    static Execute()
-    {
-        DefaultPropertyChangedDispatcher = a => a();
+        get => UiThreadDispatch.Dispatcher;
+        set => UiThreadDispatch.Dispatcher = value ?? throw new ArgumentNullException(nameof(value));
     }
 
     /// <summary>
-    /// Dispatches the given action to be run on the UI thread asynchronously, even if the current thread is the UI thread
+    /// Dispatches the given action to be run on the UI thread asynchronously.
     /// </summary>
-    /// <param name="action">Action to run on the UI thread</param>
+    [Obsolete("Inject IDispatcher instead. This facade will be removed in a future version.")]
     public static void PostToUIThread(Action action)
     {
-        Dispatcher.Post(action);
+        UiThreadDispatch.PostToUIThread(action);
     }
 
     /// <summary>
-    /// Dispatches the given action to be run on the UI thread asynchronously, and returns a task which completes when the action completes, even if the current thread is the UI thread
+    /// Runs the action on the UI thread synchronously if already on it, otherwise posts.
     /// </summary>
-    /// <remarks>DO NOT BLOCK waiting for this Task - you'll cause a deadlock. Use PostToUIThread instead</remarks>
-    /// <param name="action">Action to run on the UI thread</param>
-    /// <returns>Task which completes when the action has been run</returns>
-    public static Task PostToUIThreadAsync(Action action)
-    {
-        return PostOnUIThreadInternalAsync(action);
-    }
-
-    /// <summary>
-    /// Dispatches the given action to be run on the UI thread asynchronously, or runs it synchronously if the current thread is the UI thread
-    /// </summary>
-    /// <param name="action">Action to run on the UI thread</param>
+    [Obsolete("Inject IDispatcher instead. This facade will be removed in a future version.")]
     public static void OnUIThread(Action action)
     {
-        if (Dispatcher.IsCurrent)
-            action();
-        else
-            Dispatcher.Post(action);
-    }
-
-    /// <summary>
-    /// Dispatches the given action to be run on the UI thread and blocks until it completes, or runs it synchronously if the current thread is the UI thread
-    /// </summary>
-    /// <param name="action">Action to run on the UI thread</param>
-    public static void OnUIThreadSync(Action action)
-    {
-        Exception exception = null;
-        if (Dispatcher.IsCurrent)
-        {
-            action();
-        }
-        else
-        {
-            Dispatcher.Send(() =>
-            {
-                try
-                {
-                    action();
-                }
-                catch (Exception e)
-                {
-                    exception = e;
-                }
-            });
-
-            if (exception != null)
-                throw new TargetInvocationException("An error occurred while dispatching a call to the UI Thread", exception);
-        }
-    }
-
-    /// <summary>
-    /// Dispatches the given action to be run on the UI thread and returns a task that completes when the action completes, or runs it synchronously if the current thread is the UI thread
-    /// </summary>
-    /// <param name="action">Action to run on the UI thread</param>
-    /// <returns>Task which completes when the action has been run</returns>
-    public static Task OnUIThreadAsync(Action action)
-    {
-        if (Dispatcher.IsCurrent)
-        {
-            action();
-            return Task.FromResult(false);
-        }
-
-        return PostOnUIThreadInternalAsync(action);
-    }
-
-    private static Task PostOnUIThreadInternalAsync(Action action)
-    {
-        var tcs = new TaskCompletionSource<object>();
-        Dispatcher.Post(() =>
-        {
-            try
-            {
-                action();
-                tcs.SetResult(null);
-            }
-            catch (Exception e)
-            {
-                tcs.SetException(e);
-            }
-        });
-        return tcs.Task;
+        UiThreadDispatch.OnUIThread(action);
     }
 
     /// <summary>
     /// Gets or sets a value indicating whether design mode is currently active.
-    /// Settable for really obscure unit testing only
+    /// Settable for really obscure unit testing only.
     /// </summary>
     public static bool InDesignMode
     {
-        get
-        {
-            _inDesignMode ??= Design.IsDesignMode;
-
-            return _inDesignMode.Value;
-        }
-
-        set => _inDesignMode = value;
+        get => UiThreadDispatch.InDesignMode;
+        set => UiThreadDispatch.InDesignMode = value;
     }
 }

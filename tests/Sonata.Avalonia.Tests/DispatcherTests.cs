@@ -75,4 +75,25 @@ public class DispatcherTests
             UiThreadDispatch.Dispatcher = null;
         }
     }
+
+    [Fact]
+    public void ExecuteFacade_DelegatesToUiThreadDispatch()
+    {
+        var recording = new RecordingDispatcher();
+        UiThreadDispatch.Dispatcher = recording;
+        try
+        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            Execute.OnUIThread(() => { });
+            Execute.Dispatcher = recording;
+#pragma warning restore CS0618
+
+            Assert.Single(recording.Posted);
+            Assert.Same(recording, UiThreadDispatch.Dispatcher);
+        }
+        finally
+        {
+            UiThreadDispatch.Dispatcher = null;
+        }
+    }
 }

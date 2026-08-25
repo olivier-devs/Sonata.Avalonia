@@ -103,7 +103,7 @@ public static class View
                 viewManager.OnModelChanged(e.Sender, e.OldValue, newValue);
                 return;
             }
-            else if (Execute.InDesignMode)
+            else if (UiThreadDispatch.InDesignMode)
             {
 
                 // var bindingExpression = BindingOperations.GetBindingExpression(d, ModelProperty);

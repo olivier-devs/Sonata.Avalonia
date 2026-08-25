@@ -34,6 +34,7 @@ public static class SonataServiceCollectionExtensions
             ViewFactory = type => sp.GetRequiredService(type),
             ViewAssemblies = assemblies,
         });
+        services.TryAddSingleton<IDispatcher>(_ => new ApplicationDispatcher());
         services.TryAddSingleton<IViewManager, ViewManager>();
         services.TryAddSingleton<ViewManager>();
         services.TryAddSingleton<IWindowManagerConfig>(windowManagerConfig);
