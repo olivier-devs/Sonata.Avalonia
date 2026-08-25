@@ -22,11 +22,12 @@ public abstract class SonataApplicationBase<T> : Application, IWindowManagerConf
     {
         try
         {
-            return (IDispatcher)GetInstance(typeof(IDispatcher));
+            return (IDispatcher?)GetInstance(typeof(IDispatcher)) ?? new ApplicationDispatcher();
         }
-        catch
+        catch (Exception e)
         {
-            // Custom container without an IDispatcher registration: fall back to the default.
+            SonataLogManager.GetLogger(GetType())
+                .LogWarning(e, "Unable to resolve IDispatcher from the container; falling back to ApplicationDispatcher. Register IDispatcher in your container to override.");
             return new ApplicationDispatcher();
         }
     }
