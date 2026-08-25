@@ -41,14 +41,14 @@ public interface IViewManager
 public class ViewManagerConfig
 {
     /// <summary>
-    /// Gets or sets the ViewFactory to use
+    /// Gets the ViewFactory used to instantiate views.
     /// </summary>
-    public Func<Type, object> ViewFactory { get; set; }
+    public required Func<Type, object> ViewFactory { get; init; }
 
     /// <summary>
-    /// Gets or sets the Assembles to search for views in
+    /// Gets the assemblies searched for views.
     /// </summary>
-    public List<Assembly> ViewAssemblies { get; set; }
+    public required List<Assembly> ViewAssemblies { get; init; }
 }
 
 /// <summary>
@@ -57,6 +57,8 @@ public class ViewManagerConfig
 public class ViewManager : IViewManager
 {
     private readonly ILogger _logger;
+
+    internal readonly ConcurrentDictionary<Type, Type> ViewTypeCache = new();
 
     private Func<Type, object> _viewFactory; // This is assigned by the ctor
 
@@ -263,27 +265,31 @@ public class ViewManager : IViewManager
     /// </summary>
     /// <param name="modelType">Model to find the view for</param>
     /// <returns>Type of the ViewModel's View</returns>
+    /// <remarks>Results are cached per model type. Overriding this method replaces the cache entirely.</remarks>
     protected virtual Type LocateViewForModel(Type modelType)
     {
-        var modelName = modelType.FullName;
-        var viewName = ViewTypeNameForModelTypeName(modelName);
-        if (modelName == viewName)
-            throw new SonataViewLocationException(string.Format("Unable to transform ViewModel name {0} into a suitable View name", modelName), viewName);
-
-        // Also include the ViewModel's assembly, to be helpful
-        var viewType = ViewTypeForViewName(viewName, new[] { modelType.Assembly });
-        if (viewType == null)
+        return ViewTypeCache.GetOrAdd(modelType, mt =>
         {
-            var e = new SonataViewLocationException(string.Format("Unable to find a View with type {0}", viewName), viewName);
-            _logger.LogError(e, "View location failed");
-            throw e;
-        }
-        else
-        {
-            _logger.LogInformation("Searching for a View with name {0}, and found {1}", viewName, viewType);
-        }
+            var modelName = mt.FullName;
+            var viewName = ViewTypeNameForModelTypeName(modelName);
+            if (modelName == viewName)
+                throw new SonataViewLocationException(string.Format("Unable to transform ViewModel name {0} into a suitable View name", modelName), viewName);
 
-        return viewType;
+            // Also include the ViewModel's assembly, to be helpful
+            var viewType = ViewTypeForViewName(viewName, new[] { mt.Assembly });
+            if (viewType == null)
+            {
+                var e = new SonataViewLocationException(string.Format("Unable to find a View with type {0}", viewName), viewName);
+                _logger.LogError(e, "View location failed");
+                throw e;
+            }
+            else
+            {
+                _logger.LogInformation("Searching for a View with name {0}, and found {1}", viewName, viewType);
+            }
+
+            return viewType;
+        });
     }
 
     /// <summary>
@@ -304,24 +310,7 @@ public class ViewManager : IViewManager
 
         var view = (Control)ViewFactory(viewType);
 
-        InitializeView(view, viewType);
-
         return view;
-    }
-
-    /// <summary>
-    /// Given a view, take steps to initialize it (for example calling InitializeComponent)
-    /// </summary>
-    /// <param name="view">View to initialize</param>
-    /// <param name="viewType">Type of view, passed for efficiency reasons</param>
-    public virtual void InitializeView(Control view, Type viewType)
-    {
-        // If it doesn't have a code-behind, this won't be called
-        // We have to use this reflection here, since the InitializeComponent is a method on the View, not on any of its base classes
-        // var initializer = viewType.GetMethod("InitializeComponent", BindingFlags.Public | BindingFlags.Instance);
-        // var initializer = viewType.GetMethod("OnAttachedToVisualTree", BindingFlags.Public | BindingFlags.Instance);
-        //if (initializer != null)
-        //    initializer.Invoke(view, null);
     }
 
     /// <summary>
