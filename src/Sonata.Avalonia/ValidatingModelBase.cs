@@ -271,7 +271,7 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
     {
         var handler = ErrorsChanged;
         if (handler != null)
-            PropertyChangedDispatcher(() => handler(this, new DataErrorsChangedEventArgs(propertyName)));
+            UiThreadDispatch.PostToUIThread(() => handler(this, new DataErrorsChangedEventArgs(propertyName)));
     }
 
     /// <summary>
