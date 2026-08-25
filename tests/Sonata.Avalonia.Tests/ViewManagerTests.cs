@@ -45,5 +45,7 @@ public class ViewManagerTests
         var manager = CreateManager(new List<Assembly> { typeof(NoViewViewModel).Assembly });
 
         Assert.Throws<SonataViewLocationException>(() => manager.CreateViewForModel(new NoViewViewModel()));
+        Assert.Throws<SonataViewLocationException>(() => manager.CreateViewForModel(new NoViewViewModel()));
+        Assert.Empty(manager.ViewTypeCache);   // failures are never cached
     }
 }

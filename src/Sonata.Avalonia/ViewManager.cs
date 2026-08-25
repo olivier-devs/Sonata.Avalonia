@@ -52,7 +52,9 @@ public class ViewManagerConfig
 }
 
 /// <summary>
-/// Default implementation of ViewManager. Responsible for locating, creating, and settings up Views. Also owns the View.Model and View.ActionTarget attached properties
+/// Default implementation of ViewManager. Responsible for locating, creating, and settings up Views. Also owns the View.Model and View.ActionTarget attached properties.
+/// View location results are cached per ViewModel type: configure all conventions
+/// (ViewAssemblies, NamespaceTransformations, suffixes) before the first lookup.
 /// </summary>
 public class ViewManager : IViewManager
 {
@@ -147,12 +149,6 @@ public class ViewManager : IViewManager
     /// <param name="logger">Logger to use</param>
     public ViewManager(ViewManagerConfig config, ILogger<ViewManager> logger)
     {
-        // Config.ViewAssemblies cannot be null - ViewManagerConfig ensures this
-        if (config.ViewFactory == null)
-            throw new ArgumentNullException("viewFactory");
-        if (config.ViewAssemblies == null)
-            throw new ArgumentNullException("viewAssemblies");
-
         ViewFactory = config.ViewFactory;
         ViewAssemblies = config.ViewAssemblies;
         _logger = logger;
