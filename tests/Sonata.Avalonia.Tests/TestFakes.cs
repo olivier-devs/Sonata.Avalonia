@@ -5,6 +5,16 @@ using Sonata.Avalonia;
 
 namespace Sonata.Avalonia.Tests;
 
+public class RecordingDispatcher : IDispatcher
+{
+    public List<Action> Posted { get; } = new();
+    public List<Action> Sent { get; } = new();
+    public bool IsCurrent { get; set; }
+
+    public void Post(Action action) => Posted.Add(action);
+    public void Send(Action action) => Sent.Add(action);
+}
+
 public class TestRootViewModel : Screen
 {
 }
