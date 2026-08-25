@@ -14,8 +14,8 @@ public abstract class SonataApplicationBase<T> : Application, IWindowManagerConf
         IoC.GetInstances = GetInstances;
         base.Initialize();
         Configure();
-        UiThreadDispatch.Dispatcher = ResolveDispatcher();
         SonataLogManager.SetFactory(GetLoggerFactory());
+        UiThreadDispatch.Dispatcher = ResolveDispatcher();
     }
 
     private IDispatcher ResolveDispatcher()
