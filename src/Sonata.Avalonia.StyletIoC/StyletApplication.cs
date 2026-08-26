@@ -56,6 +56,7 @@ public abstract class StyletApplication<T> : SonataApplicationBase<T> where T : 
         builder.Bind<IWindowManager>().To<WindowManager>().InSingletonScope().AsWeakBinding();
         builder.Bind<IEventAggregator>().To<EventAggregator>().InSingletonScope().AsWeakBinding();
         builder.Bind<IMessageBoxViewModel>().To<MessageBoxViewModel>().AsWeakBinding();
+        builder.Bind<Func<IMessageBoxViewModel>>().ToFactory<Func<IMessageBoxViewModel>>(c => () => c.Get<IMessageBoxViewModel>()).AsWeakBinding();
         // Stylet's assembly isn't added to the container, so add this explicitly
         builder.Bind<MessageBoxView>().ToSelf();
 

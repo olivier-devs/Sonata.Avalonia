@@ -41,6 +41,7 @@ public static class SonataServiceCollectionExtensions
         services.TryAddSingleton<IWindowManager, WindowManager>();
         services.TryAddSingleton<IEventAggregator, EventAggregator>();
         services.TryAddTransient<IMessageBoxViewModel, MessageBoxViewModel>();
+        services.TryAddTransient<Func<IMessageBoxViewModel>>(sp => () => sp.GetRequiredService<IMessageBoxViewModel>());
         services.TryAddTransient<MessageBoxView>();
         services.TryAddSingleton<ILoggerFactory, LoggerFactory>();
         services.TryAdd(ServiceDescriptor.Transient(typeof(ILogger<>), typeof(Logger<>)));

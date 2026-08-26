@@ -2,6 +2,8 @@ using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Sonata.Avalonia;
+using Sonata.Avalonia.Internal;
+using System.ComponentModel;
 
 namespace Sonata.Avalonia.Tests;
 
@@ -91,10 +93,15 @@ public class TestScreen : Screen
     public bool ThrowOnActivate { get; set; }
     public bool ThrowOperationCanceled { get; set; }
     public bool? CanCloseResult { get; set; }
+    public bool ThrowOnCanClose { get; set; }
     public TaskCompletionSource<bool>? ActivateGate { get; set; }
 
     public override Task<bool> CanCloseAsync(CancellationToken ct = default)
-        => Task.FromResult(CanCloseResult ?? true);
+    {
+        if (ThrowOnCanClose)
+            throw new InvalidOperationException("boom");
+        return Task.FromResult(CanCloseResult ?? true);
+    }
 
     protected override Task OnInitialActivateAsync(CancellationToken ct)
     {
@@ -125,6 +132,30 @@ public class TestScreen : Screen
     }
 
     protected override void OnViewLoaded() => ViewLoadedCount++;
+}
+
+public class FakeWindowAdapter : IWindowAdapter
+{
+    public event EventHandler<CancelEventArgs>? Closing;
+    public event EventHandler? Closed;
+    public event EventHandler? StateChanged;
+
+    public WindowState WindowState { get; set; } = WindowState.Normal;
+    public int CloseCalls { get; private set; }
+    public object? LastDialogResult { get; private set; }
+    public bool Disposed { get; private set; }
+
+    public void Close(object? dialogResult = null)
+    {
+        CloseCalls++;
+        LastDialogResult = dialogResult;
+    }
+
+    public void Dispose() => Disposed = true;
+
+    public void RaiseClosing(CancelEventArgs e) => Closing?.Invoke(this, e);
+    public void RaiseClosed() => Closed?.Invoke(this, EventArgs.Empty);
+    public void RaiseStateChanged() => StateChanged?.Invoke(this, EventArgs.Empty);
 }
 
 public class DisposableItem : IAsyncDisposable

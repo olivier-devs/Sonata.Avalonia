@@ -76,17 +76,17 @@ public class WindowManager : IWindowManager
     private readonly ILogger _logger;
     private readonly IViewManager _viewManager;
     private readonly Func<TopLevel?> _getActiveWindow;
+    private readonly Func<IMessageBoxViewModel> _messageBoxViewModelFactory;
 
     /// <summary>
     /// Initialises a new instance of the <see cref="WindowManager"/> class, using the given <see cref="IViewManager"/>
     /// </summary>
-    /// <param name="viewManager">IViewManager to use when creating views</param>
-    /// <param name="config">Configuration object</param>
-    /// <param name="logger">Logger to use</param>
-    public WindowManager(IViewManager viewManager, IWindowManagerConfig config, ILogger<WindowManager> logger)
+    public WindowManager(IViewManager viewManager, IWindowManagerConfig config,
+        Func<IMessageBoxViewModel> messageBoxViewModelFactory, ILogger<WindowManager> logger)
     {
         _viewManager = viewManager;
         _getActiveWindow = config.GetActiveWindow;
+        _messageBoxViewModelFactory = messageBoxViewModelFactory;
         _logger = logger;
     }
 
@@ -154,7 +154,7 @@ public class WindowManager : IWindowManager
         FlowDirection flowDirection = FlowDirection.LeftToRight,
         TextAlignment textAlignment = TextAlignment.Left)
     {
-        var vm = IoC.Get<IMessageBoxViewModel>();
+        var vm = _messageBoxViewModelFactory();
         vm.Setup(text, caption, buttons, icon, defaultResult, cancelResult, flowDirection, textAlignment);
         return ShowDialog<T>(vm);
     }
@@ -192,16 +192,9 @@ public class WindowManager : IWindowManager
 
         if (ownerViewModel?.View is Window explicitOwner)
         {
-            //window.SetValue(WindowBase.OwnerProperty, explicitOwner);
             try
             {
-                // window.Owner = owner;
-                // window.SetValue(Window.OwnerProperty, owner);
-                var propertyInfo = typeof(WindowBase).GetProperty(nameof(Window.Owner), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                if (propertyInfo is not null && propertyInfo.CanWrite)
-                {
-                    propertyInfo.SetValue(window, explicitOwner); // 设置新值
-                }
+                window.SetValue(WindowBase.OwnerProperty, explicitOwner);
             }
             catch (InvalidOperationException e)
             {
@@ -213,18 +206,9 @@ public class WindowManager : IWindowManager
             var owner = InferOwnerOf(window);
             if (owner is not null)
             {
-                // We can end up in a really weird situation if they try and display more than one dialog as the application's closing
-                // Basically the MainWindow's no long active, so the second dialog chooses the first dialog as its owner... But the first dialog
-                // hasn't yet been shown, so we get an exception ("cannot set owner property to a Window which has not been previously shown").
                 try
                 {
-                    // window.Owner = owner;
-                    // window.SetValue(Window.OwnerProperty, owner);
-                    var propertyInfo = typeof(WindowBase).GetProperty(nameof(Window.Owner), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                    if (propertyInfo is not null && propertyInfo.CanWrite)
-                    {
-                        propertyInfo.SetValue(window, owner); // 设置新值
-                    }
+                    window.SetValue(WindowBase.OwnerProperty, owner);
                 }
                 catch (InvalidOperationException e)
                 {
@@ -254,8 +238,7 @@ public class WindowManager : IWindowManager
         }
 
         // This gets itself retained by the window, by registering events
-        // ReSharper disable once ObjectCreationAsStatement
-        new WindowConductor(window, viewModel, _logger);
+        new WindowConductor(new WindowAdapter(window), viewModel, _logger);
 
         return window;
     }
@@ -266,121 +249,5 @@ public class WindowManager : IWindowManager
         return ReferenceEquals(active, window) ? null : active;
     }
 
-    private class WindowConductor : IChildDelegate
-    {
-        private readonly Window _window;
-        private readonly object _viewModel;
-        private readonly IDisposable _windowStateChangedObservable;
-        private readonly ILogger _logger;
 
-        public WindowConductor(Window window, object viewModel, ILogger logger)
-        {
-            _window = window;
-            _viewModel = viewModel;
-            _logger = logger;
-
-            // They won't be able to request a close unless they implement IChild anyway...
-            var viewModelAsChild = _viewModel as IChild;
-            if (viewModelAsChild != null)
-                viewModelAsChild.Parent = this;
-
-            FireAndForget.Run(ScreenExtensions.TryActivateAsync(_viewModel), _logger);
-
-            var viewModelAsScreenState = _viewModel as IScreenState;
-            _windowStateChangedObservable = null;
-            if (viewModelAsScreenState != null)
-            {
-                _windowStateChangedObservable = window.GetPropertyChangedObservable(Window.WindowStateProperty)
-                    .Subscribe(WindowStateChanged);
-                window.Closed += WindowClosed;
-            }
-
-            if (_viewModel is IGuardClose)
-                window.Closing += WindowClosing;
-        }
-
-        private void WindowStateChanged(AvaloniaPropertyChangedEventArgs e)
-        {
-            switch (_window.WindowState)
-            {
-                case WindowState.Maximized:
-                case WindowState.Normal:
-                    _logger.LogInformation("Window {0} maximized/restored: activating", _window);
-                    FireAndForget.Run(ScreenExtensions.TryActivateAsync(_viewModel), _logger);
-                    break;
-
-                case WindowState.Minimized:
-                    _logger.LogInformation("Window {0} minimized: deactivating", _window);
-                    FireAndForget.Run(ScreenExtensions.TryDeactivateAsync(_viewModel), _logger);
-                    break;
-            }
-        }
-
-        private void WindowClosed(object sender, EventArgs e)
-        {
-            // Logging was done in the Closing handler
-            _windowStateChangedObservable?.Dispose();
-            _window.Closed -= WindowClosed;
-            _window.Closing -= WindowClosing; // Not sure this is required
-
-            FireAndForget.Run(ScreenExtensions.TryCloseAsync(_viewModel), _logger);
-        }
-
-        private async void WindowClosing(object sender, CancelEventArgs e)
-        {
-            if (e.Cancel)
-                return;
-
-            _logger.LogInformation("ViewModel {0} close requested because its View was closed", _viewModel);
-
-            // Always defer the close decision until CanCloseAsync completes. If it completed
-            // synchronously this round-trips through one await, which is imperceptible.
-            e.Cancel = true;
-            if (await ((IGuardClose)_viewModel).CanCloseAsync())
-            {
-                _window.Closing -= WindowClosing;
-                _window.Close();
-                // The Closed event handler handles unregistering the events, and closing the ViewModel
-            }
-            else
-            {
-                _logger.LogInformation("Close of ViewModel {0} cancelled because CanCloseAsync returned false", _viewModel);
-            }
-        }
-
-        /// <summary>
-        /// Close was requested by the child
-        /// </summary>
-        async Task IChildDelegate.CloseItemAsync(object item, bool? dialogResult, CancellationToken ct)
-        {
-            if (item != _viewModel)
-            {
-                _logger.LogWarning("IChildDelegate.CloseItemAsync called with item {0} which is _not_ our ViewModel {1}", item, _viewModel);
-                return;
-            }
-
-            var guardClose = _viewModel as IGuardClose;
-            if (guardClose != null && !await guardClose.CanCloseAsync(ct))
-            {
-                _logger.LogInformation("Close of ViewModel {0} cancelled because CanCloseAsync returned false", _viewModel);
-                return;
-            }
-
-            _logger.LogInformation("ViewModel {0} close requested with DialogResult {1} because it called RequestClose", _viewModel, dialogResult);
-
-            _windowStateChangedObservable?.Dispose();
-            _window.Closed -= WindowClosed;
-            _window.Closing -= WindowClosing;
-
-            // Need to call this after unregistering the event handlers, as it causes the window
-            // to be closed
-            // TODO:
-            // if (dialogResult != null)
-            //     this.window.DialogResult = dialogResult;
-
-            await ScreenExtensions.TryCloseAsync(_viewModel, ct);
-
-            _window.Close(dialogResult);
-        }
-    }
 }
