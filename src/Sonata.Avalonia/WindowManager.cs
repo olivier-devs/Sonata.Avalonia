@@ -139,10 +139,6 @@ public class WindowManager : IWindowManager
                 "ShowDialog requires an owner window: no ownerViewModel was provided and no active window could be inferred. " +
                 "Provide a ViewModel whose View is a shown Window, or call ShowDialog while a window is active.");
 
-        // Center on the owner unless the app positioned the window itself
-        if (window.WindowStartupLocation == WindowStartupLocation.Manual && double.IsNaN(window.Position.Y) && double.IsNaN(window.Position.X))
-            window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-
         return window.ShowDialog<T>(owner);
     }
 
@@ -214,10 +210,10 @@ public class WindowManager : IWindowManager
         }
 
         // If and only if they haven't tried to position the window themselves...
-        if (window.WindowStartupLocation == WindowStartupLocation.Manual && double.IsNaN(window.Position.Y) && double.IsNaN(window.Position.X)
-            /*&& BindingOperations.GetBinding(window, Window.TopProperty) == null && BindingOperations.GetBinding(window, Window.LeftProperty) == null*/)
+        // Has to be done after we've attempted to set the owner
+        if (window.WindowStartupLocation == WindowStartupLocation.Manual && window.Position == default)
         {
-            window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            window.WindowStartupLocation = isDialog ? WindowStartupLocation.CenterOwner : WindowStartupLocation.CenterScreen;
         }
 
         // This gets itself retained by the window, by registering events
