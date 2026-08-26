@@ -73,11 +73,10 @@ internal sealed class WindowConductor : IChildDelegate
 
         FireAndForget.Run(ScreenExtensions.TryActivateAsync(_viewModel), _logger);
 
+        _window.Closed += WindowClosed;
+
         if (_viewModel is IScreenState)
-        {
             _window.StateChanged += WindowStateChanged;
-            _window.Closed += WindowClosed;
-        }
 
         if (_viewModel is IGuardClose)
             _window.Closing += WindowClosing;
@@ -100,11 +99,16 @@ internal sealed class WindowConductor : IChildDelegate
         }
     }
 
-    private void WindowClosed(object? sender, EventArgs e)
+    private void UnsubscribeFromWindowEvents()
     {
         _window.StateChanged -= WindowStateChanged;
         _window.Closed -= WindowClosed;
         _window.Closing -= WindowClosing;
+    }
+
+    private void WindowClosed(object? sender, EventArgs e)
+    {
+        UnsubscribeFromWindowEvents();
         _window.Dispose();
 
         FireAndForget.Run(ScreenExtensions.TryCloseAsync(_viewModel), _logger);
@@ -159,13 +163,16 @@ internal sealed class WindowConductor : IChildDelegate
 
         _logger.LogInformation("ViewModel {0} close requested with DialogResult {1} because it called RequestClose", _viewModel, dialogResult);
 
-        _window.StateChanged -= WindowStateChanged;
-        _window.Closed -= WindowClosed;
-        _window.Closing -= WindowClosing;
-
-        await ScreenExtensions.TryCloseAsync(_viewModel, ct);
-
-        _window.Close(dialogResult);
+        UnsubscribeFromWindowEvents();
         _window.Dispose();
+
+        try
+        {
+            await ScreenExtensions.TryCloseAsync(_viewModel, ct);
+        }
+        finally
+        {
+            _window.Close(dialogResult);
+        }
     }
 }

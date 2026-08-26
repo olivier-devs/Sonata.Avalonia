@@ -94,6 +94,7 @@ public class TestScreen : Screen
     public bool ThrowOperationCanceled { get; set; }
     public bool? CanCloseResult { get; set; }
     public bool ThrowOnCanClose { get; set; }
+    public bool ThrowOnClose { get; set; }
     public TaskCompletionSource<bool>? ActivateGate { get; set; }
 
     public override Task<bool> CanCloseAsync(CancellationToken ct = default)
@@ -128,6 +129,8 @@ public class TestScreen : Screen
     protected override Task OnCloseAsync(CancellationToken ct)
     {
         Calls.Add("OnCloseAsync");
+        if (ThrowOnClose)
+            throw new InvalidOperationException("boom");
         return Task.CompletedTask;
     }
 

@@ -119,4 +119,27 @@ public class WindowConductorTests
 
         Assert.Equal(0, _window.CloseCalls);
     }
+
+    [Fact]
+    public async Task CloseItemAsync_TryCloseThrows_StillClosesAndDisposes()
+    {
+        _vm.ThrowOnClose = true;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => ((IChildDelegate)_conductor).CloseItemAsync(_vm, null, CancellationToken.None));
+
+        Assert.Equal(1, _window.CloseCalls);
+        Assert.True(_window.Disposed);
+    }
+
+    [Fact]
+    public void WindowClosing_AlreadyCancelled_ShortCircuits()
+    {
+        _vm.CanCloseResult = false;
+
+        var e = new CancelEventArgs { Cancel = true };
+        _window.RaiseClosing(e);
+
+        Assert.Equal(0, _window.CloseCalls);   // handler returned before touching the guard
+    }
 }

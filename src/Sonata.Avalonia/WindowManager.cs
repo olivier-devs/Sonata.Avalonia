@@ -106,7 +106,11 @@ public class WindowManager : IWindowManager
     /// <param name="ownerViewModel">The ViewModel for the View which should own this window</param>
     public void ShowWindow(object viewModel, IViewAware ownerViewModel)
     {
-        CreateWindow(viewModel, false, ownerViewModel).Show();
+        var window = CreateWindow(viewModel, false, ownerViewModel);
+        if (ownerViewModel?.View is Window owner)
+            window.Show(owner);
+        else
+            window.Show();
     }
 
     /// <summary>
@@ -129,7 +133,17 @@ public class WindowManager : IWindowManager
     {
         var window = CreateWindow(viewModel, true, ownerViewModel);
 
-        return window.ShowDialog<T>(window.Owner as Window);
+        var owner = ownerViewModel?.View as Window ?? InferOwnerOf(window);
+        if (owner is null)
+            throw new InvalidOperationException(
+                "ShowDialog requires an owner window: no ownerViewModel was provided and no active window could be inferred. " +
+                "Provide a ViewModel whose View is a shown Window, or call ShowDialog while a window is active.");
+
+        // Center on the owner unless the app positioned the window itself
+        if (window.WindowStartupLocation == WindowStartupLocation.Manual && double.IsNaN(window.Position.Y) && double.IsNaN(window.Position.X))
+            window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+        return window.ShowDialog<T>(owner);
     }
 
     /// <summary>
@@ -190,33 +204,6 @@ public class WindowManager : IWindowManager
             window.Bind(Window.TitleProperty, binding);
         }
 
-        if (ownerViewModel?.View is Window explicitOwner)
-        {
-            try
-            {
-                window.SetValue(WindowBase.OwnerProperty, explicitOwner);
-            }
-            catch (InvalidOperationException e)
-            {
-                _logger.LogError(e, "This can occur when the application is closing down");
-            }
-        }
-        else if (isDialog)
-        {
-            var owner = InferOwnerOf(window);
-            if (owner is not null)
-            {
-                try
-                {
-                    window.SetValue(WindowBase.OwnerProperty, owner);
-                }
-                catch (InvalidOperationException e)
-                {
-                    _logger.LogError(e, "This can occur when the application is closing down");
-                }
-            }
-        }
-
         if (isDialog)
         {
             _logger.LogInformation("Displaying ViewModel {0} with View {1} as a Dialog", viewModel, window);
@@ -227,14 +214,10 @@ public class WindowManager : IWindowManager
         }
 
         // If and only if they haven't tried to position the window themselves...
-        // Has to be done after we're attempted to set the owner
         if (window.WindowStartupLocation == WindowStartupLocation.Manual && double.IsNaN(window.Position.Y) && double.IsNaN(window.Position.X)
             /*&& BindingOperations.GetBinding(window, Window.TopProperty) == null && BindingOperations.GetBinding(window, Window.LeftProperty) == null*/)
         {
-            // var topObservable = window.GetBindingSubject(Control.TagProperty);
-            // var leftObservable = window.GetBindingSubject(Control.LeftProperty);
-
-            window.WindowStartupLocation = window.Owner == null ? WindowStartupLocation.CenterScreen : WindowStartupLocation.CenterOwner;
+            window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
 
         // This gets itself retained by the window, by registering events
