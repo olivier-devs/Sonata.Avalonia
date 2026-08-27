@@ -5,6 +5,7 @@
     <Project Path="src/Sonata.Avalonia/Sonata.Avalonia.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Sonata.Avalonia.Headless.Tests/Sonata.Avalonia.Headless.Tests.csproj" />
     <Project Path="tests/Sonata.Avalonia.Tests/Sonata.Avalonia.Tests.csproj" />
   </Folder>
   <Folder Name="/samples/">

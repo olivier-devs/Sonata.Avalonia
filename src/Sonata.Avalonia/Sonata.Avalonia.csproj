@@ -21,6 +21,7 @@
     </ItemGroup>
     <ItemGroup>
         <InternalsVisibleTo Include="Sonata.Avalonia.Tests" />
+        <InternalsVisibleTo Include="Sonata.Avalonia.Headless.Tests" />
         <InternalsVisibleTo Include="Sonata.Avalonia.Hosting" />
     </ItemGroup>
     <ItemGroup>
