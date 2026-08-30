@@ -26,7 +26,7 @@ public class EventAction : ActionBase
     /// <param name="methodName">The MyMethod in {s:Action MyMethod}, this is what we call when the event's fired</param>
     /// <param name="targetNullBehaviour">Behaviour for it the relevant View.ActionTarget is null</param>
     /// <param name="actionNonExistentBehaviour">Behaviour for if the action doesn't exist on the View.ActionTarget</param>
-    public EventAction(AvaloniaObject subject, AvaloniaObject backupSubject, Type eventHandlerType, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour)
+    public EventAction(AvaloniaObject subject, AvaloniaObject? backupSubject, Type eventHandlerType, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour)
         : base(subject, backupSubject, methodName, targetNullBehaviour, actionNonExistentBehaviour, Logger)
     {
         AssertBehaviours(targetNullBehaviour, actionNonExistentBehaviour);
@@ -80,7 +80,7 @@ public class EventAction : ActionBase
     /// <returns>An event hander, which, when invoked, will invoke the action</returns>
     public Delegate GetDelegate()
     {
-        Delegate del = null;
+        Delegate? del = null;
         foreach (var invokeCommandMethodInfo in InvokeCommandMethodInfos)
         {
             del = Delegate.CreateDelegate(_eventHandlerType, this, invokeCommandMethodInfo, false);
@@ -93,7 +93,7 @@ public class EventAction : ActionBase
             var msg = string.Format("Event being bound to does not have a signature we know about. Method {0} on target {1}. Valid signatures are:" +
                 "Valid signatures are:\n" +
                 " - '(object sender, EventArgsOrSubclass e)'\n" +
-                " - '(object sender, DependencyPropertyChangedEventArgs e)'", MethodName, Target);
+                " - '(object sender, DependencyPropertyChangedEventArgs e)'", MethodName, Target?.GetType().Name ?? "(null)");
             var e = new ActionEventSignatureInvalidException(msg);
             Logger.LogError(e, "Invalid event action signature");
             throw e;
@@ -121,11 +121,11 @@ public class EventAction : ActionBase
         if (Target == null || TargetMethodInfo == null)
             return;
 
-        object[] parameters;
+        object?[]? parameters;
         switch (TargetMethodInfo.GetParameters().Length)
         {
             case 1:
-                parameters = new object[] { e };
+                parameters = new object?[] { e };
                 break;
 
             case 2:

@@ -43,7 +43,7 @@ public class EqualityConverter : AvaloniaObject, IMultiValueConverter
         if (values == null || values.Count == 0)
             return null;
         var first = values.FirstOrDefault();
-        var result = values.Skip(1).All(x => x.Equals(first));
+        var result = values.Skip(1).All(x => Equals(x, first));
         return Invert ? !result : result;
     }
 }

@@ -52,7 +52,7 @@ public class BindableCollection<T> : ObservableCollection<T>, IObservableCollect
     /// <summary>
     /// Occurs when the collection will change
     /// </summary>
-    public event NotifyCollectionChangedEventHandler CollectionChanging;
+    public event NotifyCollectionChangedEventHandler? CollectionChanging;
 
     /// <summary>
     /// Raises the System.Collections.ObjectModel.ObservableCollection{T}.PropertyChanged event with the provided arguments.

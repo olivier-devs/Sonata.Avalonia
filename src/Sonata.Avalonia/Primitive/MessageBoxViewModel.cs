@@ -15,7 +15,7 @@ public class MessageBoxViewModel : Screen, IMessageBoxViewModel
 
     private MessageBoxResult defaultButton;
     private MessageBoxResult cancelButton;
-    private string text;
+    private string text = string.Empty;
     private MessageBoxImage icon;
     private FlowDirection flowDirection;
     private TextAlignment textAlignment;
@@ -110,7 +110,9 @@ public class MessageBoxViewModel : Screen, IMessageBoxViewModel
         {
             if (Icon == MessageBoxImage.None)
                 return null;
-            return new Bitmap(AssetLoader.Open(new Uri(Icon.GetDescription())));
+            var description = Icon.GetDescription()
+                ?? throw new InvalidOperationException($"No description found for icon {Icon}");
+            return new Bitmap(AssetLoader.Open(new Uri(description)));
         }
     }
 
@@ -180,7 +182,7 @@ public class MessageBoxViewModel : Screen, IMessageBoxViewModel
         var buttonList = new BindableCollection<LabelledValue<MessageBoxResult>>();
         foreach (var val in ButtonToResults[buttons])
         {
-            var lbv = new LabelledValue<MessageBoxResult>(val.GetDescription(), val);
+            var lbv = new LabelledValue<MessageBoxResult>(val.GetDescription() ?? val.ToString(), val);
             buttonList.Add(lbv);
             if (val == defaultResult)
                 DefaultButton = val;

@@ -12,6 +12,8 @@ namespace Sonata.Avalonia;
 /// <typeparam name="TEventArgs">The type of the event arguments.</typeparam>
 public abstract class WeakEventManagerBase<TEventManager, TEventSource, TEventHandler, TEventArgs>
     where TEventManager : WeakEventManagerBase<TEventManager, TEventSource, TEventHandler, TEventArgs>, new()
+    where TEventSource : class
+    where TEventHandler : Delegate
 {
     // ReSharper disable once StaticMemberInGenericType
     private static readonly object StaticSource = new object();
@@ -56,7 +58,7 @@ public abstract class WeakEventManagerBase<TEventManager, TEventSource, TEventHa
     /// </summary>
     /// <param name="sender">The sender.</param>
     /// <param name="args">The <see cref="TEventArgs"/> instance containing the event data.</param>
-    protected static void DeliverEvent(object sender, TEventArgs args)
+    protected static void DeliverEvent(object? sender, TEventArgs args)
     {
         Current.PrivateDeliverEvent(sender, args);
     }
@@ -77,11 +79,6 @@ public abstract class WeakEventManagerBase<TEventManager, TEventSource, TEventHa
     {
         if (source == null) throw new ArgumentNullException(nameof(source));
         if (handler == null) throw new ArgumentNullException(nameof(handler));
-
-        if (!typeof(TEventHandler).GetTypeInfo().IsSubclassOf(typeof(Delegate)))
-        {
-            throw new ArgumentException("Handler must be Delegate type");
-        }
 
         AddWeakHandler(source, handler);
         AddTargetHandler(handler);
@@ -114,8 +111,8 @@ public abstract class WeakEventManagerBase<TEventManager, TEventSource, TEventHa
 
     private void AddTargetHandler(TEventHandler handler)
     {
-        var @delegate = handler as Delegate;
-        var key = @delegate?.Target ?? StaticSource;
+        var @delegate = (Delegate)handler;
+        var key = @delegate.Target ?? StaticSource;
 
         if (_targetToEventHandler.TryGetValue(key, out var delegates))
         {
@@ -133,11 +130,6 @@ public abstract class WeakEventManagerBase<TEventManager, TEventSource, TEventHa
     {
         if (source == null) throw new ArgumentNullException(nameof(source));
         if (handler == null) throw new ArgumentNullException(nameof(handler));
-
-        if (!typeof(TEventHandler).GetTypeInfo().IsSubclassOf(typeof(Delegate)))
-        {
-            throw new ArgumentException("handler must be Delegate type");
-        }
 
         RemoveWeakHandler(source, handler);
         RemoveTargetHandler(handler);
@@ -165,8 +157,8 @@ public abstract class WeakEventManagerBase<TEventManager, TEventSource, TEventHa
 
     private void RemoveTargetHandler(TEventHandler handler)
     {
-        var @delegate = handler as Delegate;
-        var key = @delegate?.Target ?? StaticSource;
+        var @delegate = (Delegate)handler;
+        var key = @delegate.Target ?? StaticSource;
 
         if (_targetToEventHandler.TryGetValue(key, out var delegates))
         {
@@ -179,7 +171,7 @@ public abstract class WeakEventManagerBase<TEventManager, TEventSource, TEventHa
         }
     }
 
-    private void PrivateDeliverEvent(object sender, TEventArgs args)
+    private void PrivateDeliverEvent(object? sender, TEventArgs args)
     {
         var source = sender ?? StaticSource;
 
@@ -223,7 +215,7 @@ public abstract class WeakEventManagerBase<TEventManager, TEventSource, TEventHa
 
         public bool IsActive => _source != null && _source.IsAlive && _originalHandler != null && _originalHandler.IsAlive;
 
-        public TEventHandler Handler
+        public TEventHandler? Handler
         {
             get
             {
@@ -231,7 +223,7 @@ public abstract class WeakEventManagerBase<TEventManager, TEventSource, TEventHa
                 {
                     return default;
                 }
-                return (TEventHandler)_originalHandler.Target;
+                return (TEventHandler?)_originalHandler.Target;
             }
         }
 

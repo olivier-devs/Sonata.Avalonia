@@ -15,7 +15,7 @@ public class CommandAction : ActionBase, ICommand
     /// <summary>
     /// Generated accessor to grab the value of the guard property, or null if there is none
     /// </summary>
-    private Func<bool> guardPropertyGetter;
+    private Func<bool>? guardPropertyGetter;
 
     /// <summary>
     /// Initialises a new instance of the <see cref="CommandAction"/> class to use <see cref="View.ActionTargetProperty"/> to get the target
@@ -25,7 +25,7 @@ public class CommandAction : ActionBase, ICommand
     /// <param name="methodName">Method name. the MyMethod in Buttom Command="{s:Action MyMethod}".</param>
     /// <param name="targetNullBehaviour">Behaviour for it the relevant View.ActionTarget is null</param>
     /// <param name="actionNonExistentBehaviour">Behaviour for if the action doesn't exist on the View.ActionTarget</param>
-    public CommandAction(AvaloniaObject subject, AvaloniaObject backupSubject, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour)
+    public CommandAction(AvaloniaObject subject, AvaloniaObject? backupSubject, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour)
         : base(subject, backupSubject, methodName, targetNullBehaviour, actionNonExistentBehaviour, Logger)
     { }
 
@@ -63,7 +63,7 @@ public class CommandAction : ActionBase, ICommand
     /// </summary>
     /// <param name="oldTarget">Previous target</param>
     /// <param name="newTarget">New target</param>
-    private protected override void OnTargetChanged(object oldTarget, object newTarget)
+    private protected override void OnTargetChanged(object? oldTarget, object? newTarget)
     {
         if (oldTarget is INotifyPropertyChanged oldInpc)
         {
@@ -102,7 +102,7 @@ public class CommandAction : ActionBase, ICommand
         UpdateCanExecute();
     }
 
-    private void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+    private void PropertyChangedHandler(object? sender, PropertyChangedEventArgs e)
     {
         UpdateCanExecute();
     }
@@ -122,7 +122,7 @@ public class CommandAction : ActionBase, ICommand
     /// </summary>
     /// <param name="parameter">Data used by the command. If the command does not require data to be passed, this object can be set to null.</param>
     /// <returns>true if this command can be executed; otherwise, false.</returns>
-    public bool CanExecute(object parameter)
+    public bool CanExecute(object? parameter)
     {
         // This can happen if the ActionTarget hasn't been set from its default - 
         // e.g. if the button/etc in question is in a ContextMenu/Popup, which attached properties
@@ -150,13 +150,13 @@ public class CommandAction : ActionBase, ICommand
     /// <summary>
     /// Occurs when changes occur that affect whether or not the command should execute.
     /// </summary>
-    public event EventHandler CanExecuteChanged;
+    public event EventHandler? CanExecuteChanged;
 
     /// <summary>
     /// The method to be called when the command is invoked.
     /// </summary>
     /// <param name="parameter">Data used by the command. If the command does not require data to be passed, this object can be set to null.</param>
-    public void Execute(object parameter)
+    public void Execute(object? parameter)
     {
         AssertTargetSet();
 

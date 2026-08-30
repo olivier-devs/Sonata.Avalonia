@@ -13,7 +13,7 @@ public partial class Conductor<T>
         /// <summary>
         /// Activate the given item. This deactivates the previous item, and pushes it onto the history stack
         /// </summary>
-        public override async Task ActivateItemAsync(T item, CancellationToken ct = default)
+        public override async Task ActivateItemAsync(T? item, CancellationToken ct = default)
         {
             if (item != null && item.Equals(ActiveItem))
             {
@@ -31,7 +31,7 @@ public partial class Conductor<T>
         /// <summary>
         /// Deactivate the given item
         /// </summary>
-        public override Task DeactivateItemAsync(T item, CancellationToken ct = default)
+        public override Task DeactivateItemAsync(T? item, CancellationToken ct = default)
         {
             return ScreenExtensions.TryDeactivateAsync(item, ct);
         }
@@ -59,7 +59,7 @@ public partial class Conductor<T>
         /// <summary>
         /// Close the given item. If it was the ActiveItem, activate the top item in the history stack
         /// </summary>
-        public override async Task CloseItemAsync(T item, CancellationToken ct = default)
+        public override async Task CloseItemAsync(T? item, CancellationToken ct = default)
         {
             if (item == null || !await CanCloseItem(item, ct))
                 return;
@@ -86,7 +86,7 @@ public partial class Conductor<T>
         /// </summary>
         public override Task<bool> CanCloseAsync(CancellationToken ct = default)
         {
-            return CanAllItemsCloseAsync(_history.Concat(new[] { ActiveItem }), ct);
+            return CanAllItemsCloseAsync(_history.Concat(new[] { ActiveItem }.OfType<T>()), ct);
         }
 
         /// <summary>

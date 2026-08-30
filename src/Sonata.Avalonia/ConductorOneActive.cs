@@ -11,7 +11,7 @@ public partial class Conductor<T>
         {
             private readonly BindableCollection<T> items = new();
 
-            private List<T> itemsBeforeReset;
+            private List<T>? itemsBeforeReset = new();
 
             /// <summary>
             /// Gets the items owned by this Conductor, one of which is active
@@ -38,15 +38,15 @@ public partial class Conductor<T>
                 switch (e.Action)
                 {
                     case NotifyCollectionChangedAction.Add:
-                        FireAndForget.Run(this.SetParentAndSetActiveAsync(e.NewItems, false), Logger);
+                        FireAndForget.Run(this.SetParentAndSetActiveAsync(e.NewItems ?? Array.Empty<object>(), false), Logger);
                         break;
 
                     case NotifyCollectionChangedAction.Remove:
-                        FireAndForget.Run(HandleRemoveAsync(e.OldItems), Logger);
+                        FireAndForget.Run(HandleRemoveAsync(e.OldItems ?? Array.Empty<object>()), Logger);
                         break;
 
                     case NotifyCollectionChangedAction.Replace:
-                        FireAndForget.Run(HandleReplaceAsync(e.OldItems, e.NewItems), Logger);
+                        FireAndForget.Run(HandleReplaceAsync(e.OldItems ?? Array.Empty<object>(), e.NewItems ?? Array.Empty<object>()), Logger);
                         break;
 
                     case NotifyCollectionChangedAction.Reset:
@@ -84,12 +84,13 @@ public partial class Conductor<T>
             /// </summary>
             protected virtual async Task ActiveItemMayHaveBeenRemovedFromItemsAsync()
             {
-                if (items.Contains(ActiveItem))
+                var activeItem = ActiveItem;
+                if (activeItem != null && items.Contains(activeItem))
                     return;
 
                 // Only close the previous item if it's in this.items - if it isn't, we'll
                 // have already have closed it as part of reacting to changes in this.items.
-                await ChangeActiveItemAsync(items.FirstOrDefault(), items.Contains(ActiveItem));
+                await ChangeActiveItemAsync(items.FirstOrDefault(), activeItem != null && items.Contains(activeItem));
             }
 
             /// <summary>
@@ -103,7 +104,7 @@ public partial class Conductor<T>
             /// <summary>
             /// Activate the given item and set it as the ActiveItem, deactivating the previous ActiveItem
             /// </summary>
-            public override async Task ActivateItemAsync(T item, CancellationToken ct = default)
+            public override async Task ActivateItemAsync(T? item, CancellationToken ct = default)
             {
                 if (item != null && item.Equals(ActiveItem))
                 {
@@ -119,7 +120,7 @@ public partial class Conductor<T>
             /// <summary>
             /// Deactive the given item, and choose another item to set as the ActiveItem
             /// </summary>
-            public override async Task DeactivateItemAsync(T item, CancellationToken ct = default)
+            public override async Task DeactivateItemAsync(T? item, CancellationToken ct = default)
             {
                 if (item == null)
                     return;
@@ -138,7 +139,7 @@ public partial class Conductor<T>
             /// <summary>
             /// Close the given item (if and when possible, depending on IGuardClose.CanCloseAsync). This will deactive if it is the active item
             /// </summary>
-            public override async Task CloseItemAsync(T item, CancellationToken ct = default)
+            public override async Task CloseItemAsync(T? item, CancellationToken ct = default)
             {
                 if (item == null || !await CanCloseItem(item, ct))
                     return;
@@ -158,7 +159,7 @@ public partial class Conductor<T>
             /// <summary>
             /// Given a list of items, and and item which is going to be removed, choose a new item to be the next ActiveItem
             /// </summary>
-            protected virtual T DetermineNextItemToActivate(T itemToRemove)
+            protected virtual T? DetermineNextItemToActivate(T itemToRemove)
             {
                 if (itemToRemove == null)
                 {

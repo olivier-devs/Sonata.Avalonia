@@ -6,13 +6,13 @@
 /// <typeparam name="T">Type of item being conducted</typeparam>
 public abstract class ConductorBaseWithActiveItem<T> : ConductorBase<T>, IHaveActiveItem<T> where T : class
 {
-    private T _activeItem;
+    private T? _activeItem;
 
     /// <summary>
     /// Gets or sets the item which is currently active.
     /// Setting this fire-and-forgets the activation; exceptions are logged.
     /// </summary>
-    public T ActiveItem
+    public T? ActiveItem
     {
         get => _activeItem;
         set => FireAndForget.Run(ActivateItemAsync(value), SonataLogManager.GetLogger(GetType()));
@@ -23,13 +23,13 @@ public abstract class ConductorBaseWithActiveItem<T> : ConductorBase<T>, IHaveAc
     /// </summary>
     public override IEnumerable<T> GetChildren()
     {
-        return new[] { ActiveItem };
+        return ActiveItem == null ? Enumerable.Empty<T>() : new[] { ActiveItem };
     }
 
     /// <summary>
     /// Switch the active item to the given item
     /// </summary>
-    protected Task ChangeActiveItemAsync(T newItem, bool closePrevious, CancellationToken ct = default)
+    protected Task ChangeActiveItemAsync(T? newItem, bool closePrevious, CancellationToken ct = default)
     {
         return ExecuteTransitionAsync(async () =>
         {

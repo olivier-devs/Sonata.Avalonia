@@ -22,7 +22,7 @@ public class IconToBitmapSourceConverter : IValueConverter
     /// <param name="parameter">converter parameter</param>
     /// <param name="culture">culture information</param>
     /// <returns>Converted value</returns>
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value == null)
             return null;
@@ -38,7 +38,8 @@ public class IconToBitmapSourceConverter : IValueConverter
             }
             else
             {
-                string assemblyName = Assembly.GetEntryAssembly().GetName().Name;
+                string assemblyName = Assembly.GetEntryAssembly()?.GetName().Name
+                    ?? throw new InvalidOperationException("Unable to determine the entry assembly name for the asset URI");
                 uri = new Uri($"avares://{assemblyName}{rawUri}");
             }
 
@@ -57,7 +58,7 @@ public class IconToBitmapSourceConverter : IValueConverter
     /// <param name="parameter">converter parameter</param>
     /// <param name="culture">culture information</param>
     /// <returns>Converted back value</returns>
-    public object ConvertBack(object value, Type targetType, object parameter,
+    public object? ConvertBack(object? value, Type targetType, object? parameter,
         CultureInfo culture)
     {
         throw new NotSupportedException();

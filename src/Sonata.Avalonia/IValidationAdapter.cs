@@ -35,7 +35,7 @@ public interface IModelValidator
     /// </summary>
     /// <param name="propertyName">Property to validate, or <see cref="string.Empty"/> to validate the entire model</param>
     /// <returns>Array of validation errors, or null / empty if validation was successful</returns>
-    Task<IEnumerable<string>> ValidatePropertyAsync(string propertyName);
+    Task<IEnumerable<string>?> ValidatePropertyAsync(string? propertyName);
 
     /// <summary>
     /// Validate all properties, and return the results for all properties
@@ -46,5 +46,5 @@ public interface IModelValidator
     /// If a property validates successfully, you MUST return a null entry for it in the returned dictionary!
     /// </remarks>
     /// <returns>A dictionary of property name => array of validation errors (or null if that property validated successfully)</returns>
-    Task<Dictionary<string, IEnumerable<string>>> ValidateAllPropertiesAsync();
+    Task<Dictionary<string, IEnumerable<string>?>> ValidateAllPropertiesAsync();
 }

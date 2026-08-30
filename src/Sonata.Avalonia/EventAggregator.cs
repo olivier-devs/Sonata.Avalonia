@@ -138,7 +138,9 @@ public class EventAggregator : IEventAggregator
             foreach (var implementation in handler.GetType().GetInterfaces().Where(x => x.IsGenericType && typeof(IHandle).IsAssignableFrom(x)))
             {
                 var messageType = implementation.GetGenericArguments()[0];
-                _invokers.Add(new HandlerInvoker(_target, handlerType, messageType, implementation.GetMethod("Handle")));
+                var handleMethod = implementation.GetMethod("Handle")
+                    ?? throw new InvalidOperationException($"Unable to find Handle method on {implementation.FullName}");
+                _invokers.Add(new HandlerInvoker(_target, handlerType, messageType, handleMethod));
             }
 
             if (channels.Length == 0)

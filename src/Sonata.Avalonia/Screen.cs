@@ -20,15 +20,15 @@ public class Screen : ValidatingModelBase, IScreen, IAsyncDisposable
     /// </summary>
     /// <param name="validator">Validator to use</param>
     [SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors", Justification = "Can be safely called from the Ctor, as it doesn't depend on state being set")]
-    public Screen(IModelValidator validator) : base(validator)
+    public Screen(IModelValidator? validator) : base(validator)
     {
         var type = GetType();
-        DisplayName = type.FullName;
+        DisplayName = type.FullName!; // Runtime types always have a full name
     }
 
     #region IHaveDisplayName
 
-    private string _displayName;
+    private string _displayName = string.Empty;
 
     /// <summary>
     /// Gets or sets the name associated with this ViewModel.
@@ -74,22 +74,22 @@ public class Screen : ValidatingModelBase, IScreen, IAsyncDisposable
     /// <summary>
     /// Raised when the Screen's state changed, for any reason
     /// </summary>
-    public event EventHandler<ScreenStateChangedEventArgs> StateChanged;
+    public event EventHandler<ScreenStateChangedEventArgs>? StateChanged;
 
     /// <summary>
     /// Fired whenever the Screen is activated
     /// </summary>
-    public event EventHandler<ActivationEventArgs> Activated;
+    public event EventHandler<ActivationEventArgs>? Activated;
 
     /// <summary>
     /// Fired whenever the Screen is deactivated
     /// </summary>
-    public event EventHandler<DeactivationEventArgs> Deactivated;
+    public event EventHandler<DeactivationEventArgs>? Deactivated;
 
     /// <summary>
     /// Called whenever this Screen is closed
     /// </summary>
-    public event EventHandler<CloseEventArgs> Closed;
+    public event EventHandler<CloseEventArgs>? Closed;
 
     /// <summary>
     /// Called the very first time this Screen is activated, and never again
@@ -207,7 +207,7 @@ public class Screen : ValidatingModelBase, IScreen, IAsyncDisposable
     /// <summary>
     /// Gets the View attached to this ViewModel, if any. Using this should be a last resort
     /// </summary>
-    public Control View { get; private set; }
+    public Control? View { get; private set; }
 
     [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "As this is a framework type, don't want to make it too easy for users to call this method")]
     void IViewAware.AttachView(Control view)
@@ -252,12 +252,12 @@ public class Screen : ValidatingModelBase, IScreen, IAsyncDisposable
 
     #region IChild
 
-    private object _parent;
+    private object? _parent;
 
     /// <summary>
     /// Gets or sets the parent conductor of this screen. Used to RequestClose to request a closure
     /// </summary>
-    public object Parent
+    public object? Parent
     {
         get => _parent;
         set => SetAndNotify(ref _parent, value);

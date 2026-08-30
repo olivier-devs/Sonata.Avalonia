@@ -89,17 +89,17 @@ public abstract class ConductorBase<T> : Screen, IConductor<T>, IParent<T>, IChi
     /// <summary>
     /// Activate the given item
     /// </summary>
-    public abstract Task ActivateItemAsync(T item, CancellationToken ct = default);
+    public abstract Task ActivateItemAsync(T? item, CancellationToken ct = default);
 
     /// <summary>
     /// Deactivate the given item
     /// </summary>
-    public abstract Task DeactivateItemAsync(T item, CancellationToken ct = default);
+    public abstract Task DeactivateItemAsync(T? item, CancellationToken ct = default);
 
     /// <summary>
     /// Close the given item
     /// </summary>
-    public abstract Task CloseItemAsync(T item, CancellationToken ct = default);
+    public abstract Task CloseItemAsync(T? item, CancellationToken ct = default);
 
     /// <summary>
     /// Ensure an item is ready to be activated
@@ -134,7 +134,7 @@ public abstract class ConductorBase<T> : Screen, IConductor<T>, IParent<T>, IChi
     /// <summary>
     /// Determine if the given item can be closed
     /// </summary>
-    protected virtual Task<bool> CanCloseItem(T item, CancellationToken ct = default)
+    protected virtual Task<bool> CanCloseItem(T? item, CancellationToken ct = default)
     {
         var itemAsGuardClose = item as IGuardClose;
         if (itemAsGuardClose != null)
@@ -146,7 +146,7 @@ public abstract class ConductorBase<T> : Screen, IConductor<T>, IParent<T>, IChi
     /// <summary>
     /// Close the given child
     /// </summary>
-    async Task IChildDelegate.CloseItemAsync(object item, bool? dialogResult, CancellationToken ct)
+    async Task IChildDelegate.CloseItemAsync(object? item, bool? dialogResult, CancellationToken ct)
     {
         if (item is T t)
         {

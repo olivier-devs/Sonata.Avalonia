@@ -28,7 +28,7 @@ public static class SonataConductorExtensions
     /// <summary>
     /// Close an item, and clear its parent if it's set to the current parent
     /// </summary>
-    public static async Task CloseAndCleanUpAsync<T>(this IConductor<T> parent, T item, bool dispose, CancellationToken ct = default)
+    public static async Task CloseAndCleanUpAsync<T>(this IConductor<T> parent, T? item, bool dispose, CancellationToken ct = default)
     {
         await ScreenExtensions.TryCloseAsync(item, ct);
 

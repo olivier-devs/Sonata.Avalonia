@@ -9,13 +9,13 @@ public partial class Conductor<T> : ConductorBaseWithActiveItem<T> where T : cla
     /// <summary>
     /// Activate the given item, discarding the previous ActiveItem
     /// </summary>
-    public override Task ActivateItemAsync(T item, CancellationToken ct = default)
+    public override Task ActivateItemAsync(T? item, CancellationToken ct = default)
     {
         EnsureNotReentrant();
         return ActivateItemCoreAsync(item, ct);
     }
 
-    private async Task ActivateItemCoreAsync(T item, CancellationToken ct)
+    private async Task ActivateItemCoreAsync(T? item, CancellationToken ct)
     {
         if (item != null && item.Equals(ActiveItem))
         {
@@ -32,7 +32,7 @@ public partial class Conductor<T> : ConductorBaseWithActiveItem<T> where T : cla
     /// <summary>
     /// Deactive the given item
     /// </summary>
-    public override async Task DeactivateItemAsync(T item, CancellationToken ct = default)
+    public override async Task DeactivateItemAsync(T? item, CancellationToken ct = default)
     {
         if (item != null && item.Equals(ActiveItem))
             await ScreenExtensions.TryDeactivateAsync(ActiveItem, ct);
@@ -41,7 +41,7 @@ public partial class Conductor<T> : ConductorBaseWithActiveItem<T> where T : cla
     /// <summary>
     /// Close the given item
     /// </summary>
-    public override async Task CloseItemAsync(T item, CancellationToken ct = default)
+    public override async Task CloseItemAsync(T? item, CancellationToken ct = default)
     {
         if (item == null || !item.Equals(ActiveItem))
             return;

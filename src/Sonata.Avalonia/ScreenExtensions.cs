@@ -8,7 +8,7 @@ public static class ScreenExtensions
     /// <summary>
     /// Attempt to activate the screen, if it implements IScreenState
     /// </summary>
-    public static Task TryActivateAsync(object screen, CancellationToken ct = default)
+    public static Task TryActivateAsync(object? screen, CancellationToken ct = default)
     {
         var screenAsScreenState = screen as IScreenState;
         if (screenAsScreenState != null)
@@ -19,7 +19,7 @@ public static class ScreenExtensions
     /// <summary>
     /// Attempt to deactivate the screen, if it implements IScreenState
     /// </summary>
-    public static Task TryDeactivateAsync(object screen, CancellationToken ct = default)
+    public static Task TryDeactivateAsync(object? screen, CancellationToken ct = default)
     {
         var screenAsScreenState = screen as IScreenState;
         if (screenAsScreenState != null)
@@ -30,7 +30,7 @@ public static class ScreenExtensions
     /// <summary>
     /// Try to close the screen, if it implements IScreenState
     /// </summary>
-    public static Task TryCloseAsync(object screen, CancellationToken ct = default)
+    public static Task TryCloseAsync(object? screen, CancellationToken ct = default)
     {
         var screenAsScreenState = screen as IScreenState;
         if (screenAsScreenState != null)
@@ -41,7 +41,7 @@ public static class ScreenExtensions
     /// <summary>
     /// Try to dispose a screen, if it implements IAsyncDisposable (or IDisposable)
     /// </summary>
-    public static async ValueTask TryDisposeAsync(object screen)
+    public static async ValueTask TryDisposeAsync(object? screen)
     {
         switch (screen)
         {
@@ -61,11 +61,10 @@ public static class ScreenExtensions
     public static void ActivateWith(this IScreenState child, IScreenState parent)
     {
         var weakChild = new WeakReference<IScreenState>(child);
-        EventHandler<ActivationEventArgs> handler = null;
+        EventHandler<ActivationEventArgs>? handler = null;
         handler = (o, e) =>
         {
-            IScreenState strongChild;
-            if (weakChild.TryGetTarget(out strongChild))
+            if (weakChild.TryGetTarget(out IScreenState? strongChild))
                 FireAndForget.Run(strongChild.ActivateAsync(), SonataLogManager.GetLogger(typeof(ScreenExtensions)));
             else
                 parent.Activated -= handler;
@@ -80,11 +79,10 @@ public static class ScreenExtensions
     public static void DeactivateWith(this IScreenState child, IScreenState parent)
     {
         var weakChild = new WeakReference<IScreenState>(child);
-        EventHandler<DeactivationEventArgs> handler = null;
+        EventHandler<DeactivationEventArgs>? handler = null;
         handler = (o, e) =>
         {
-            IScreenState strongChild;
-            if (weakChild.TryGetTarget(out strongChild))
+            if (weakChild.TryGetTarget(out IScreenState? strongChild))
                 FireAndForget.Run(strongChild.DeactivateAsync(), SonataLogManager.GetLogger(typeof(ScreenExtensions)));
             else
                 parent.Deactivated -= handler;
@@ -99,11 +97,10 @@ public static class ScreenExtensions
     public static void CloseWith(this IScreenState child, IScreenState parent)
     {
         var weakChild = new WeakReference<IScreenState>(child);
-        EventHandler<CloseEventArgs> handler = null;
+        EventHandler<CloseEventArgs>? handler = null;
         handler = (o, e) =>
         {
-            IScreenState strongChild;
-            if (weakChild.TryGetTarget(out strongChild))
+            if (weakChild.TryGetTarget(out IScreenState? strongChild))
                 FireAndForget.Run(TryCloseAsync(strongChild), SonataLogManager.GetLogger(typeof(ScreenExtensions)));
             else
                 parent.Closed -= handler;

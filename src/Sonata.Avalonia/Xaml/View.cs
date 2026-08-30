@@ -55,7 +55,7 @@ public static class View
     /// <summary>
     /// Set the ViewModel currently associated with a given object
     /// </summary>
-    /// <param name="obj">Object to set the ViewModel for</param>
+    /// <param name="obj">Object to set the Model for</param>
     /// <param name="value">ViewModel to set</param>
     public static void SetModel(AvaloniaObject obj, object value)
     {
@@ -75,7 +75,7 @@ public static class View
     /// </summary>
     /// <param name="targetLocation">Object to set the Content property on</param>
     /// <param name="view">View to set as the object's Content</param>
-    public static void SetContentProperty(AvaloniaObject targetLocation, Control view)
+    public static void SetContentProperty(AvaloniaObject targetLocation, Control? view)
     {
         var type = targetLocation.GetType();
         string propertyName = "Content";

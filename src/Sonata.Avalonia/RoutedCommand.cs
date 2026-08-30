@@ -3,9 +3,9 @@ namespace Sonata.Avalonia;
 public class RoutedCommand : ICommand
 {
     public string Name { get; }
-    public KeyGesture Gesture { get; }
+    public KeyGesture? Gesture { get; }
 
-    public RoutedCommand(string name, KeyGesture keyGesture = null)
+    public RoutedCommand(string name, KeyGesture? keyGesture = null)
     {
         Name = name;
         Gesture = keyGesture;
@@ -35,7 +35,7 @@ public class RoutedCommand : ICommand
         RoutedEvent.Register<CanExecuteRoutedEventArgs>(nameof(CanExecuteEvent), RoutingStrategies.Bubble,
             typeof(RoutedCommand));
 
-    public bool CanExecute(object parameter, IInputElement target)
+    public bool CanExecute(object? parameter, IInputElement? target)
     {
         if (target is null) return false;
 
@@ -45,12 +45,12 @@ public class RoutedCommand : ICommand
         return args.CanExecute;
     }
 
-    bool ICommand.CanExecute(object parameter)
+    bool ICommand.CanExecute(object? parameter)
     {
-        if (Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopLifetime)
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopLifetime)
         {
             var focusManager = TopLevel.GetTopLevel(desktopLifetime.MainWindow)?.FocusManager;
-            return CanExecute(parameter, focusManager.GetFocusedElement());
+            return CanExecute(parameter, focusManager?.GetFocusedElement());
         }
 
         return false;
@@ -60,7 +60,7 @@ public class RoutedCommand : ICommand
         RoutedEvent.Register<ExecutedRoutedEventArgs>(nameof(ExecutedEvent), RoutingStrategies.Bubble,
             typeof(RoutedCommand));
 
-    public void Execute(object parameter, IInputElement target)
+    public void Execute(object? parameter, IInputElement? target)
     {
         if (target == null) return;
 
@@ -68,17 +68,17 @@ public class RoutedCommand : ICommand
         target.RaiseEvent(args);
     }
 
-    void ICommand.Execute(object parameter)
+    void ICommand.Execute(object? parameter)
     {
-        if (Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopLifetime)
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopLifetime)
         {
             var focusManager = TopLevel.GetTopLevel(desktopLifetime.MainWindow)?.FocusManager;
-            Execute(parameter, focusManager.GetFocusedElement());
+            Execute(parameter, focusManager?.GetFocusedElement());
         }
     }
 
     // TODO
-    event EventHandler ICommand.CanExecuteChanged
+    event EventHandler? ICommand.CanExecuteChanged
     {
         add { }
         remove { }
@@ -93,8 +93,8 @@ public abstract class RoutedCommandBindableBase : Interactive
 public class RoutedCommandBinding
 {
     public RoutedCommandBinding(RoutedCommand command,
-        EventHandler<ExecutedRoutedEventArgs> executed = null,
-        EventHandler<CanExecuteRoutedEventArgs> canExecute = null)
+        EventHandler<ExecutedRoutedEventArgs>? executed = null,
+        EventHandler<CanExecuteRoutedEventArgs>? canExecute = null)
     {
         Command = command;
         if (executed != null) Executed += executed;
@@ -103,9 +103,9 @@ public class RoutedCommandBinding
 
     public RoutedCommand Command { get; }
 
-    public event EventHandler<CanExecuteRoutedEventArgs> CanExecute;
+    public event EventHandler<CanExecuteRoutedEventArgs>? CanExecute;
 
-    public event EventHandler<ExecutedRoutedEventArgs> Executed;
+    public event EventHandler<ExecutedRoutedEventArgs>? Executed;
 
     internal bool DoCanExecute(object sender, CanExecuteRoutedEventArgs e)
     {
@@ -158,11 +158,11 @@ public sealed class CanExecuteRoutedEventArgs : RoutedEventArgs
 {
     public ICommand Command { get; }
 
-    public object Parameter { get; }
+    public object? Parameter { get; }
 
     public bool CanExecute { get; set; }
 
-    internal CanExecuteRoutedEventArgs(ICommand command, object parameter)
+    internal CanExecuteRoutedEventArgs(ICommand command, object? parameter)
     {
         Command = command ?? throw new ArgumentNullException(nameof(command));
         Parameter = parameter;
@@ -174,9 +174,9 @@ public sealed class ExecutedRoutedEventArgs : RoutedEventArgs
 {
     public ICommand Command { get; }
 
-    public object Parameter { get; }
+    public object? Parameter { get; }
 
-    internal ExecutedRoutedEventArgs(ICommand command, object parameter)
+    internal ExecutedRoutedEventArgs(ICommand command, object? parameter)
     {
         Command = command ?? throw new ArgumentNullException(nameof(command));
         Parameter = parameter;

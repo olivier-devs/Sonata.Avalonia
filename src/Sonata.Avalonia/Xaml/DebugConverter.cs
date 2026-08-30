@@ -29,7 +29,7 @@ public class DebugConverter : AvaloniaObject, IValueConverter
     /// <summary>
     /// Gets or sets the Logger to use. Defaults to Debug.WriteLine. Arguments are: Message, Name
     /// </summary>
-    public Action<string, string> Logger
+    public Action<string, string>? Logger
     {
         get => GetValue(LoggerProperty);
         set => SetValue(LoggerProperty, value);
@@ -38,8 +38,8 @@ public class DebugConverter : AvaloniaObject, IValueConverter
     /// <summary>
     /// Property specifying an action, which when called will log an entry.
     /// </summary>
-    public static readonly StyledProperty<Action<string,string>> LoggerProperty =
-        AvaloniaProperty.Register<DebugConverter, Action<string, string>>("Logger", null);
+    public static readonly StyledProperty<Action<string, string>?> LoggerProperty =
+        AvaloniaProperty.Register<DebugConverter, Action<string, string>?>("Logger", null);
 
     static DebugConverter()
     {
@@ -56,6 +56,8 @@ public class DebugConverter : AvaloniaObject, IValueConverter
         Logger ??= (msg, name) => Debug.WriteLine(msg, name);
     }
 
+    private Action<string, string> EffectiveLogger => Logger ?? ((msg, name) => Debug.WriteLine(msg, name));
+
     /// <summary>
     /// Perform the conversion
     /// </summary>
@@ -64,12 +66,13 @@ public class DebugConverter : AvaloniaObject, IValueConverter
     /// <param name="parameter">converter parameter</param>
     /// <param name="culture">culture information</param>
     /// <returns>Converted value</returns>
-    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
     {
+        var logger = EffectiveLogger;
         if (parameter == null)
-            Logger(string.Format(culture, "Convert: Value = '{0}' TargetType = '{1}'", value, targetType), Name);
+            logger(string.Format(culture, "Convert: Value = '{0}' TargetType = '{1}'", value, targetType), Name);
         else
-            Logger(string.Format(culture, "Convert: Value = '{0}' TargetType = '{1}' Parameter = '{2}'", value, targetType, parameter), Name);
+            logger(string.Format(culture, "Convert: Value = '{0}' TargetType = '{1}' Parameter = '{2}'", value, targetType, parameter), Name);
 
         return value;
     }
@@ -82,12 +85,13 @@ public class DebugConverter : AvaloniaObject, IValueConverter
     /// <param name="parameter">converter parameter</param>
     /// <param name="culture">culture information</param>
     /// <returns>Converted back value</returns>
-    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+    public object? ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
     {
+        var logger = EffectiveLogger;
         if (parameter == null)
-            Logger(string.Format(culture, "ConvertBack: Value = '{0}' TargetType = '{1}'", value, targetType), Name);
+            logger(string.Format(culture, "ConvertBack: Value = '{0}' TargetType = '{1}'", value, targetType), Name);
         else
-            Logger(string.Format(culture, "ConvertBack: Value = '{0}' TargetType = '{1}' Parameter = '{2}'", value, targetType, parameter), Name);
+            logger(string.Format(culture, "ConvertBack: Value = '{0}' TargetType = '{1}' Parameter = '{2}'", value, targetType, parameter), Name);
 
         return value;
     }

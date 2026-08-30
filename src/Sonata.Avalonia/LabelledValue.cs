@@ -6,18 +6,19 @@
 /// <typeparam name="T">Type of the value</typeparam>
 public class LabelledValue<T> : PropertyChangedBase, IEquatable<LabelledValue<T>>
 {
-    private string _label;
+    private string? _label;
 
     /// <summary>
     /// Gets or sets the label associated with this item. This is displayed in your View
     /// </summary>
-    public string Label
+    public string? Label
     {
         get => _label;
         set => SetAndNotify(ref _label, value);
     }
 
-    private T _value;
+    // Unconstrained generic default is the documented initial state of the parameterless constructor.
+    private T _value = default!;
 
     /// <summary>
     /// Gets or sets the value associated with this item. This is used by your ViewModel
@@ -95,7 +96,7 @@ public class LabelledValue<T> : PropertyChangedBase, IEquatable<LabelledValue<T>
     /// <returns>The Label associated with this object</returns>
     public override string ToString()
     {
-        return Label;
+        return Label ?? string.Empty;
     }
 }
 

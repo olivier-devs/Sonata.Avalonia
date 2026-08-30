@@ -14,7 +14,7 @@ public partial class Conductor<T>
         {
             private readonly BindableCollection<T> _items = new();
 
-            private List<T> itemsBeforeReset;
+            private List<T>? itemsBeforeReset = new();
 
             /// <summary>
             /// Gets all items associated with this conductor
@@ -41,15 +41,15 @@ public partial class Conductor<T>
                 switch (e.Action)
                 {
                     case NotifyCollectionChangedAction.Add:
-                        FireAndForget.Run(ActivateAndSetParentAsync(e.NewItems), Logger);
+                        FireAndForget.Run(ActivateAndSetParentAsync(e.NewItems ?? Array.Empty<object>()), Logger);
                         break;
 
                     case NotifyCollectionChangedAction.Remove:
-                        FireAndForget.Run(this.CloseAndCleanUpAsync(e.OldItems, DisposeChildren), Logger);
+                        FireAndForget.Run(this.CloseAndCleanUpAsync(e.OldItems ?? Array.Empty<object>(), DisposeChildren), Logger);
                         break;
 
                     case NotifyCollectionChangedAction.Replace:
-                        FireAndForget.Run(HandleReplaceAsync(e.OldItems, e.NewItems), Logger);
+                        FireAndForget.Run(HandleReplaceAsync(e.OldItems ?? Array.Empty<object>(), e.NewItems ?? Array.Empty<object>()), Logger);
                         break;
 
                     case NotifyCollectionChangedAction.Reset:
@@ -133,7 +133,7 @@ public partial class Conductor<T>
             /// <summary>
             /// Activate the given item, and add it to the Items collection
             /// </summary>
-            public override Task ActivateItemAsync(T item, CancellationToken ct = default)
+            public override Task ActivateItemAsync(T? item, CancellationToken ct = default)
             {
                 if (item == null)
                     return Task.CompletedTask;
@@ -152,7 +152,7 @@ public partial class Conductor<T>
             /// <summary>
             /// Deactive the given item
             /// </summary>
-            public override Task DeactivateItemAsync(T item, CancellationToken ct = default)
+            public override Task DeactivateItemAsync(T? item, CancellationToken ct = default)
             {
                 return ScreenExtensions.TryDeactivateAsync(item, ct);
             }
@@ -160,7 +160,7 @@ public partial class Conductor<T>
             /// <summary>
             /// Close a particular item, removing it from the Items collection
             /// </summary>
-            public override async Task CloseItemAsync(T item, CancellationToken ct = default)
+            public override async Task CloseItemAsync(T? item, CancellationToken ct = default)
             {
                 if (item == null)
                     return;

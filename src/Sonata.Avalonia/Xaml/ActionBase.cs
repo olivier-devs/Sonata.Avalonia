@@ -10,7 +10,7 @@ public abstract class ActionBase : AvaloniaObject
     /// <summary>
     /// Gets the View to grab the View.ActionTarget from
     /// </summary>
-    public AvaloniaObject Subject { get; private set; }
+    public AvaloniaObject? Subject { get; private set; }
 
     /// <summary>
     /// Gets the method name. E.g. if someone's gone Buttom Command="{s:Action MyMethod}", this is MyMethod.
@@ -20,7 +20,7 @@ public abstract class ActionBase : AvaloniaObject
     /// <summary>
     /// Gets the MethodInfo for the method to call. This has to exist, or we throw a wobbly
     /// </summary>
-    protected MethodInfo TargetMethodInfo { get; private set; }
+    protected MethodInfo? TargetMethodInfo { get; private set; }
 
     /// <summary>
     /// Behaviour for if the target is null
@@ -35,7 +35,7 @@ public abstract class ActionBase : AvaloniaObject
     /// <summary>
     /// Gets the object on which methods will be invoked
     /// </summary>
-    public object Target
+    public object? Target
     {
         get => GetValue(targetProperty);
         private set => SetValue(targetProperty, value);
@@ -47,12 +47,12 @@ public abstract class ActionBase : AvaloniaObject
     //         ((ActionBase)d).UpdateActionTarget(e.OldValue, e.NewValue);
     //     }));
 
-    private static readonly StyledProperty<object> targetProperty;
+    private static readonly StyledProperty<object?> targetProperty;
 
 
     static ActionBase()
     {
-        targetProperty = AvaloniaProperty.Register<ActionBase, object>(nameof(Target));
+        targetProperty = AvaloniaProperty.Register<ActionBase, object?>(nameof(Target));
         targetProperty.Changed.Subscribe(e =>
         {
             // var type = e.NewValue.GetType();
@@ -70,7 +70,7 @@ public abstract class ActionBase : AvaloniaObject
     /// <param name="targetNullBehaviour">Behaviour for it the relevant View.ActionTarget is null</param>
     /// <param name="actionNonExistentBehaviour">Behaviour for if the action doesn't exist on the View.ActionTarget</param>
     /// <param name="logger">Logger to use</param>
-    public ActionBase(AvaloniaObject subject, AvaloniaObject backupSubject, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, ILogger logger)
+    public ActionBase(AvaloniaObject subject, AvaloniaObject? backupSubject, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, ILogger logger)
         : this(methodName, targetNullBehaviour, actionNonExistentBehaviour, logger)
     {
         Subject = subject;
@@ -138,9 +138,9 @@ public abstract class ActionBase : AvaloniaObject
         _logger = logger;
     }
 
-    private void UpdateActionTarget(object oldTarget, object newTarget)
+    private void UpdateActionTarget(object? oldTarget, object? newTarget)
     {
-        MethodInfo targetMethodInfo = null;
+        MethodInfo? targetMethodInfo = null;
 
         // If it's being set to the initial value, ignore it
         // At this point, we're executing the View's InitializeComponent method, and the ActionTarget hasn't yet been assigned
@@ -166,9 +166,11 @@ public abstract class ActionBase : AvaloniaObject
         else
         {
             BindingFlags bindingFlags;
-            if (newTarget is Type newTargetType)
+            Type newTargetType;
+            if (newTarget is Type newTargetTypeValue)
             {
                 bindingFlags = BindingFlags.Public | BindingFlags.Static;
+                newTargetType = newTargetTypeValue;
             }
             else
             {
@@ -185,7 +187,8 @@ public abstract class ActionBase : AvaloniaObject
 
                 if (targetMethodInfo == null)
                 {
-                    var t = Target.GetType();
+                    var target = Target ?? throw new InvalidOperationException("Target was unexpectedly null while resolving the action method");
+                    var t = target.GetType();
                     targetMethodInfo = t.GetMethod(MethodName, bindingFlags);
                     if (targetMethodInfo == null)
                         _logger.LogWarning("Unable to find{0} method {1} on {2}", newTarget is Type ? " static" : "", MethodName, newTargetType.Name);
@@ -218,7 +221,7 @@ public abstract class ActionBase : AvaloniaObject
     /// </summary>
     /// <param name="oldTarget">Previous target</param>
     /// <param name="newTarget">New target</param>
-    private protected virtual void OnTargetChanged(object oldTarget, object newTarget) { }
+    private protected virtual void OnTargetChanged(object? oldTarget, object? newTarget) { }
 
     /// <summary>
     /// Assert that the target is not View.InitialActionTarget
@@ -252,6 +255,9 @@ public abstract class ActionBase : AvaloniaObject
     {
         _logger.LogInformation("Invoking method {0} on {1} with parameters ({2})", MethodName, TargetName(), parameters == null ? "none" : string.Join(", ", parameters));
 
+        if (TargetMethodInfo == null)
+            return;
+
         try
         {
             var target = TargetMethodInfo.IsStatic ? null : Target;
@@ -268,16 +274,18 @@ public abstract class ActionBase : AvaloniaObject
             // They want a stack track for their VM method, not us
             _logger.LogError(e.InnerException, string.Format("Failed to invoke method {0} on {1} with parameters ({2})", MethodName, TargetName(), parameters == null ? "none" : string.Join(", ", parameters)));
             // http://stackoverflow.com/a/17091351/1086121
-            ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+            ExceptionDispatchInfo.Capture(e.InnerException ?? e).Throw();
         }
 
     }
 
     private string TargetName()
     {
-        return Target is Type t
-            ? $"static target {t.Name}"
-            : $"target {Target.GetType().Name}";
+        if (Target is Type t)
+            return $"static target {t.Name}";
+
+        var targetName = Target?.GetType().Name ?? "(null)";
+        return $"target {targetName}";
     }
 
     private class MultiBindingToActionTargetConverter : IMultiValueConverter

@@ -23,7 +23,7 @@ public interface IHaveActiveItem<T>
     /// Gets or sets the only item which is currently active.
     /// This normally corresponds to the item being displayed
     /// </summary>
-    T ActiveItem { get; set; }
+    T? ActiveItem { get; set; }
 }
 
 /// <summary>
@@ -36,7 +36,7 @@ public interface IChildDelegate
     /// </summary>
     /// <param name="item">Child object, which is passed by the child itself</param>
     /// <param name="dialogResult">DialogResult to use to close, if any</param>
-    Task CloseItemAsync(object item, bool? dialogResult = null, CancellationToken ct = default);
+    Task CloseItemAsync(object? item, bool? dialogResult = null, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -55,15 +55,15 @@ public interface IConductor<T>
     /// <summary>
     /// Activate the given item
     /// </summary>
-    Task ActivateItemAsync(T item, CancellationToken ct = default);
+    Task ActivateItemAsync(T? item, CancellationToken ct = default);
 
     /// <summary>
     /// Deactivate the given item
     /// </summary>
-    Task DeactivateItemAsync(T item, CancellationToken ct = default);
+    Task DeactivateItemAsync(T? item, CancellationToken ct = default);
 
     /// <summary>
     /// Close the given item
     /// </summary>
-    Task CloseItemAsync(T item, CancellationToken ct = default);
+    Task CloseItemAsync(T? item, CancellationToken ct = default);
 }

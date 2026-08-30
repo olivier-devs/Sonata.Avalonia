@@ -8,7 +8,7 @@ public interface IViewAware
     /// <summary>
     /// Gets the view associated with this ViewModel
     /// </summary>
-    Control View { get; }
+    Control? View { get; }
 
     /// <summary>
     /// Called when the view should be attached. Should set View property.
@@ -63,22 +63,22 @@ public interface IScreenState
     /// <summary>
     /// Raised when the Screen's state changed, for any reason
     /// </summary>
-    event EventHandler<ScreenStateChangedEventArgs> StateChanged;
+    event EventHandler<ScreenStateChangedEventArgs>? StateChanged;
 
     /// <summary>
     /// Raised when the object is actually activated
     /// </summary>
-    event EventHandler<ActivationEventArgs> Activated;
+    event EventHandler<ActivationEventArgs>? Activated;
 
     /// <summary>
     /// Raised when the object is actually deactivated
     /// </summary>
-    event EventHandler<DeactivationEventArgs> Deactivated;
+    event EventHandler<DeactivationEventArgs>? Deactivated;
 
     /// <summary>
     /// Raised when the object is actually closed
     /// </summary>
-    event EventHandler<CloseEventArgs> Closed;
+    event EventHandler<CloseEventArgs>? Closed;
 
     /// <summary>
     /// Activate the object. May not actually cause activation (e.g. if it's already active)
@@ -115,7 +115,7 @@ public interface IChild
     /// <summary>
     /// Gets or sets the parent object to this child
     /// </summary>
-    object Parent { get; set; }
+    object? Parent { get; set; }
 }
 
 /// <summary>

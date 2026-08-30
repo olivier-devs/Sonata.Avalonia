@@ -1,5 +1,4 @@
-﻿
-using Avalonia.Metadata;
+﻿using Avalonia.Metadata;
 
 namespace Sonata.Avalonia.Xaml;
 
@@ -38,12 +37,12 @@ public class ActionExtension : MarkupExtension
     /// Gets or sets the name of the method to call
     /// </summary>
     [ConstructorArgument("method")]
-    public string Method { get; set; }
+    public string? Method { get; set; }
 
     /// <summary>
     /// Gets or sets a target to override that set with View.ActionTarget
     /// </summary>
-    public object Target { get; set; }
+    public object? Target { get; set; }
 
     /// <summary>
     /// Gets or sets the behaviour if the View.ActionTarget is nulil
@@ -89,7 +88,7 @@ public class ActionExtension : MarkupExtension
         if (Method == null)
             throw new InvalidOperationException("Method has not been set");
 
-        var valueService = (IProvideValueTarget)serviceProvider.GetService(typeof(IProvideValueTarget));
+        var valueService = serviceProvider.GetService(typeof(IProvideValueTarget)) as IProvideValueTarget;
 
         switch (valueService?.TargetObject)
         {
@@ -97,7 +96,13 @@ public class ActionExtension : MarkupExtension
                 return HandleDependencyObject(serviceProvider, valueService, targetObject);
             // TODO: case CommandBinding commandBinding:
             case RoutedCommandBinding commandBinding:
-                return CreateEventAction(serviceProvider, null, ((EventInfo)valueService.TargetProperty).EventHandlerType, isCommandBinding: true);
+                {
+                    var eventInfo = valueService.TargetProperty as EventInfo
+                        ?? throw new InvalidOperationException("Action used with a CommandBinding whose TargetProperty is not an event");
+                    var eventType = eventInfo.EventHandlerType
+                        ?? throw new InvalidOperationException($"Event {eventInfo.Name} does not have a handler type");
+                    return CreateEventAction(serviceProvider, null, eventType, isCommandBinding: true);
+                }
             default:
                 // Seems this is the case when we're in a template. We'll get called again properly in a second.
                 // http://social.msdn.microsoft.com/Forums/vstudio/en-US/a9ead3d5-a4e4-4f9c-b507-b7a7d530c6a9/gaining-access-to-target-object-instead-of-shareddp-in-custom-markupextensions-providevalue-method?forum=wpf
@@ -110,8 +115,11 @@ public class ActionExtension : MarkupExtension
         if (valueService.TargetProperty is string str)
         {
             var type = valueService.TargetObject.GetType();
-            var eventInfo = type.GetEvent(str);
-            return CreateEventAction(serviceProvider, targetObject, eventInfo.EventHandlerType);
+            var eventInfo = type.GetEvent(str)
+                ?? throw new InvalidOperationException(string.Format("Unable to find event {0} on {1}", str, type.Name));
+            var eventHandlerType = eventInfo.EventHandlerType
+                ?? throw new InvalidOperationException($"Event {eventInfo.Name} does not have a handler type");
+            return CreateEventAction(serviceProvider, targetObject, eventHandlerType);
         }
 
         switch (valueService.TargetProperty)
@@ -120,7 +128,9 @@ public class ActionExtension : MarkupExtension
                 // If they're in design mode and haven't set View.ActionTarget, default to looking sensible
                 return CreateCommandAction(serviceProvider, targetObject);
             case EventInfo eventInfo:
-                return CreateEventAction(serviceProvider, targetObject, eventInfo.EventHandlerType);
+                var eventType = eventInfo.EventHandlerType
+                    ?? throw new InvalidOperationException($"Event {eventInfo.Name} does not have a handler type");
+                return CreateEventAction(serviceProvider, targetObject, eventType);
             case MethodInfo methodInfo: // For attached events
                 {
                     var parameters = methodInfo.GetParameters();
@@ -135,41 +145,50 @@ public class ActionExtension : MarkupExtension
         }
     }
 
-    private ICommand CreateCommandAction(IServiceProvider serviceProvider, AvaloniaObject targetObject)
+    private ICommand CreateCommandAction(IServiceProvider serviceProvider, AvaloniaObject? targetObject)
     {
+        if (targetObject == null)
+            throw new InvalidOperationException("CommandAction requires a target control");
+
+        var methodName = Method ?? throw new InvalidOperationException("Method has not been set");
+
         if (Target == null)
         {
-            var rootObjectProvider = (IRootObjectProvider)serviceProvider.GetService(typeof(IRootObjectProvider));
+            var rootObjectProvider = serviceProvider.GetService(typeof(IRootObjectProvider)) as IRootObjectProvider;
             var rootObject = rootObjectProvider?.RootObject as AvaloniaObject;
-            return new CommandAction(targetObject, rootObject, Method, CommandNullTargetBehaviour, CommandActionNotFoundBehaviour);
+            return new CommandAction(targetObject, rootObject, methodName, CommandNullTargetBehaviour, CommandActionNotFoundBehaviour);
         }
         else
         {
-            return new CommandAction(Target, Method, CommandNullTargetBehaviour, CommandActionNotFoundBehaviour);
+            return new CommandAction(Target, methodName, CommandNullTargetBehaviour, CommandActionNotFoundBehaviour);
         }
     }
 
-    private Delegate CreateEventAction(IServiceProvider serviceProvider, AvaloniaObject targetObject, Type eventType, bool isCommandBinding = false)
+    private Delegate CreateEventAction(IServiceProvider serviceProvider, AvaloniaObject? targetObject, Type eventType, bool isCommandBinding = false)
     {
+        var methodName = Method ?? throw new InvalidOperationException("Method has not been set");
+
         EventAction ec;
         if (Target == null)
         {
-            var rootObjectProvider = (IRootObjectProvider)serviceProvider.GetService(typeof(IRootObjectProvider));
+            var rootObjectProvider = serviceProvider.GetService(typeof(IRootObjectProvider)) as IRootObjectProvider;
             var rootObject = rootObjectProvider?.RootObject as AvaloniaObject;
             if (isCommandBinding)
             {
                 if (rootObject == null)
                     throw new InvalidOperationException("Action may only be used with CommandBinding from a XAML view (unable to retrieve IRootObjectProvider.RootObject)");
-                ec = new EventAction(rootObject, null, eventType, Method, EventNullTargetBehaviour, EventActionNotFoundBehaviour);
+                ec = new EventAction(rootObject, null, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour);
             }
             else
             {
-                ec = new EventAction(targetObject, rootObject, eventType, Method, EventNullTargetBehaviour, EventActionNotFoundBehaviour);
+                if (targetObject == null)
+                    throw new InvalidOperationException("EventAction requires a target control");
+                ec = new EventAction(targetObject, rootObject, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour);
             }
         }
         else
         {
-            ec = new EventAction(Target, eventType, Method, EventNullTargetBehaviour, EventActionNotFoundBehaviour);
+            ec = new EventAction(Target, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour);
         }
 
         return ec.GetDelegate();

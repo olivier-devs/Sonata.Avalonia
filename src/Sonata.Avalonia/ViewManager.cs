@@ -11,7 +11,7 @@ public interface IViewManager
     /// <param name="targetLocation">Thing which View.Model was changed on. Will have its Content set</param>
     /// <param name="oldValue">Previous value of View.Model</param>
     /// <param name="newValue">New value of View.Model</param>
-    void OnModelChanged(AvaloniaObject targetLocation, object oldValue, object newValue);
+    void OnModelChanged(AvaloniaObject targetLocation, object? oldValue, object? newValue);
 
     /// <summary>
     /// Given a ViewModel instance, locate its View type (using LocateViewForModel), and instantiates it
@@ -62,7 +62,8 @@ public class ViewManager : IViewManager
 
     internal readonly ConcurrentDictionary<Type, Type> ViewTypeCache = new();
 
-    private Func<Type, object> _viewFactory; // This is assigned by the ctor
+    // Assigned through the ViewFactory property setter in the constructor.
+    private Func<Type, object> _viewFactory = null!;
 
     /// <summary>
     /// Gets or sets the delegate used to retrieve an instance of a view
@@ -78,7 +79,8 @@ public class ViewManager : IViewManager
         }
     }
 
-    private List<Assembly> _viewAssemblies; // This is assigned by the ctor
+    // Assigned through the ViewAssemblies property setter in the constructor.
+    private List<Assembly> _viewAssemblies = null!;
 
     /// <summary>
     /// Gets or sets the assemblies which are used for IoC container auto-binding and searching for Views.
@@ -160,7 +162,7 @@ public class ViewManager : IViewManager
     /// <param name="targetLocation">Thing which View.Model was changed on. Will have its Content set</param>
     /// <param name="oldValue">Previous value of View.Model</param>
     /// <param name="newValue">New value of View.Model</param>
-    public virtual void OnModelChanged(AvaloniaObject targetLocation, object oldValue, object newValue)
+    public virtual void OnModelChanged(AvaloniaObject targetLocation, object? oldValue, object? newValue)
     {
         if (oldValue == newValue)
             return;
@@ -191,11 +193,10 @@ public class ViewManager : IViewManager
     /// <returns>Newly created View, bound to the given ViewModel</returns>
     public virtual Control CreateAndBindViewForModelIfNecessary(object model)
     {
-        var modelAsViewAware = model as IViewAware;
-        if (modelAsViewAware != null && modelAsViewAware.View != null)
+        if (model is IViewAware modelAsViewAware && modelAsViewAware.View is Control existingView)
         {
             _logger.LogInformation("ViewModel {0} already has a View attached to it. Not attaching another", model);
-            return modelAsViewAware.View;
+            return existingView;
         }
 
         return CreateAndBindViewForModel(model);
@@ -222,7 +223,7 @@ public class ViewManager : IViewManager
     /// <param name="viewName">View name to locate the type for</param>
     /// <param name="extraAssemblies">Extra assemblies to search through</param>
     /// <returns>Type for that view name</returns>
-    protected virtual Type ViewTypeForViewName(string viewName, IEnumerable<Assembly> extraAssemblies)
+    protected virtual Type? ViewTypeForViewName(string viewName, IEnumerable<Assembly> extraAssemblies)
     {
         return ViewAssemblies.Concat(extraAssemblies).Select(x => x.GetType(viewName)).FirstOrDefault(x => x != null);
     }
@@ -266,23 +267,16 @@ public class ViewManager : IViewManager
     {
         return ViewTypeCache.GetOrAdd(modelType, mt =>
         {
-            var modelName = mt.FullName;
+            var modelName = mt.FullName ?? throw new SonataViewLocationException("Unable to determine the ViewModel's full name", string.Empty);
             var viewName = ViewTypeNameForModelTypeName(modelName);
             if (modelName == viewName)
                 throw new SonataViewLocationException(string.Format("Unable to transform ViewModel name {0} into a suitable View name", modelName), viewName);
 
             // Also include the ViewModel's assembly, to be helpful
-            var viewType = ViewTypeForViewName(viewName, new[] { mt.Assembly });
-            if (viewType == null)
-            {
-                var e = new SonataViewLocationException(string.Format("Unable to find a View with type {0}", viewName), viewName);
-                _logger.LogError(e, "View location failed");
-                throw e;
-            }
-            else
-            {
-                _logger.LogInformation("Searching for a View with name {0}, and found {1}", viewName, viewType);
-            }
+            var viewType = ViewTypeForViewName(viewName, new[] { mt.Assembly })
+                ?? throw new SonataViewLocationException(string.Format("Unable to find a View with type {0}", viewName), viewName);
+
+            _logger.LogInformation("Searching for a View with name {0}, and found {1}", viewName, viewType);
 
             return viewType;
         });

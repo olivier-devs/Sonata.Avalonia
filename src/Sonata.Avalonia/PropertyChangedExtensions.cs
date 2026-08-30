@@ -54,7 +54,7 @@ public static class PropertyChangedExtensions
 
         public void Unbind()
         {
-            if (this.inpc.TryGetTarget(out INotifyPropertyChanged inpc))
+            if (this.inpc.TryGetTarget(out INotifyPropertyChanged? inpc))
                 inpc.PropertyChanged -= handler;
         }
     }
@@ -80,17 +80,21 @@ public static class PropertyChangedExtensions
             // PropertyChangedEventManager.AddHandler(source, this.PropertyChangedHandler, this.propertyName);
         }
 
-        private void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+        private void PropertyChangedHandler(object? sender, PropertyChangedEventArgs e)
         {
-            var got = this.source.TryGetTarget(out TSource source);
-            // We should never hit this case. The PropertyChangedeventManager shouldn't call us if the source became null
-            Debug.Assert(got);
+            if (!this.source.TryGetTarget(out TSource? source))
+            {
+                // We should never hit this case. The PropertyChangedeventManager shouldn't call us if the source became null
+                Debug.Assert(false);
+                return;
+            }
+
             handler(source, new PropertyChangedExtendedEventArgs<TProperty>(propertyName, valueSelector(source)));
         }
 
         public void Unbind()
         {
-            if (this.source.TryGetTarget(out TSource source))
+            if (this.source.TryGetTarget(out TSource? source))
             {
                 PropertyChangedWeakEventManager.RemoveHandler(source, PropertyChangedHandler);
                 // PropertyChangedEventManager.RemoveHandler(source, this.PropertyChangedHandler, this.propertyName);
@@ -109,7 +113,7 @@ public static class PropertyChangedExtensions
 
         public void Unbind()
         {
-            if (this.wrappedBinding.TryGetTarget(out IEventBinding wrappedBinding))
+            if (this.wrappedBinding.TryGetTarget(out IEventBinding? wrappedBinding))
                 wrappedBinding.Unbind();
         }
     }
@@ -163,11 +167,11 @@ public static class PropertyChangedExtensions
         // If it does get released, we're released from the delegate list
         var weakTarget = new WeakReference<TSource>(target);
 
-        void ourHandler(object o, PropertyChangedEventArgs e)
+        void ourHandler(object? o, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == propertyName || e.PropertyName == string.Empty)
             {
-                if (weakTarget.TryGetTarget(out TSource strongTarget))
+                if (weakTarget.TryGetTarget(out TSource? strongTarget))
                     handler(strongTarget, new PropertyChangedExtendedEventArgs<TProperty>(propertyName, propertyAccess(strongTarget)));
             }
         }
@@ -197,7 +201,7 @@ public static class PropertyChangedExtensions
     [Obsolete("Don't use this - use Bind instead and explicitly .Unbind it when appropriate.", error: true)]
     public static IEventBinding BindWeak<TSource, TProperty>(this TSource target, Expression<Func<TSource, TProperty>> targetSelector, EventHandler<PropertyChangedExtendedEventArgs<TProperty>> handler) where TSource : class, INotifyPropertyChanged
     {
-        var attribute = handler.Target.GetType().GetCustomAttribute<CompilerGeneratedAttribute>();
+        var attribute = handler.Target?.GetType().GetCustomAttribute<CompilerGeneratedAttribute>();
         if (attribute != null)
             throw new InvalidOperationException("Handler passed to BindWeak refers to a compiler-generated class. You may not capture local variables in the handler");
 

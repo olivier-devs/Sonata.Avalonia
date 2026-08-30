@@ -9,16 +9,16 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
     /// <summary>
     /// Occurs when the validation errors have changed for a property or for the entire entity.
     /// </summary>
-    public event EventHandler<DataErrorsChangedEventArgs> ErrorsChanged;
+    public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
 
     private readonly SemaphoreSlim propertyErrorsLock = new SemaphoreSlim(1, 1);
-    private readonly Dictionary<string, string[]> propertyErrors = new Dictionary<string, string[]>();
-    private IModelValidator _validator;
+    private readonly Dictionary<string, string[]?> propertyErrors = new Dictionary<string, string[]?>();
+    private IModelValidator? _validator;
 
     /// <summary>
     /// Gets or sets the IModelValidator to use to validate properties. You're expected to write your own, using your favourite validation library
     /// </summary>
-    protected virtual IModelValidator Validator
+    protected virtual IModelValidator? Validator
     {
         get { return _validator; }
         set
@@ -46,7 +46,7 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
     /// Initialises a new instance of the <see cref="ValidatingModelBase"/> class, using the specifies <see cref="IModelValidator"/>
     /// </summary>
     /// <param name="validator">Validator adapter to use to perform validations</param>
-    public ValidatingModelBase(IModelValidator validator) : this()
+    public ValidatingModelBase(IModelValidator? validator) : this()
     {
         // Can't set this.validator, as it's virtual, and FxCop complains
         _validator = validator;
@@ -54,7 +54,7 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
             _validator.Initialize(this);
     }
 
-    private bool ErrorsEqual(string[] e1, string[] e2)
+    private bool ErrorsEqual(string[]? e1, string[]? e2)
     {
         if (e1 == null && e2 == null)
             return true;
@@ -79,7 +79,7 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
         // However, we can't raise PropertyChanged events from within the lock, otherwise deadlock
         var results = await Validator.ValidateAllPropertiesAsync().ConfigureAwait(false);
         if (results == null)
-            results = new Dictionary<string, IEnumerable<string>>();
+            results = new Dictionary<string, IEnumerable<string>?>();
 
         var changedProperties = new List<string>();
         await propertyErrorsLock.WaitAsync(ct).ConfigureAwait(false);
@@ -120,7 +120,7 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
     /// </summary>
     /// <param name="property">Name of the property to change the errors for (or <see cref="string.Empty"/> to change the errors for the whole model)</param>
     /// <param name="errors">The new errors, or null to clear errors for this property</param>
-    protected virtual void RecordPropertyError<TProperty>(Expression<Func<TProperty>> property, string[] errors)
+    protected virtual void RecordPropertyError<TProperty>(Expression<Func<TProperty>> property, string[]? errors)
     {
         RecordPropertyError(property.NameForProperty(), errors);
     }
@@ -130,7 +130,7 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
     /// </summary>
     /// <param name="propertyName">Name of the property to change the errors for (or <see cref="string.Empty"/> to change the errors for the whole model)</param>
     /// <param name="errors">The new errors, or null to clear errors for this property</param>
-    protected virtual void RecordPropertyError(string propertyName, string[] errors)
+    protected virtual void RecordPropertyError(string propertyName, string[]? errors)
     {
         if (propertyName == null)
             propertyName = string.Empty;
@@ -139,7 +139,7 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
         propertyErrorsLock.Wait();
         try
         {
-            string[] existingErrors;
+            string[]? existingErrors;
             if (!propertyErrors.TryGetValue(propertyName, out existingErrors) || !ErrorsEqual(errors, existingErrors))
             {
                 propertyErrors[propertyName] = errors;
@@ -198,7 +198,7 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
     /// <param name="propertyName">Property to validate. Validates the entire model if null or <see cref="string.Empty"/></param>
     /// <returns>True if the property validated successfully</returns>
     /// <remarks>If you override this, you MUST fire ErrorsChanged and call OnValidationStateChanged() if appropriate</remarks>
-    public virtual async Task<bool> ValidatePropertyAsync([CallerMemberName] string propertyName = null, CancellationToken ct = default)
+    public virtual async Task<bool> ValidatePropertyAsync([CallerMemberName] string? propertyName = null, CancellationToken ct = default)
     {
         if (Validator == null)
             throw new InvalidOperationException("Can't run validation if a validator hasn't been set");
@@ -279,9 +279,9 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
     /// </summary>
     /// <param name="propertyName">The name of the property to retrieve validation errors for; or null or System.String.Empty, to retrieve entity-level errors.</param>
     /// <returns>The validation errors for the property or entity.</returns>
-    public virtual IEnumerable GetErrors(string propertyName)
+    public virtual IEnumerable? GetErrors(string? propertyName)
     {
-        string[] errors;
+        string[]? errors;
 
         if (propertyName == null)
             propertyName = string.Empty;
