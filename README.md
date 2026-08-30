@@ -1,5 +1,9 @@
 # Sonata.Avalonia
 
+[![CI](https://github.com/olivier-devs/Sonata.Avalonia/actions/workflows/ci.yml/badge.svg)](https://github.com/olivier-devs/Sonata.Avalonia/actions/workflows/ci.yml)
+[![Publish](https://github.com/olivier-devs/Sonata.Avalonia/actions/workflows/publish.yml/badge.svg)](https://github.com/olivier-devs/Sonata.Avalonia/actions/workflows/publish.yml)
+[![NuGet](https://img.shields.io/nuget/v/Sonata.Avalonia.svg)](https://www.nuget.org/packages/Sonata.Avalonia/)
+
 A lightweight, powerful ViewModel-first MVVM framework for [Avalonia UI](https://avaloniaui.net/),
 modernized from [Stylet.Avalonia](https://github.com/sealoyal2018/Stylet.Avalonia) (itself a port of
 [Stylet](https://github.com/canton7/Stylet)) for .NET 8/9/10 and Avalonia 12.
