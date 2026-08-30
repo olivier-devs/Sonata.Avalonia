@@ -2,7 +2,7 @@
     <PropertyGroup>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
-        <Version>1.0.0-preview.1</Version>
+        <Version>1.0.0</Version>
         <Authors>Sonata Contributors</Authors>
         <Copyright>Copyright © Sonata Contributors — derived from Stylet.Avalonia (MIT, © sealoyal) and Stylet (MIT, © canton7)</Copyright>
         <PackageProjectUrl>https://github.com/sonata-avalonia/Sonata.Avalonia</PackageProjectUrl>
