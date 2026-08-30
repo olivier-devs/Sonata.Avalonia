@@ -119,11 +119,11 @@ internal sealed class WindowConductor : IChildDelegate
         if (e.Cancel)
             return;
 
+        // Cancel by default: the close only proceeds if CanCloseAsync succeeds below.
+        e.Cancel = true;
+
         _logger.LogInformation("ViewModel {0} close requested because its View was closed", _viewModel);
 
-        // Always defer the close decision until CanCloseAsync completes. If it completed
-        // synchronously this round-trips through one await, which is imperceptible.
-        e.Cancel = true;
         try
         {
             if (await ((IGuardClose)_viewModel).CanCloseAsync())
@@ -164,10 +164,10 @@ internal sealed class WindowConductor : IChildDelegate
         _logger.LogInformation("ViewModel {0} close requested with DialogResult {1} because it called RequestClose", _viewModel, dialogResult);
 
         UnsubscribeFromWindowEvents();
-        _window.Dispose();
 
         try
         {
+            _window.Dispose();
             await ScreenExtensions.TryCloseAsync(_viewModel, ct);
         }
         finally

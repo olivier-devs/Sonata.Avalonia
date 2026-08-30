@@ -34,4 +34,14 @@ public class FireAndForgetTests
         // Must not throw (defensive)
         FireAndForget.Run(Task.CompletedTask, logger);
     }
+
+    [Fact]
+    public void Run_LoggerThrowsInObservation_DoesNotCrash()
+    {
+        var task = Task.FromException(new InvalidOperationException("boom"));
+
+        var ex = Record.Exception(() => FireAndForget.Run(task, new ThrowingLogger()));
+
+        Assert.Null(ex);
+    }
 }

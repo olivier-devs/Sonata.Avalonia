@@ -154,11 +154,26 @@ public class FakeWindowAdapter : IWindowAdapter
         LastDialogResult = dialogResult;
     }
 
-    public void Dispose() => Disposed = true;
+    public virtual void Dispose() => Disposed = true;
 
     public void RaiseClosing(CancelEventArgs e) => Closing?.Invoke(this, e);
     public void RaiseClosed() => Closed?.Invoke(this, EventArgs.Empty);
     public void RaiseStateChanged() => StateChanged?.Invoke(this, EventArgs.Empty);
+}
+
+public class ThrowingDisposeWindowAdapter : FakeWindowAdapter
+{
+    public override void Dispose() => throw new InvalidOperationException("dispose boom");
+}
+
+public class ThrowingLogger : ILogger
+{
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+    public bool IsEnabled(LogLevel logLevel) => true;
+
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+        Func<TState, Exception?, string> formatter) => throw new InvalidOperationException("logger boom");
 }
 
 public class DisposableItem : IAsyncDisposable

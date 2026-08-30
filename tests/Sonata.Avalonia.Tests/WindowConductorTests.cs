@@ -142,4 +142,17 @@ public class WindowConductorTests
 
         Assert.Equal(0, _window.CloseCalls);   // handler returned before touching the guard
     }
+
+    [Fact]
+    public async Task CloseItemAsync_DisposeThrows_StillCloses()
+    {
+        var throwing = new ThrowingDisposeWindowAdapter();
+        var vm = new TestScreen();
+        var conductor = new WindowConductor(throwing, vm, NullLogger.Instance);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => ((IChildDelegate)conductor).CloseItemAsync(vm, null, CancellationToken.None));
+
+        Assert.Equal(1, throwing.CloseCalls);
+    }
 }

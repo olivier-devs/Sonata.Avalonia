@@ -20,14 +20,26 @@ internal static class FireAndForget
         if (task.IsCompleted)
         {
             if (task.IsFaulted)
-                logger.LogError(task.Exception, "Unhandled exception in fire-and-forget task");
+                LogError(logger, task.Exception);
             return;
         }
 
         _ = task.ContinueWith(
-            t => logger.LogError(t.Exception, "Unhandled exception in fire-and-forget task"),
+            t => LogError(logger, t.Exception),
             CancellationToken.None,
             TaskContinuationOptions.OnlyOnFaulted,
             TaskScheduler.Default);
+    }
+
+    private static void LogError(ILogger logger, Exception? exception)
+    {
+        try
+        {
+            logger.LogError(exception, "Unhandled exception in fire-and-forget task {Task}", exception?.GetType().Name ?? "unknown");
+        }
+        catch
+        {
+            // A misbehaving logger must not crash the observing thread.
+        }
     }
 }
