@@ -108,16 +108,15 @@ internal sealed class WindowConductor : IChildDelegate
 
     private void WindowClosed(object? sender, EventArgs e)
     {
-        UnsubscribeFromWindowEvents();
-
         try
         {
+            UnsubscribeFromWindowEvents();
             _window.Dispose();
         }
         catch (Exception ex)
         {
             // Guarded: a misbehaving adapter (or logger) must not prevent the ViewModel from closing.
-            try { _logger.LogError(ex, "Window adapter Dispose threw for ViewModel {0}; closing the ViewModel anyway", _viewModel); }
+            try { _logger.LogError(ex, "Window adapter cleanup threw for ViewModel {0}; closing the ViewModel anyway", _viewModel); }
             catch { }
         }
         finally
@@ -179,14 +178,28 @@ internal sealed class WindowConductor : IChildDelegate
 
         UnsubscribeFromWindowEvents();
 
+        Exception? disposeError = null;
         try
         {
             _window.Dispose();
+        }
+        catch (Exception ex)
+        {
+            disposeError = ex;
+            // Guarded: a misbehaving adapter must not prevent the ViewModel from closing.
+            try { _logger.LogError(ex, "Window adapter Dispose threw for ViewModel {0}; closing the ViewModel anyway", _viewModel); }
+            catch { }
+        }
+
+        try
+        {
             await ScreenExtensions.TryCloseAsync(_viewModel, ct);
         }
         finally
         {
             _window.Close(dialogResult);
+            if (disposeError is not null)
+                ExceptionDispatchInfo.Capture(disposeError).Throw();
         }
     }
 }

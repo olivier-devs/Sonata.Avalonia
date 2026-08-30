@@ -156,6 +156,7 @@ public class WindowConductorTests
             () => ((IChildDelegate)conductor).CloseItemAsync(vm, null, CancellationToken.None));
 
         Assert.Equal(1, throwing.CloseCalls);
+        Assert.Equal(ScreenState.Closed, vm.ScreenState);
     }
 
     [Fact]
@@ -170,7 +171,19 @@ public class WindowConductorTests
         throwing.RaiseClosed();
 
         Assert.Equal(ScreenState.Closed, vm.ScreenState);
-        Assert.Contains(provider.Entries, e => e.Level == LogLevel.Error);
+        Assert.Contains(provider.Entries, e => e.Level == LogLevel.Error && e.Message.Contains("cleanup threw"));
+    }
+
+    [Fact]
+    public void WindowClosed_DisposeAndLoggerThrow_StillClosesViewModel()
+    {
+        var throwing = new ThrowingDisposeWindowAdapter();
+        var vm = new TestScreen();
+        var conductor = new WindowConductor(throwing, vm, new ThrowingLogger());
+
+        throwing.RaiseClosed();
+
+        Assert.Equal(ScreenState.Closed, vm.ScreenState);
     }
 
     [Fact]
