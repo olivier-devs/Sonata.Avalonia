@@ -14,5 +14,6 @@
     <Project Path="samples/Sonata.Samples.HelloDialog/Sonata.Samples.HelloDialog.csproj" />
     <Project Path="samples/Sonata.Samples.MasterDetail/Sonata.Samples.MasterDetail.csproj" />
     <Project Path="samples/Sonata.Samples.MSIoC/Sonata.Samples.MSIoC.csproj" />
+    <Project Path="samples/Sonata.Samples.TabNavigation/Sonata.Samples.TabNavigation.csproj" />
   </Folder>
 </Solution>
