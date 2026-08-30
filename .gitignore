@@ -263,3 +263,7 @@ __pycache__/
 /src/Coldairarrow.Api/wwwroot/Upload
 unpackage/
 /src/.vscode
+
+# Local planning docs (kept out of the repository)
+.ai/
+docs/superpowers/
