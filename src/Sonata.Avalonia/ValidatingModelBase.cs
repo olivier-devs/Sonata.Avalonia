@@ -279,7 +279,7 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
     /// </summary>
     /// <param name="propertyName">The name of the property to retrieve validation errors for; or null or System.String.Empty, to retrieve entity-level errors.</param>
     /// <returns>The validation errors for the property or entity.</returns>
-    public virtual IEnumerable? GetErrors(string? propertyName)
+    public virtual IEnumerable GetErrors(string? propertyName)
     {
         string[]? errors;
 
@@ -298,7 +298,7 @@ public class ValidatingModelBase : PropertyChangedBase, INotifyDataErrorInfo
             propertyErrorsLock.Release();
         }
 
-        return errors;
+        return errors ?? Array.Empty<string>();
     }
 
     /// <summary>

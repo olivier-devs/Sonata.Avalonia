@@ -160,7 +160,7 @@ internal sealed class WindowConductor : IChildDelegate
     /// <summary>
     /// Close was requested by the child
     /// </summary>
-    async Task IChildDelegate.CloseItemAsync(object item, bool? dialogResult, CancellationToken ct)
+    async Task IChildDelegate.CloseItemAsync(object? item, bool? dialogResult, CancellationToken ct)
     {
         if (item != _viewModel)
         {

@@ -68,7 +68,7 @@ public class LabelledValue<T> : PropertyChangedBase, IEquatable<LabelledValue<T>
     /// </summary>
     /// <param name="obj">An object to compare with this object</param>
     /// <returns>true if the current object is of the same type as the other object, and equal to the other parameter; otherwise, false.</returns>
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         return Equals(obj as LabelledValue<T>);
     }
