@@ -27,12 +27,11 @@ public class FireAndForgetTests
     }
 
     [Fact]
-    public void Run_DoesNotThrow_ForNullTask()
+    public void Run_NullTask_ThrowsArgumentNullException()
     {
         var logger = new LoggerFactory().CreateLogger("test");
 
-        // Must not throw (defensive)
-        FireAndForget.Run(Task.CompletedTask, logger);
+        Assert.Throws<ArgumentNullException>(() => FireAndForget.Run(null!, logger));
     }
 
     [Fact]
