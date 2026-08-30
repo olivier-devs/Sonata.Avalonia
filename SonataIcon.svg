@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Sonata icon: "S" monogram as three sound-wave bars, flat violet -->
+  <rect width="128" height="128" rx="28" fill="#7C4DFF"/>
+  <rect x="28" y="28" width="72" height="18" rx="9" fill="#FFFFFF"/>
+  <rect x="44" y="55" width="40" height="18" rx="9" fill="#FFFFFF"/>
+  <rect x="28" y="82" width="72" height="18" rx="9" fill="#FFFFFF"/>
+</svg>
