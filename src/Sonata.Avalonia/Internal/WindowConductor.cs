@@ -109,9 +109,21 @@ internal sealed class WindowConductor : IChildDelegate
     private void WindowClosed(object? sender, EventArgs e)
     {
         UnsubscribeFromWindowEvents();
-        _window.Dispose();
 
-        FireAndForget.Run(ScreenExtensions.TryCloseAsync(_viewModel), _logger);
+        try
+        {
+            _window.Dispose();
+        }
+        catch (Exception ex)
+        {
+            // Guarded: a misbehaving adapter (or logger) must not prevent the ViewModel from closing.
+            try { _logger.LogError(ex, "Window adapter Dispose threw for ViewModel {0}; closing the ViewModel anyway", _viewModel); }
+            catch { }
+        }
+        finally
+        {
+            FireAndForget.Run(ScreenExtensions.TryCloseAsync(_viewModel), _logger);
+        }
     }
 
     private async void WindowClosing(object? sender, CancelEventArgs e)

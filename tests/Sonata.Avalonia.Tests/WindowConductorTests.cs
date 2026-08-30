@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using System.ComponentModel;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Sonata.Avalonia;
 using Sonata.Avalonia.Internal;
@@ -155,5 +156,20 @@ public class WindowConductorTests
             () => ((IChildDelegate)conductor).CloseItemAsync(vm, null, CancellationToken.None));
 
         Assert.Equal(1, throwing.CloseCalls);
+    }
+
+    [Fact]
+    public void WindowClosed_DisposeThrows_StillClosesViewModel()
+    {
+        var provider = new TestLoggerProvider();
+        var logger = new LoggerFactory(new[] { provider }).CreateLogger("WindowConductor");
+        var throwing = new ThrowingDisposeWindowAdapter();
+        var vm = new TestScreen();
+        var conductor = new WindowConductor(throwing, vm, logger);
+
+        throwing.RaiseClosed();
+
+        Assert.Equal(ScreenState.Closed, vm.ScreenState);
+        Assert.Contains(provider.Entries, e => e.Level == LogLevel.Error);
     }
 }
