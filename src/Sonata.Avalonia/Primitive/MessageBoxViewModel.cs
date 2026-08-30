@@ -176,7 +176,7 @@ public class MessageBoxViewModel : Screen, IMessageBoxViewModel
         TextAlignment textAlignment = TextAlignment.Left)
     {
         Text = text;
-        DisplayName = caption??"提示";
+        DisplayName = caption ?? string.Empty;
         Icon = icon;
 
         var buttonList = new BindableCollection<LabelledValue<MessageBoxResult>>();
