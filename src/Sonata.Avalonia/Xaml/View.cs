@@ -97,10 +97,13 @@ public static class View
             if (e.Sender is Control control)
             {
                 var viewManager = IoC.Get<IViewManager>();
-                var newValue = e.NewValue == defaultModelValue ? null : e.NewValue;
-                if (!newValue.HasValue)
+                if (!e.NewValue.HasValue)
                     return;
-                viewManager.OnModelChanged(e.Sender, e.OldValue, newValue);
+                var newValue = e.NewValue.Value;
+                if (ReferenceEquals(newValue, defaultModelValue))
+                    newValue = null;
+                var oldValue = e.OldValue.HasValue ? e.OldValue.Value : null;
+                viewManager.OnModelChanged(e.Sender, oldValue, newValue);
                 return;
             }
             else if (UiThreadDispatch.InDesignMode)
