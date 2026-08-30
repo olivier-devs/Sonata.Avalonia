@@ -58,7 +58,7 @@ public class ApplicationDispatcher : IDispatcher
     /// <inheritdoc/>
     public void Send(Action action)
     {
-        dispatcher.InvokeAsync(action);
+        dispatcher.Invoke(action);
     }
 
     /// <inheritdoc/>
