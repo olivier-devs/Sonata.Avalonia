@@ -121,11 +121,13 @@ internal class Container : IContainer, IRegistrationContext
     private IEnumerable<object> GetAll(RuntimeTypeHandle typeHandle, string? key = null, Type? elementTypeIfAvailable = null)
     {
         var typeKey = new TypeKey(typeHandle, key);
-        IRegistration? registration;
         // This can currently never fail, since we pass in null
-        var result = TryRetrieveGetAllRegistrationFromElementType(typeKey, null, out registration, elementTypeIfAvailable);
-        Debug.Assert(result);
-        var generator = registration!.GetGenerator();
+        if (!TryRetrieveGetAllRegistrationFromElementType(typeKey, null, out var registration, elementTypeIfAvailable)
+            || registration is null)
+        {
+            throw new InvalidOperationException("No registration found for the requested type.");
+        }
+        var generator = registration.GetGenerator();
         return (IEnumerable<object>)generator(this);
     }
 
