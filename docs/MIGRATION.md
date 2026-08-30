@@ -76,7 +76,6 @@ If you were using the StyletIoC container, also add:
 | `IoC` (static service locator) | `internal` | Use constructor injection; only the XAML `View.Model` bridge retains a static delegate |
 | Single `Stylet.Avalonia` package | Three packages | Add `Sonata.Avalonia.StyletIoC` if using StyletIoC; `Sonata.Avalonia.Hosting` if using Generic Host |
 
-**Source:** [SP-1 §12](docs/superpowers/specs/2026-08-23-sp1-foundations-design.md#12-compatibilit)
 
 ---
 
@@ -94,7 +93,6 @@ If you were using the StyletIoC container, also add:
 | `GoBack()` / `Clear()` (StackNavigation) | `GoBackAsync()` / `ClearAsync()` | Await the returned task |
 | `[Obsolete]` members (`State`, `CanClose()`, `TryClose()`) | Removed | Already migrated away in Stylet — remove any remaining usages |
 
-**Source:** [SP-2 §8](docs/superpowers/specs/2026-08-24-sp2-async-lifecycle-design.md#8-compatibilit--table-de-migration)
 
 ---
 
@@ -115,7 +113,6 @@ If you were using the StyletIoC container, also add:
 It now uses a non-blocking `Post`. Handlers that depended on the calling thread being blocked
 by the UI dispatch need to be reviewed — the notification order (FIFO) is preserved.
 
-**Source:** [SP-3 §8](docs/superpowers/specs/2026-08-25-sp3-ui-layer-design.md#8-compatibilit--table-de-migration)
 
 ---
 
@@ -128,7 +125,6 @@ by the UI dispatch need to be reviewed — the notification order (FIFO) is pres
 | `EventAggregator.PublishOnUIThread`: `Dispatcher.UIThread.Invoke` | `UiThreadDispatch.OnUIThread` | Same behavior on UI thread; off-UI-thread calls are now non-blocking |
 | `RethinkingBinding`: `Dispatcher.UIThread.Invoke` | `UiThreadDispatch.OnUIThread` | Same; constructors cleaned of dead WPF code |
 
-**Source:** [SP-4 §7](docs/superpowers/specs/2026-08-27-sp4-consolidation-design.md#7-compatibilit)
 
 ---
 
@@ -139,7 +135,6 @@ by the UI dispatch need to be reviewed — the notification order (FIFO) is pres
 | MessageBox with no caption: title falls back to `"提示"` | Title falls back to **empty string** | Any UI test asserting `"提示"` as the default caption needs updating |
 | `ApplicationDispatcher.Send` | Fixed to be **truly synchronous** | This was a bug fix — the behavior change only affects code that was relying on the incorrect async-over-sync implementation |
 
-**Source:** [SP-5 §3](docs/superpowers/specs/2026-08-30-sp5-release-design.md#3-phase-1--durcissements-tdd) (H5), [SP-5 §7](docs/superpowers/specs/2026-08-30-sp5-release-design.md#7-compatibilit) (H1/H2/H5)
 
 ---
 
@@ -246,7 +241,6 @@ The framework itself (`ViewManager`, `WindowManager`, `EventAggregator`, etc.) n
 `ILogger<T>` internally. A no-op logger factory is registered by default — add an
 `ILoggerProvider` via `ConfigureServices` to capture framework logs.
 
-**Source:** [SP-1 §6](docs/superpowers/specs/2026-08-23-sp1-foundations-design.md#6-logging--migration-vers-mel)
 
 ---
 
@@ -291,7 +285,6 @@ public async Task ValidatePropertyAsync(string propertyName, CancellationToken c
 `Validate()` and `ValidateProperty()` (sync facades) have been removed.
 `ValidateAsync(ct)` and `ValidatePropertyAsync(propertyName, ct)` are the only entry points.
 
-**Source:** [SP-2 §5](docs/superpowers/specs/2026-08-24-sp2-async-lifecycle-design.md#5-correction-de-la-validation-validatingmodelbase)
 
 ---
 
