@@ -8,7 +8,7 @@ public class BuilderUpper
     private readonly RuntimeTypeHandle typeHandle;
     private readonly IRegistrationContext parentContext;
     private readonly object implementorLock = new object();
-    private Action<IRegistrationContext, object> implementor;
+    private Action<IRegistrationContext, object> implementor = null!; // Lazily initialized by GetImplementor()
 
     /// <summary>
     /// Initialises a new instance of the <see cref="BuilderUpper"/> class
@@ -29,14 +29,14 @@ public class BuilderUpper
     /// <returns>Expression which will build up inputParameterExpression</returns>
     public Expression GetExpression(Expression inputParameterExpression, ParameterExpression registrationContext)
     {
-        return GetExpression(inputParameterExpression, registrationContext, Type.GetTypeFromHandle(typeHandle));
+        return GetExpression(inputParameterExpression, registrationContext, Type.GetTypeFromHandle(typeHandle)!);
     }
 
     private Expression GetExpression(Expression inputParameterExpression, ParameterExpression registrationContext, Type type)
     {
         var expressions = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance).Select(x => ExpressionForMember(inputParameterExpression, x, x.FieldType, registrationContext))
             .Concat(type.GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance).Select(x => ExpressionForMember(inputParameterExpression, x, x.PropertyType, registrationContext)))
-            .Where(x => x != null)
+            .OfType<Expression>()
             .ToList();
 
         // Sadly, we can't cache this expression (I think), as it relies on the inputParameterExpression
@@ -48,7 +48,7 @@ public class BuilderUpper
         return Expression.Block(expressions);
     }
 
-    private Expression ExpressionForMember(Expression objExpression, MemberInfo member, Type memberType, ParameterExpression registrationContext)
+    private Expression? ExpressionForMember(Expression objExpression, MemberInfo member, Type memberType, ParameterExpression registrationContext)
     {
         var attribute = member.GetCustomAttribute<InjectAttribute>(true);
         if (attribute == null)
@@ -72,7 +72,7 @@ public class BuilderUpper
             if (implementor != null)
                 return implementor;
 
-            var type = Type.GetTypeFromHandle(typeHandle);
+            var type = Type.GetTypeFromHandle(typeHandle)!;
 
             var parameterExpression = Expression.Parameter(typeof(object), "inputParameter");
             var registrationContext = Expression.Parameter(typeof(IRegistrationContext), "registrationContext");

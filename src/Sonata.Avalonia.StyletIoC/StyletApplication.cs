@@ -16,7 +16,7 @@ public abstract class StyletApplication<T> : SonataApplicationBase<T> where T : 
     /// <summary>
     /// Gets or sets the StyletApplication's IoC container. This is created after ConfigureIoC has been run.
     /// </summary>
-    protected IContainer Container { get; private set; }
+    protected IContainer Container { get; private set; } = null!; // Initialized in Configure() before use
 
     /// <summary>
     /// Overridden from SonataApplicationBase, this sets up the IoC container

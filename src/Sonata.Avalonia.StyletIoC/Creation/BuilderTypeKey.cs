@@ -13,7 +13,7 @@ public class BuilderTypeKey : IEquatable<BuilderTypeKey>
     /// <summary>
     /// Gets or sets the Key associated with this Type+Key
     /// </summary>
-    public string Key { get; set; }
+    public string? Key { get; set; }
 
     /// <summary>
     /// Initialises a new instance of the <see cref="BuilderTypeKey"/> class with the given type
@@ -29,7 +29,7 @@ public class BuilderTypeKey : IEquatable<BuilderTypeKey>
     /// </summary>
     /// <param name="type">Type to associated with this Type+Key</param>
     /// <param name="key">Key to associated with this Type+Key</param>
-    public BuilderTypeKey(Type type, string key)
+    public BuilderTypeKey(Type type, string? key)
     {
         Type = type;
         Key = key;
@@ -40,7 +40,7 @@ public class BuilderTypeKey : IEquatable<BuilderTypeKey>
     /// </summary>
     /// <param name="obj">The object to compare with the current object.</param>
     /// <returns>true if the specified object is equal to the current object; otherwise, false</returns>
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         return base.Equals(obj as BuilderTypeKey);
     }
@@ -66,7 +66,7 @@ public class BuilderTypeKey : IEquatable<BuilderTypeKey>
     /// </summary>
     /// <param name="other">The object to compare with the current object.</param>
     /// <returns>true if the specified object is equal to the current object; otherwise, false</returns>
-    public bool Equals(BuilderTypeKey other)
+    public bool Equals(BuilderTypeKey? other)
     {
         return other != null &&
             Type == other.Type &&

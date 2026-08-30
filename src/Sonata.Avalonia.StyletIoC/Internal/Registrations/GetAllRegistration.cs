@@ -9,18 +9,18 @@ internal class GetAllRegistration : IRegistration
 {
     private readonly IRegistrationContext parentContext;
 
-    public string Key { get; private set; }
+    public string? Key { get; private set; }
     private readonly RuntimeTypeHandle _type;
     public RuntimeTypeHandle TypeHandle
     {
         get { return _type; }
     }
 
-    private Expression expression;
+    private Expression expression = null!; // Lazily initialized by GetInstanceExpression()
     private readonly object generatorLock = new object();
-    private Func<IRegistrationContext, object> generator;
+    private Func<IRegistrationContext, object> generator = null!; // Lazily initialized by GetGenerator()
 
-    public GetAllRegistration(RuntimeTypeHandle typeHandle, IRegistrationContext parentContext, string key)
+    public GetAllRegistration(RuntimeTypeHandle typeHandle, IRegistrationContext parentContext, string? key)
     {
         Key = key;
         _type = typeHandle;
@@ -48,7 +48,7 @@ internal class GetAllRegistration : IRegistration
         if (expression != null)
             return expression;
 
-        var type = Type.GetTypeFromHandle(TypeHandle);
+        var type = Type.GetTypeFromHandle(TypeHandle)!;
 
         var instanceExpressions = parentContext.GetAllRegistrations(type.GenericTypeArguments[0], Key, false).Select(x => x.GetInstanceExpression(registrationContext)).ToArray();
         var listCtor = type.GetConstructor(new[] { typeof(int) }); // ctor which takes capacity

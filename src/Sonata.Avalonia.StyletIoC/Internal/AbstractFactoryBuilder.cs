@@ -48,9 +48,9 @@ internal class AbstractFactoryBuilder
         // These are needed by all methods, so get them now
         // IRegistrationContext.GetTypeOrAll(Type, string)
         // IRegistrationContext extends ICreator, and it's ICreator that actually implements this
-        var containerGetMethod = typeof(IContainer).GetMethod("GetTypeOrAll", new[] { typeof(Type), typeof(string) });
+        var containerGetMethod = typeof(IContainer).GetMethod("GetTypeOrAll", new[] { typeof(Type), typeof(string) })!;
         // Type.GetTypeFromHandler(RuntimeTypeHandle)
-        var typeFromHandleMethod = typeof(Type).GetMethod("GetTypeFromHandle");
+        var typeFromHandleMethod = typeof(Type).GetMethod("GetTypeFromHandle")!;
 
         // Go through each method, emmitting an implementation for each
         foreach (var methodInfo in serviceType.GetMethods())
@@ -85,10 +85,10 @@ internal class AbstractFactoryBuilder
             // Stack: [this.registrationContext, typeof(returnType), key]
             if (parameters.Length == 0)
             {
-                if (attribute == null)
+                if (attribute == null || attribute.Key == null)
                     methodIlGenerator.Emit(OpCodes.Ldnull);
                 else
-                    methodIlGenerator.Emit(OpCodes.Ldstr, attribute.Key); // Load null as the key
+                    methodIlGenerator.Emit(OpCodes.Ldstr, attribute.Key);
             }
             else
             {
@@ -120,7 +120,7 @@ internal class AbstractFactoryBuilder
         var typeInfo = type.GetTypeInfo();
         if (typeInfo.IsGenericType)
         {
-            sb.Append(type.GetGenericTypeDefinition().FullName.Replace('.', '+'));
+            sb.Append((type.GetGenericTypeDefinition().FullName ?? type.GetGenericTypeDefinition().Name).Replace('.', '+'));
             sb.Append("<>["); // Just so that they can't fool us with carefully-crafted interface names...
             foreach (var arg in typeInfo.GetGenericArguments())
             {
@@ -130,9 +130,9 @@ internal class AbstractFactoryBuilder
         }
         else
         {
-            sb.Append(type.FullName.Replace('.', '+'));
+            sb.Append((type.FullName ?? type.Name).Replace('.', '+'));
         }
-        sb.Append("<>").Append(typeInfo.Assembly.GetName().Name.Replace('.', '+'));
+        sb.Append("<>").Append((typeInfo.Assembly.GetName().Name ?? "Unknown").Replace('.', '+'));
     }
 
     private string CreateImplementationName(Type interfaceType)

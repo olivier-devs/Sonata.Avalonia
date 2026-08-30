@@ -17,6 +17,7 @@ internal abstract class BuilderBindingBase : IInScopeOrWithKeyOrAsWeakBinding, I
         RegistrationFactory = (ctx, services, creator) => new TransientRegistration(creator);
     }
 
+
     public IAsWeakBinding WithRegistrationFactory(RegistrationFactory registrationFactory)
     {
         if (registrationFactory == null)
@@ -34,7 +35,7 @@ internal abstract class BuilderBindingBase : IInScopeOrWithKeyOrAsWeakBinding, I
         return WithRegistrationFactory((ctx, serviceTypes, creator) => new SingletonRegistration(ctx, creator));
     }
 
-    public IInScopeOrAsWeakBinding WithKey(string key)
+    public IInScopeOrAsWeakBinding WithKey(string? key)
     {
         foreach (var serviceType in ServiceTypes)
         {
@@ -102,7 +103,7 @@ internal abstract class BuilderBindingBase : IInScopeOrWithKeyOrAsWeakBinding, I
     }
 
     // Convenience...
-    protected void BindImplementationToSpecificService(Container container, Type implementationType, Type serviceType, string key)
+    protected void BindImplementationToSpecificService(Container container, Type implementationType, Type serviceType, string? key)
     {
         if (serviceType.IsGenericTypeDefinition)
         {
@@ -124,7 +125,7 @@ internal abstract class BuilderBindingBase : IInScopeOrWithKeyOrAsWeakBinding, I
         return RegistrationFactory(registrationContext, ServiceTypes, creator);
     }
 
-    IAsWeakBinding IWithKeyOrAsWeakBinding.WithKey(string key)
+    IAsWeakBinding IWithKeyOrAsWeakBinding.WithKey(string? key)
     {
         ServiceTypes[ServiceTypes.Count - 1].Key = key;
         return this;

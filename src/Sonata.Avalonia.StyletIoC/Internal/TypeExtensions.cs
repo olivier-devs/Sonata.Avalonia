@@ -76,7 +76,7 @@ public static class TypeExtensions
             return string.Format("{0}<{1}>", type.Name.Split('`')[0], string.Join(", ", type.GetTypeInfo().GenericTypeParameters.Select(x => x.Name)));
         var genericArguments = type.GetGenericArguments();
 
-        string name;
+        string? name;
         if (genericArguments.Length > 0)
         {
             var genericArgumentNames = genericArguments.Select(x => primitiveNameMapping.TryGetValue(x, out name) ? name : x.Name);

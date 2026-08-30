@@ -10,7 +10,7 @@ public interface IStyletIoCBuilder
     /// <summary>
     /// Gets or sets the list of assemblies searched by Autobind and ToAllImplementatinos
     /// </summary>
-    List<Assembly> Assemblies { get; set; }
+    List<Assembly>? Assemblies { get; set; }
 
     /// <summary>
     /// Bind the specified service (interface, abstract class, concrete class, unbound generic, etc) to something
@@ -30,13 +30,13 @@ public interface IStyletIoCBuilder
     /// Search the specified assembly(s) / the current assembly for concrete types, and self-bind them
     /// </summary>
     /// <param name="assemblies">Assembly(s) to search, or leave empty / null to search the current assembly</param>
-    void Autobind(IEnumerable<Assembly> assemblies);
+    void Autobind(IEnumerable<Assembly>? assemblies);
 
     /// <summary>
     /// Search the specified assembly(s) / the current assembly for concrete types, and self-bind them
     /// </summary>
     /// <param name="assemblies">Assembly(s) to search, or leave empty / null to search the current assembly</param>
-    void Autobind(params Assembly[] assemblies);
+    void Autobind(params Assembly[]? assemblies);
 
     /// <summary>
     /// Add a single module to this builder
@@ -63,12 +63,12 @@ public interface IStyletIoCBuilder
 public class StyletIoCBuilder : IStyletIoCBuilder
 {
     private readonly List<BuilderBindTo> bindings = new List<BuilderBindTo>();
-    private List<Assembly> autobindAssemblies;
+    private List<Assembly>? autobindAssemblies;
 
     /// <summary>
     /// Gets or sets the list of assemblies searched by Autobind and ToAllImplementatinos
     /// </summary>
-    public List<Assembly> Assemblies { get; set; }
+    public List<Assembly>? Assemblies { get; set; }
 
     /// <summary>
     /// Initialises a new instance of the <see cref="StyletIoCBuilder"/> class
@@ -113,7 +113,7 @@ public class StyletIoCBuilder : IStyletIoCBuilder
     /// Search assemblies for concrete types, and self-bind them
     /// </summary>
     /// <param name="assemblies">Assemblies to search, in addition to the Assemblies property</param>
-    public void Autobind(IEnumerable<Assembly> assemblies)
+    public void Autobind(IEnumerable<Assembly>? assemblies)
     {
         // If they've called Autobind before, then add the new set of assemblies on
         var existing = autobindAssemblies ?? Enumerable.Empty<Assembly>();
@@ -124,9 +124,9 @@ public class StyletIoCBuilder : IStyletIoCBuilder
     /// Search assemblies for concrete types, and self-bind them
     /// </summary>
     /// <param name="assemblies">Assemblies to search, in addition to the Assemblies property</param>
-    public void Autobind(params Assembly[] assemblies)
+    public void Autobind(params Assembly[]? assemblies)
     {
-        Autobind(assemblies.AsEnumerable());
+        Autobind(assemblies?.AsEnumerable());
     }
 
     /// <summary>
@@ -187,7 +187,7 @@ public class StyletIoCBuilder : IStyletIoCBuilder
         bindings.Add(binding);
     }
 
-    private IEnumerable<Assembly> GetAssemblies(IEnumerable<Assembly> extras, string methodName)
+    private IEnumerable<Assembly> GetAssemblies(IEnumerable<Assembly>? extras, string methodName)
     {
         IEnumerable<Assembly> assemblies = Assemblies ?? Enumerable.Empty<Assembly>();
         if (extras != null)

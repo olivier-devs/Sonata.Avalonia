@@ -22,7 +22,7 @@ internal class SingleRegistration : IRegistrationCollection
     public IRegistrationCollection AddRegistration(IRegistration registration)
     {
         if (this.registration.TypeHandle.Equals(registration.TypeHandle))
-            throw new StyletIoCRegistrationException(string.Format("Multiple registrations for type {0} found.", Type.GetTypeFromHandle(registration.TypeHandle).GetDescription()));
+            throw new StyletIoCRegistrationException(string.Format("Multiple registrations for type {0} found.", Type.GetTypeFromHandle(registration.TypeHandle)!.GetDescription()));
         return new RegistrationCollection(new List<IRegistration>() { this.registration, registration });
     }
 }

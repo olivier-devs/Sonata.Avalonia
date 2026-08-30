@@ -17,7 +17,7 @@ public sealed class InjectAttribute : Attribute
     /// Initialises a new instance of the <see cref="InjectAttribute"/> class, which has the specified key
     /// </summary>
     /// <param name="key">Key to associate (meaning depends on context)</param>
-    public InjectAttribute(string key)
+    public InjectAttribute(string? key)
     {
         Key = key;
     }
@@ -25,5 +25,5 @@ public sealed class InjectAttribute : Attribute
     /// <summary>
     /// Gets or sets the key to use to resolve the relevant dependency
     /// </summary>
-    public string Key { get; set; }
+    public string? Key { get; set; }
 }

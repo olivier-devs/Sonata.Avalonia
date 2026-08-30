@@ -14,12 +14,12 @@ namespace Sonata.Avalonia.StyletIoC.Internal.Creators;
 // Sealed so Code Analysis doesn't moan about us setting the virtual Type property
 internal sealed class TypeCreator : CreatorBase
 {
-    private readonly string _attributeKey;
-    public string AttributeKey
+    private readonly string? _attributeKey;
+    public string? AttributeKey
     {
         get { return _attributeKey; }
     }
-    private Expression creationExpression;
+    private Expression? creationExpression;
 
     public TypeCreator(Type type, IRegistrationContext parentContext)
         : base(parentContext)
@@ -32,7 +32,7 @@ internal sealed class TypeCreator : CreatorBase
             _attributeKey = attribute.Key;
     }
 
-    private string KeyForParameter(ParameterInfo parameter)
+    private string? KeyForParameter(ParameterInfo parameter)
     {
         var attribute = parameter.GetCustomAttribute<InjectAttribute>(true);
         return attribute == null ? null : attribute.Key;
@@ -44,10 +44,10 @@ internal sealed class TypeCreator : CreatorBase
         if (creationExpression != null)
             return creationExpression;
 
-        var type = Type.GetTypeFromHandle(TypeHandle);
+        var type = Type.GetTypeFromHandle(TypeHandle)!;
 
         // Find the constructor which has the most parameters which we can fulfill, accepting default values which we can't fulfill
-        ConstructorInfo ctor;
+        ConstructorInfo? ctor;
         var ctorsWithAttribute = type.GetConstructors().Where(x => x.GetCustomAttribute<InjectAttribute>(true) != null).ToList();
         if (ctorsWithAttribute.Count > 1)
         {
@@ -56,7 +56,7 @@ internal sealed class TypeCreator : CreatorBase
         else if (ctorsWithAttribute.Count == 1)
         {
             ctor = ctorsWithAttribute[0];
-            var key = ctorsWithAttribute[0].GetCustomAttribute<InjectAttribute>(true).Key;
+            var key = ctorsWithAttribute[0].GetCustomAttribute<InjectAttribute>(true)!.Key;
             var cantResolve = ctor.GetParameters().FirstOrDefault(p => !ParentContext.CanResolve(p.ParameterType, key) && !p.HasDefaultValue);
             if (cantResolve != null)
                 throw new StyletIoCFindConstructorException(string.Format("Found a constructor with [Inject] on type {0}, but can't resolve parameter '{1}' (of type {2}, and doesn't have a default value).", type.GetDescription(), cantResolve.Name, cantResolve.ParameterType.GetDescription()));

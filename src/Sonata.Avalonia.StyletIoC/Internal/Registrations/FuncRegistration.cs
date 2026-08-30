@@ -18,7 +18,7 @@ internal class FuncRegistration : IRegistration
     public FuncRegistration(IRegistration delegateRegistration)
     {
         this.delegateRegistration = delegateRegistration;
-        funcType = Expression.GetFuncType(Type.GetTypeFromHandle(delegateRegistration.TypeHandle)).TypeHandle;
+        funcType = Expression.GetFuncType(Type.GetTypeFromHandle(delegateRegistration.TypeHandle)!).TypeHandle;
 
         var registrationContext = Expression.Parameter(typeof(IRegistrationContext), "registrationContext");
         generator = Expression.Lambda<Func<IRegistrationContext, object>>(GetInstanceExpression(registrationContext), registrationContext).Compile();

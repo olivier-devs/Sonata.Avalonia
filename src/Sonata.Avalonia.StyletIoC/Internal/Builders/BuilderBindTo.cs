@@ -2,12 +2,12 @@
 
 internal class BuilderBindTo : IBindTo, IAndOrToMultipleServices
 {
-    private readonly Func<IEnumerable<Assembly>, string, IEnumerable<Assembly>> getAssemblies;
+    private readonly Func<IEnumerable<Assembly>?, string, IEnumerable<Assembly>> getAssemblies;
     public List<BuilderTypeKey> ServiceTypes { get; private set; }
-    private BuilderBindingBase builderBinding;
+    private BuilderBindingBase? builderBinding;
     public bool IsWeak { get { return builderBinding?.IsWeak ?? false; } }
 
-    public BuilderBindTo(Type serviceType, Func<IEnumerable<Assembly>, string, IEnumerable<Assembly>> getAssemblies)
+    public BuilderBindTo(Type serviceType, Func<IEnumerable<Assembly>?, string, IEnumerable<Assembly>> getAssemblies)
     {
         ServiceTypes = new List<BuilderTypeKey>() { new BuilderTypeKey(serviceType) };
         this.getAssemblies = getAssemblies;
@@ -24,7 +24,7 @@ internal class BuilderBindTo : IBindTo, IAndOrToMultipleServices
         return this;
     }
 
-    public IAndOrToMultipleServices WithKey(string key)
+    public IAndOrToMultipleServices WithKey(string? key)
     {
         // Should have been ensured by the fluent interface
         Trace.Assert(ServiceTypes.Count > 0);
@@ -71,15 +71,15 @@ internal class BuilderBindTo : IBindTo, IAndOrToMultipleServices
         return builderBinding;
     }
 
-    public IInScopeOrWithKeyOrAsWeakBinding ToAllImplementations(IEnumerable<Assembly> assemblies, bool allowZeroImplementations = false)
+    public IInScopeOrWithKeyOrAsWeakBinding ToAllImplementations(IEnumerable<Assembly>? assemblies, bool allowZeroImplementations = false)
     {
         builderBinding = new BuilderToAllImplementationsBinding(ServiceTypes, getAssemblies(assemblies, "ToAllImplementations"), allowZeroImplementations);
         return builderBinding;
     }
 
-    public IInScopeOrWithKeyOrAsWeakBinding ToAllImplementations(bool allowZeroImplementations = false, params Assembly[] assemblies)
+    public IInScopeOrWithKeyOrAsWeakBinding ToAllImplementations(bool allowZeroImplementations = false, params Assembly[]? assemblies)
     {
-        return ToAllImplementations(assemblies.AsEnumerable(), allowZeroImplementations);
+        return ToAllImplementations(assemblies?.AsEnumerable(), allowZeroImplementations);
     }
 
     internal void Build(Container container)

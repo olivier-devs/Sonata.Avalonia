@@ -6,9 +6,9 @@
 internal class TypeKey : IEquatable<TypeKey>
 {
     public readonly RuntimeTypeHandle TypeHandle;
-    public readonly string Key;
+    public readonly string? Key;
 
-    public TypeKey(RuntimeTypeHandle typeHandle, string key)
+    public TypeKey(RuntimeTypeHandle typeHandle, string? key)
     {
         TypeHandle = typeHandle;
         Key = key;
@@ -21,12 +21,12 @@ internal class TypeKey : IEquatable<TypeKey>
         return TypeHandle.GetHashCode() ^ Key.GetHashCode();
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         return Equals(obj as TypeKey);
     }
 
-    public bool Equals(TypeKey other)
+    public bool Equals(TypeKey? other)
     {
         return other != null && TypeHandle.Equals(other.TypeHandle) && Key == other.Key;
     }

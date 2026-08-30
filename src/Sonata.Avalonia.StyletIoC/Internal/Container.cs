@@ -39,16 +39,16 @@ internal class Container : IContainer, IRegistrationContext
     /// <summary>
     /// Builder used to build abstract factories
     /// </summary>
-    private AbstractFactoryBuilder abstractFactoryBuilder;
+    private AbstractFactoryBuilder? abstractFactoryBuilder;
 
     /// <summary>
     /// Fired when this container is asked to dispose
     /// </summary>
-    public event EventHandler Disposing;
+    public event EventHandler? Disposing;
 
     private bool disposed;
 
-    public Container(List<Assembly> autobindAssemblies)
+    public Container(List<Assembly>? autobindAssemblies)
     {
         this.autobindAssemblies = autobindAssemblies ?? new List<Assembly>();
     }
@@ -79,7 +79,7 @@ internal class Container : IContainer, IRegistrationContext
     /// <summary>
     /// Fetch a single instance of the specified type
     /// </summary>
-    public object Get(Type type, string key = null)
+    public object Get(Type type, string? key = null)
     {
         if (type == null)
             throw new ArgumentNullException("type");
@@ -89,12 +89,12 @@ internal class Container : IContainer, IRegistrationContext
     /// <summary>
     /// Generic form of Get
     /// </summary>
-    public T Get<T>(string key = null)
+    public T Get<T>(string? key = null)
     {
         return (T)Get(typeof(T).TypeHandle, key);
     }
 
-    private object Get(RuntimeTypeHandle typeHandle, string key = null, Type typeIfAvailable = null)
+    private object Get(RuntimeTypeHandle typeHandle, string? key = null, Type? typeIfAvailable = null)
     {
         var generator = GetRegistrations(new TypeKey(typeHandle, key), false, typeIfAvailable).GetSingle().GetGenerator();
         return generator(this);
@@ -103,7 +103,7 @@ internal class Container : IContainer, IRegistrationContext
     /// <summary>
     /// Fetch instances of all types which implement the specified service
     /// </summary>
-    public IEnumerable<object> GetAll(Type type, string key = null)
+    public IEnumerable<object> GetAll(Type type, string? key = null)
     {
         if (type == null)
             throw new ArgumentNullException("type");
@@ -113,26 +113,26 @@ internal class Container : IContainer, IRegistrationContext
     /// <summary>
     /// Generic form of GetAll
     /// </summary>
-    public IEnumerable<T> GetAll<T>(string key = null)
+    public IEnumerable<T> GetAll<T>(string? key = null)
     {
         return GetAll(typeof(T).TypeHandle, key).Cast<T>();
     }
 
-    private IEnumerable<object> GetAll(RuntimeTypeHandle typeHandle, string key = null, Type elementTypeIfAvailable = null)
+    private IEnumerable<object> GetAll(RuntimeTypeHandle typeHandle, string? key = null, Type? elementTypeIfAvailable = null)
     {
         var typeKey = new TypeKey(typeHandle, key);
-        IRegistration registration;
+        IRegistration? registration;
         // This can currently never fail, since we pass in null
         var result = TryRetrieveGetAllRegistrationFromElementType(typeKey, null, out registration, elementTypeIfAvailable);
         Debug.Assert(result);
-        var generator = registration.GetGenerator();
+        var generator = registration!.GetGenerator();
         return (IEnumerable<object>)generator(this);
     }
 
     /// <summary>
     /// If type is an IEnumerable{T} or similar, is equivalent to calling GetAll{T}. Else, is equivalent to calling Get{T}.
     /// </summary>
-    public object GetTypeOrAll(Type type, string key = null)
+    public object GetTypeOrAll(Type type, string? key = null)
     {
         if (type == null)
             throw new ArgumentNullException("type");
@@ -142,12 +142,12 @@ internal class Container : IContainer, IRegistrationContext
     /// <summary>
     /// Generic form of GetTypeOrAll
     /// </summary>
-    public T GetTypeOrAll<T>(string key = null)
+    public T GetTypeOrAll<T>(string? key = null)
     {
         return (T)GetTypeOrAll(typeof(T).TypeHandle, key);
     }
 
-    private object GetTypeOrAll(RuntimeTypeHandle typeHandle, string key = null, Type typeIfAvailable = null)
+    private object GetTypeOrAll(RuntimeTypeHandle typeHandle, string? key = null, Type? typeIfAvailable = null)
     {
         var generator = GetRegistrations(new TypeKey(typeHandle, key), true, typeIfAvailable).GetSingle().GetGenerator();
         return generator(this);
@@ -165,9 +165,9 @@ internal class Container : IContainer, IRegistrationContext
     /// <summary>
     /// Determine whether we can resolve a particular typeKey
     /// </summary>
-    bool IRegistrationContext.CanResolve(Type type, string key)
+    bool IRegistrationContext.CanResolve(Type type, string? key)
     {
-        IRegistrationCollection registrations;
+        IRegistrationCollection? registrations;
 
         if (this.registrations.TryGetValue(new TypeKey(type.TypeHandle, key), out registrations) ||
             TryCreateFuncFactory(type, key, out registrations) ||
@@ -178,14 +178,14 @@ internal class Container : IContainer, IRegistrationContext
         }
 
         // Is it a 'get all' request?
-        IRegistration registration;
+        IRegistration? registration;
         return TryRetrieveGetAllRegistration(type, key, out registration);
     }
 
     /// <summary>
     /// Given a collection type (IEnumerable{T}, etc) extracts the T, or null if we couldn't, or if we can't resolve that [T, key]
     /// </summary>
-    private Type GetElementTypeFromCollectionType(Type type)
+    private Type? GetElementTypeFromCollectionType(Type type)
     {
         // Elements are never removed from this.registrations, so we're safe to make this ContainsKey query
         if (!type.IsGenericType || !type.Implements(typeof(IEnumerable<>)))
@@ -202,7 +202,7 @@ internal class Container : IContainer, IRegistrationContext
     /// <param name="registration">Returned IRegistration, or null if the method returns false</param>
     /// <param name="elementTypeIfAvailable">Type corresponding to elementTypeKey, if available. Used for a small optimization</param>
     /// <returns>Whether such an IRegistration could be created or retrieved</returns>
-    private bool TryRetrieveGetAllRegistrationFromElementType(TypeKey elementTypeKey, Type collectionTypeOrNull, out IRegistration registration, Type elementTypeIfAvailable = null)
+    private bool TryRetrieveGetAllRegistrationFromElementType(TypeKey elementTypeKey, Type? collectionTypeOrNull, out IRegistration? registration, Type? elementTypeIfAvailable = null)
     {
         // TryGet first, as making the generic type is expensive
         // If it isn't present, and can be made, GetOrAdd to try and add it, but return the now-existing registration if someone beat us to it
@@ -210,7 +210,7 @@ internal class Container : IContainer, IRegistrationContext
             return true;
 
         // Failed :( Have to fetch the Type
-        var elementType = elementTypeIfAvailable ?? Type.GetTypeFromHandle(elementTypeKey.TypeHandle);
+        var elementType = elementTypeIfAvailable ?? Type.GetTypeFromHandle(elementTypeKey.TypeHandle)!;
         var listType = typeof(List<>).MakeGenericType(elementType);
         if (collectionTypeOrNull != null && !collectionTypeOrNull.IsAssignableFrom(listType))
             return false;
@@ -226,7 +226,7 @@ internal class Container : IContainer, IRegistrationContext
     /// <param name="key">Key associated with the collection</param>
     /// <param name="registration">Returned IRegistration, or null if the method returns false</param>
     /// <returns>Whether such an IRegistration could be created or retrieved</returns>
-    private bool TryRetrieveGetAllRegistration(Type type, string key, out IRegistration registration)
+    private bool TryRetrieveGetAllRegistration(Type type, string? key, out IRegistration? registration)
     {
         registration = null;
         var elementType = GetElementTypeFromCollectionType(type);
@@ -236,7 +236,7 @@ internal class Container : IContainer, IRegistrationContext
         return TryRetrieveGetAllRegistrationFromElementType(new TypeKey(elementType.TypeHandle, key), type, out registration, elementType);
     }
 
-    private bool TryCreateSelfBinding(Type type, string key, out IRegistrationCollection registrations)
+    private bool TryCreateSelfBinding(Type type, string? key, out IRegistrationCollection? registrations)
     {
         registrations = null;
 
@@ -261,7 +261,7 @@ internal class Container : IContainer, IRegistrationContext
     /// <summary>
     /// If the given type is a Func{T}, get a registration which can create an instance of it
     /// </summary>
-    private bool TryCreateFuncFactory(Type type, string key, out IRegistrationCollection registrations)
+    private bool TryCreateFuncFactory(Type type, string? key, out IRegistrationCollection? registrations)
     {
         registrations = null;
 
@@ -291,7 +291,7 @@ internal class Container : IContainer, IRegistrationContext
     /// Given a generic type (e.g. IValidator{T}), tries to create a collection of IRegistrations which can implement it from the unbound generic registrations.
     /// For example, if someone bound an IValidator{} to Validator{}, and this was called with Validator{T}, the IRegistrationCollection would contain a Validator{T}.
     /// </summary>
-    private bool TryCreateGenericTypesForUnboundGeneric(Type type, string key, out IRegistrationCollection registrations)
+    private bool TryCreateGenericTypesForUnboundGeneric(Type type, string? key, out IRegistrationCollection? registrations)
     {
         registrations = null;
 
@@ -300,7 +300,7 @@ internal class Container : IContainer, IRegistrationContext
 
         Type unboundGenericType = type.GetGenericTypeDefinition();
 
-        List<UnboundGeneric> unboundGenerics;
+        List<UnboundGeneric>? unboundGenerics;
         if (!this.unboundGenerics.TryGetValue(new TypeKey(unboundGenericType.TypeHandle, key), out unboundGenerics))
             return false;
 
@@ -340,47 +340,47 @@ internal class Container : IContainer, IRegistrationContext
         return registrations != null;
     }
 
-    IRegistration IRegistrationContext.GetSingleRegistration(Type type, string key, bool searchGetAllTypes)
+    IRegistration IRegistrationContext.GetSingleRegistration(Type type, string? key, bool searchGetAllTypes)
     {
         return GetRegistrations(new TypeKey(type.TypeHandle, key), searchGetAllTypes, type).GetSingle();
     }
 
-    IReadOnlyList<IRegistration> IRegistrationContext.GetAllRegistrations(Type type, string key, bool searchGetAllTypes)
+    IReadOnlyList<IRegistration> IRegistrationContext.GetAllRegistrations(Type type, string? key, bool searchGetAllTypes)
     {
         return GetRegistrations(new TypeKey(type.TypeHandle, key), searchGetAllTypes, type).GetAll();
     }
 
-    internal IReadOnlyRegistrationCollection GetRegistrations(TypeKey typeKey, bool searchGetAllTypes, Type typeIfAvailable = null)
+    internal IReadOnlyRegistrationCollection GetRegistrations(TypeKey typeKey, bool searchGetAllTypes, Type? typeIfAvailable = null)
     {
         CheckDisposed();
 
         IReadOnlyRegistrationCollection readOnlyRegistrations;
 
-        IRegistrationCollection registrations;
+        IRegistrationCollection? registrations;
         if (this.registrations.TryGetValue(typeKey, out registrations))
         {
-            readOnlyRegistrations = registrations;
+            readOnlyRegistrations = registrations!;
         }
         else
         {
             // At this point we need to fetch the type from its handle
             // This is the rare path - once we've hit it once, the result is cached in registrations
-            var type = typeIfAvailable ?? Type.GetTypeFromHandle(typeKey.TypeHandle);
+            var type = typeIfAvailable ?? Type.GetTypeFromHandle(typeKey.TypeHandle)!;
             if (TryCreateFuncFactory(type, typeKey.Key, out registrations) ||
                 TryCreateGenericTypesForUnboundGeneric(type, typeKey.Key, out registrations) ||
                 TryCreateSelfBinding(type, typeKey.Key, out registrations))
             {
-                readOnlyRegistrations = registrations;
+                readOnlyRegistrations = registrations!;
             }
             else if (searchGetAllTypes)
             {
                 // Couldn't find this type - is it a 'get all' collection type? (i.e. they've put IEnumerable<TypeWeCanResolve> in a ctor param)
-                IRegistration registration;
+                IRegistration? registration;
                 if (!TryRetrieveGetAllRegistration(type, typeKey.Key, out registration))
                     throw new StyletIoCRegistrationException(string.Format("No registrations found for service {0}.", type.GetDescription()));
 
                 // Got this far? Good. There's actually a 'get all' collection type. Proceed with that
-                readOnlyRegistrations = new SingleRegistration(registration);
+                readOnlyRegistrations = new SingleRegistration(registration!);
             }
             else
             {
@@ -400,7 +400,7 @@ internal class Container : IContainer, IRegistrationContext
         }
         catch (StyletIoCRegistrationException e)
         {
-            throw new StyletIoCRegistrationException(string.Format("{0} Service type: {1}, key: '{2}'", e.Message, Type.GetTypeFromHandle(typeKey.TypeHandle).GetDescription(), typeKey.Key), e);
+            throw new StyletIoCRegistrationException(string.Format("{0} Service type: {1}, key: '{2}'", e.Message, Type.GetTypeFromHandle(typeKey.TypeHandle)!.GetDescription(), typeKey.Key), e);
         }
     }
 
@@ -408,7 +408,7 @@ internal class Container : IContainer, IRegistrationContext
     {
         // We're not worried about thread-safety across multiple calls to this function (as it's only called as part of setup, which we're
         // not thread-safe about).
-        List<UnboundGeneric> unboundGenerics;
+        List<UnboundGeneric>? unboundGenerics;
         if (!this.unboundGenerics.TryGetValue(typeKey, out unboundGenerics))
         {
             unboundGenerics = new List<UnboundGeneric>();
@@ -416,7 +416,7 @@ internal class Container : IContainer, IRegistrationContext
         }
         // Is there an existing registration for this type?
         if (unboundGenerics.Any(x => x.Type == unboundGeneric.Type))
-            throw new StyletIoCRegistrationException(string.Format("Multiple registrations for type {0} found", Type.GetTypeFromHandle(typeKey.TypeHandle).GetDescription()));
+            throw new StyletIoCRegistrationException(string.Format("Multiple registrations for type {0} found", Type.GetTypeFromHandle(typeKey.TypeHandle)!.GetDescription()));
 
         unboundGenerics.Add(unboundGeneric);
     }

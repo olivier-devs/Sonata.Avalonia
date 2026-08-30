@@ -17,7 +17,7 @@ internal class UnboundGeneric
         RegistrationFactory = registrationFactory;
     }
 
-    public IRegistration CreateRegistrationForTypeAndKey(Type boundType, string boundKey)
+    public IRegistration CreateRegistrationForTypeAndKey(Type boundType, string? boundKey)
     {
         var serviceTypes = new List<BuilderTypeKey>() { new BuilderTypeKey(serviceType, boundKey) };
         return RegistrationFactory(parentContext, serviceTypes, new TypeCreator(boundType, parentContext));

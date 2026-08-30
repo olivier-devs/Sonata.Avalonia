@@ -6,7 +6,7 @@
 internal class SingletonRegistration : RegistrationBase
 {
     private readonly IRegistrationContext parentContext;
-    private object instance;
+    private object? instance;
 
     public SingletonRegistration(IRegistrationContext parentContext, ICreator creator)
         : base(creator)
@@ -14,7 +14,7 @@ internal class SingletonRegistration : RegistrationBase
         this.parentContext = parentContext;
         this.parentContext.Disposing += (o, e) =>
         {
-            IDisposable disposable;
+            IDisposable? disposable;
             lock (lockObject)
             {
                 disposable = instance as IDisposable;

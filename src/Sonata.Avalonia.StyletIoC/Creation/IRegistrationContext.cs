@@ -22,7 +22,7 @@ public interface IRegistrationContext : IContainer
     /// <param name="type">Type to resolve</param>
     /// <param name="key">Key to resolve</param>
     /// <returns>True if the container can resolve this type+key combination</returns>
-    bool CanResolve(Type type, string key);
+    bool CanResolve(Type type, string? key);
 
     /// <summary>
     /// Retrieve a single IRegistration for the type+key combination, or throw an exception if non, or more than one, are avaiable
@@ -34,7 +34,7 @@ public interface IRegistrationContext : IContainer
     /// where each element in that list is a different instance implementing ISomething
     /// </param>
     /// <returns>The appropriate registration</returns>
-    IRegistration GetSingleRegistration(Type type, string key, bool searchGetAllTypes);
+    IRegistration GetSingleRegistration(Type type, string? key, bool searchGetAllTypes);
 
     /// <summary>
     /// Retrieve all IRegistrations for the type+key combination
@@ -47,7 +47,7 @@ public interface IRegistrationContext : IContainer
     /// where each element in that list is a different instance implementing ISomething
     /// </param>
     /// <returns>The appropriate registrations</returns>
-    IReadOnlyList<IRegistration> GetAllRegistrations(Type type, string key, bool searchGetAllTypes);
+    IReadOnlyList<IRegistration> GetAllRegistrations(Type type, string? key, bool searchGetAllTypes);
 
     /// <summary>
     /// Fired when Dispose is called on the container.

@@ -68,7 +68,7 @@ public interface IToAnyService : IToMultipleServices
     /// <param name="assemblies">Assemblies to search. If empty / null, searches the current assembly</param>
     /// <param name="allowZeroImplementations">By default, ToAllImplementations will throw an exception if no implementations are found. Set this parameter to true to allow this case</param>
     /// <returns>Fluent interface to continue configuration</returns>
-    IInScopeOrWithKeyOrAsWeakBinding ToAllImplementations(IEnumerable<Assembly> assemblies, bool allowZeroImplementations = false);
+    IInScopeOrWithKeyOrAsWeakBinding ToAllImplementations(IEnumerable<Assembly>? assemblies, bool allowZeroImplementations = false);
 
     /// <summary>
     /// Discover all implementations of the service in the specified assemblies / the current assembly, and bind those to the service
@@ -76,7 +76,7 @@ public interface IToAnyService : IToMultipleServices
     /// <param name="allowZeroImplementations">By default, ToAllImplementations will throw an exception if no implementations are found. Set this parameter to true to allow this case</param>
     /// <param name="assemblies">Assemblies to search. If empty / null, searches the current assembly</param>
     /// <returns>Fluent interface to continue configuration</returns>
-    IInScopeOrWithKeyOrAsWeakBinding ToAllImplementations(bool allowZeroImplementations = false, params Assembly[] assemblies);
+    IInScopeOrWithKeyOrAsWeakBinding ToAllImplementations(bool allowZeroImplementations = false, params Assembly[]? assemblies);
 }
 
 /// <summary>
@@ -109,7 +109,7 @@ public interface IWithKeyOrToMulipleServices : IToMultipleServices
     /// </summary>
     /// <param name="key">Key to add to this part of the multiple-service binding</param>
     /// <returns>Fluent interface to continue configuration</returns>
-    IAndOrToMultipleServices WithKey(string key);
+    IAndOrToMultipleServices WithKey(string? key);
 }
 
 /// <summary>
@@ -162,7 +162,7 @@ public interface IWithKeyOrAsWeakBinding : IAsWeakBinding
     /// </summary>
     /// <param name="key">Key to associate with this binding</param>
     /// <returns>Fluent interface to continue configuration</returns>
-    IAsWeakBinding WithKey(string key);
+    IAsWeakBinding WithKey(string? key);
 }
 
 /// <summary>
@@ -207,5 +207,5 @@ public interface IInScopeOrWithKeyOrAsWeakBinding : IInScopeOrAsWeakBinding
     /// </summary>
     /// <param name="key">Key to associate with this binding</param>
     /// <returns>Fluent interface to continue configuration</returns>
-    IInScopeOrAsWeakBinding WithKey(string key);
+    IInScopeOrAsWeakBinding WithKey(string? key);
 }

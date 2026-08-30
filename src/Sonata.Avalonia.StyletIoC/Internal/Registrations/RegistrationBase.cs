@@ -9,7 +9,7 @@ internal abstract class RegistrationBase : IRegistration
     public RuntimeTypeHandle TypeHandle { get { return Creator.TypeHandle; } }
 
     protected readonly object lockObject = new object();
-    protected Func<IRegistrationContext, object> generator;
+    protected Func<IRegistrationContext, object>? generator;
 
     protected RegistrationBase(ICreator creator)
     {
@@ -25,7 +25,7 @@ internal abstract class RegistrationBase : IRegistration
         {
             if (generator == null)
                 generator = GetGeneratorInternal();
-            return generator;
+            return generator!;
         }
     }
 

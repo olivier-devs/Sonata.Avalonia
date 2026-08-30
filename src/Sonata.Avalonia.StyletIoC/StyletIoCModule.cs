@@ -7,8 +7,8 @@ namespace Sonata.Avalonia.StyletIoC;
 /// </summary>
 public abstract class StyletIoCModule
 {
-    private StyletIoCBuilder builder;
-    private Func<IEnumerable<Assembly>, string, IEnumerable<Assembly>> getAssemblies;
+    private StyletIoCBuilder? builder;
+    private Func<IEnumerable<Assembly>?, string, IEnumerable<Assembly>>? getAssemblies;
 
     /// <summary>
     /// Bind the specified service (interface, abstract class, concrete class, unbound generic, etc) to something
@@ -40,7 +40,7 @@ public abstract class StyletIoCModule
     /// </summary>
     protected abstract void Load();
 
-    internal void AddToBuilder(StyletIoCBuilder builder, Func<IEnumerable<Assembly>, string, IEnumerable<Assembly>> getAssemblies)
+    internal void AddToBuilder(StyletIoCBuilder builder, Func<IEnumerable<Assembly>?, string, IEnumerable<Assembly>> getAssemblies)
     {
         this.builder = builder;
         this.getAssemblies = getAssemblies;
