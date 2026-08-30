@@ -78,7 +78,7 @@ public class BindableCollection<T> : ObservableCollection<T>, IObservableCollect
             var handler = CollectionChanging;
             using (BlockReentrancy())
             {
-                handler(this, e);
+                handler?.Invoke(this, e);
             }
         }
     }
