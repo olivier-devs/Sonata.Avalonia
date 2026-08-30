@@ -227,7 +227,7 @@ public static class EventAggregatorExtensions
     /// <param name="channels">Channel(s) to publish the message to. Defaults to EventAggregator.DefaultChannel none given</param>
     public static void PublishOnUIThread(this IEventAggregator eventAggregator, object message, params string[] channels)
     {
-        eventAggregator.PublishWithDispatcher(message, Dispatcher.UIThread.Invoke, channels);
+        eventAggregator.PublishWithDispatcher(message, UiThreadDispatch.OnUIThread, channels);
     }
 
     /// <summary>

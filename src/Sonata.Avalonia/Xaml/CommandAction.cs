@@ -114,7 +114,7 @@ public class CommandAction : ActionBase, ICommand
         // are not safe firing CanExecuteChanged events on other threads...
         // Therefore make sure we're on the UI thread
         if (handler != null)
-            Dispatcher.UIThread.Invoke(() => handler(this, EventArgs.Empty));
+            UiThreadDispatch.OnUIThread(() => handler(this, EventArgs.Empty));
     }
 
     /// <summary>

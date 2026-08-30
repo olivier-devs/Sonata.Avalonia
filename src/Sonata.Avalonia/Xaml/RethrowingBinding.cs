@@ -8,20 +8,18 @@ public class RethrowingBinding : Binding
     /// <inheritdoc/>
     public RethrowingBinding()
     {
-        //this.UpdateSourceExceptionFilter = this.ExceptionFilter;
     }
 
     /// <inheritdoc/>
     public RethrowingBinding(string path)
         : base(path)
     {
-        //this.UpdateSourceExceptionFilter = this.ExceptionFilter;
     }
 
     private object ExceptionFilter(object bindExpression, Exception exception)
     {
         var edi = ExceptionDispatchInfo.Capture(exception);
-        Dispatcher.UIThread.Invoke(() => edi.Throw());
+        UiThreadDispatch.OnUIThread(() => edi.Throw());
         return exception;
     }
 }
