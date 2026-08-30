@@ -184,12 +184,13 @@ public class MessageBoxViewModel : Screen, IMessageBoxViewModel
             buttonList.Add(lbv);
             if (val == defaultResult)
                 DefaultButton = val;
+            if (val == cancelResult)
+                CancelButton = val;
         }
         ButtonList = buttonList;
         // If they didn't specify a button which we showed, then pick a default, if we can
         if (defaultResult == MessageBoxResult.None && ButtonList.Any())
             DefaultButton = buttonList[0].Value;
-        
         if (cancelResult == MessageBoxResult.None && ButtonList.Any())
             CancelButton = buttonList.Last().Value;
         
