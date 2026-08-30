@@ -172,4 +172,18 @@ public class WindowConductorTests
         Assert.Equal(ScreenState.Closed, vm.ScreenState);
         Assert.Contains(provider.Entries, e => e.Level == LogLevel.Error);
     }
+
+    [Fact]
+    public void WindowClosing_ThrowingLogger_DoesNotCrash()
+    {
+        var window = new FakeWindowAdapter();
+        var vm = new TestScreen();
+        var conductor = new WindowConductor(window, vm, new ThrowingLogger());
+
+        var e = new CancelEventArgs();
+        window.RaiseClosing(e);
+
+        Assert.True(e.Cancel);
+        Assert.Equal(0, window.CloseCalls);
+    }
 }

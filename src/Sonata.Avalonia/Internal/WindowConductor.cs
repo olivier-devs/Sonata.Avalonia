@@ -134,10 +134,10 @@ internal sealed class WindowConductor : IChildDelegate
         // Cancel by default: the close only proceeds if CanCloseAsync succeeds below.
         e.Cancel = true;
 
-        _logger.LogInformation("ViewModel {0} close requested because its View was closed", _viewModel);
-
         try
         {
+            _logger.LogInformation("ViewModel {0} close requested because its View was closed", _viewModel);
+
             if (await ((IGuardClose)_viewModel).CanCloseAsync())
             {
                 _window.Closing -= WindowClosing;
@@ -151,8 +151,10 @@ internal sealed class WindowConductor : IChildDelegate
         }
         catch (Exception ex)
         {
-            // CanCloseAsync threw: log and cancel the close so the window stays usable.
-            _logger.LogError(ex, "CanCloseAsync threw for ViewModel {0}; close cancelled, window stays open", _viewModel);
+            // Guarded: CanCloseAsync or a misbehaving logger must not crash the async void handler.
+            // Cancel the close so the window stays usable.
+            try { _logger.LogError(ex, "CanCloseAsync threw for ViewModel {0}; close cancelled, window stays open", _viewModel); }
+            catch { }
         }
     }
 
