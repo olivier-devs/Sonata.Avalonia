@@ -256,10 +256,10 @@ public abstract class ActionBase : AvaloniaObject
         {
             var target = TargetMethodInfo.IsStatic ? null : Target;
             var result = TargetMethodInfo.Invoke(target, parameters);
-            // Be nice and make sure that any exceptions get rethrown
+            // Observe the task so exceptions are logged, not swallowed silently
             if (result is Task task)
             {
-                AwaitTask(task);
+                FireAndForget.Run(task, _logger);
             }
         }
         catch (TargetInvocationException e)
@@ -271,7 +271,6 @@ public abstract class ActionBase : AvaloniaObject
             ExceptionDispatchInfo.Capture(e.InnerException).Throw();
         }
 
-        async void AwaitTask(Task t) => await t;
     }
 
     private string TargetName()
