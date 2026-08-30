@@ -4,6 +4,7 @@ using Xunit;
 
 namespace Sonata.Avalonia.Tests;
 
+[Collection("Ambient")]
 public class PropertyChangedBaseTests
 {
     private class TestVm : PropertyChangedBase

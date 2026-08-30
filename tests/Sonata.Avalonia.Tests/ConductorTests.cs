@@ -4,6 +4,7 @@ using Xunit;
 
 namespace Sonata.Avalonia.Tests;
 
+[Collection("Ambient")]
 public class ConductorTests
 {
     public ConductorTests()

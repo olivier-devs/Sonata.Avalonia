@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Sonata.Avalonia.Tests;
 
+[Collection("Ambient")]
 public class HostingTests
 {
     private sealed class TestHostedService : IHostedService, IDisposable

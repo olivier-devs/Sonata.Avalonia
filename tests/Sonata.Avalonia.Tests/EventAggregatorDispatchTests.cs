@@ -3,6 +3,7 @@ using Xunit;
 
 namespace Sonata.Avalonia.Tests;
 
+[Collection("Ambient")]
 public class EventAggregatorDispatchTests
 {
     private class ObjectHandler : IHandle<object>

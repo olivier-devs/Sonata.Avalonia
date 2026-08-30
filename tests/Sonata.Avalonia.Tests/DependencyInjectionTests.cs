@@ -4,6 +4,7 @@ using Xunit;
 
 namespace Sonata.Avalonia.Tests;
 
+[Collection("Ambient")]
 public class DependencyInjectionTests
 {
     private class KeyedTestApp : SonataApplication<TestRootViewModel>
