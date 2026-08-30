@@ -68,7 +68,7 @@ await _windowManager.ShowDialog<bool>(dialogVm, this); // 'this' is IViewAware
 
 ```csharp
 var result = await _windowManager.ShowMessageBox<MessageBoxResult>(
-    messageBoxText: "Do you want to save before closing?",
+    text: "Do you want to save before closing?",
     caption: "Confirm",                      // null → empty string title (SP-5)
     buttons: MessageBoxButton.YesNoCancel,
     icon: MessageBoxImage.Question,

@@ -34,11 +34,8 @@ public class OrderService
         await _repository.SaveAsync(order);
 
         // Post result back to UI thread
-        _dispatcher.Post(() =>
-        {
-            await _windowManager.ShowMessageBox<MessageBoxResult>(
-                "Order placed successfully", "Success");
-        });
+        _dispatcher.Post(() => _ = _windowManager.ShowMessageBox<MessageBoxResult>(
+            "Order placed successfully", "Success"));
     }
 
     public bool IsOnUIThread => _dispatcher.IsCurrent;
@@ -63,7 +60,7 @@ else
     _dispatcher.Send(() => UpdateUI()); // must dispatch
 ```
 
-`ApplicationDispatcher.Send` uses `dispatcher.InvokeAsync` (line 61 in `IDispatcher.cs`) which returns a `Task` — the `Send` method is synchronous but internally awaits the `Task`.
+`ApplicationDispatcher.Send` uses `dispatcher.Invoke(action)` (line 61 in `IDispatcher.cs`) — a blocking call that runs the action synchronously on the UI thread.
 
 ### SynchronousDispatcher for unit tests
 

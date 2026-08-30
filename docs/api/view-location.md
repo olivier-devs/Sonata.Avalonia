@@ -42,19 +42,20 @@ Results are cached per view model type in `ViewManager.ViewTypeCache`. Configure
 // App.axaml.cs
 protected override void ConfigureSonataServices(IServiceCollection services)
 {
-    var viewManager = new ViewManager(new ViewManagerConfig
+    var config = new ViewManagerConfig
     {
         ViewFactory = type => AvaloniaXamlLoader.Load(type),
-        ViewAssemblies = new List<Assembly> { GetType().Assembly }
-    })
+        ViewAssemblies = new List<Assembly> { GetType().Assembly },
+        ViewNameSuffix = "Screen",
+        ViewModelNameSuffix = "ViewModel"
+    };
+    var viewManager = new ViewManager(config, loggerFactory.CreateLogger<ViewManager>())
     {
         NamespaceTransformations = new Dictionary<string, string>
         {
             ["MyApp.Features.Customers"] = "MyApp.UI.Customers",
             ["MyApp.Domain"] = "MyApp.Presentation",
         },
-        ViewNameSuffix = "Screen",
-        ViewModelNameSuffix = "ViewModel"
     };
     services.AddSingleton<IViewManager>(viewManager);
 }

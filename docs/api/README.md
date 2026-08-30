@@ -13,9 +13,9 @@ This section documents the key types and common use cases for Sonata.Avalonia. S
 | [bindables](./bindables.md) | Observable objects: `PropertyChangedBase`, `SetAndNotify`, `BindableCollection<T>`, `INotifyCollectionChanging`, `LabelledValue<T>` |
 | [conductors](./conductors.md) | Conductors: `Conductor<T>`, `Conductor<T>.Collection.OneActive`, `Conductor<T>.Collection.AllActive`, `Conductor<T>.StackNavigation`, item lifecycle |
 | [view-location](./view-location.md) | View location: `IViewManager`, view-model to view resolution, naming conventions, `ViewManagerConfig` |
-| [actions](./actions.md) | XAML actions: `IAction` via `<Button Action="">`, `ICommand` binding, `RoutedCommand` |
-| [window-manager](./window-manager.md) | Window management: `IWindowManager`, `ShowWindowAsync`, `ShowDialogAsync`, `ShowMessageBox`, `WindowConductor` lifecycle |
-| [validation](./validation.md) | Validation: `ValidatingModelBase`, `IModelValidator`, `IValidationAdapter`, integration with `DataAnnotations` |
+| [actions](./actions.md) | XAML actions: `{s:Action}` via `ActionExtension`/`CommandAction`/`EventAction`, `ICommand` binding, guard methods |
+| [window-manager](./window-manager.md) | Window management: `IWindowManager`, `ShowWindow`, `ShowDialog<T>`, `ShowMessageBox`, `WindowConductor` lifecycle |
+| [validation](./validation.md) | Validation: `ValidatingModelBase`, `IModelValidator`/`IModelValidator<T>`, integration with `DataAnnotations` |
 | [event-aggregator](./event-aggregator.md) | Event aggregation: `IEventAggregator`, `Subscribe`, `Publish`, weak subscriptions |
 | [commands](./commands.md) | Commands: `RelayCommand`, `IAction` (action callable from XAML), `ActionExtension` |
 | [dispatching](./dispatching.md) | Dispatching: `IDispatcher`, `UiThreadDispatch`, fire-and-forget, `Execute.OnUiThread` |

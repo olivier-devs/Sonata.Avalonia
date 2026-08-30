@@ -84,7 +84,7 @@ public void PointerDown(PointerPressedEventArgs e)
 `ActionExtension` exposes `NullTarget` and `ActionNotFound` properties controlling what happens when `View.ActionTarget` is null or the method doesn't exist:
 
 ```xml
-<!-- Default for commands: Disable if null/not found -->
+<!-- Default for commands: Disable if the target is null, Throw if the method is not found -->
 <Button Command="{s:Action DoSomething}">Do</Button>
 
 <!-- Explicit: throw if View.ActionTarget is null -->
