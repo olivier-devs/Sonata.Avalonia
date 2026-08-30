@@ -41,12 +41,6 @@ public abstract class ActionBase : AvaloniaObject
         private set => SetValue(targetProperty, value);
     }
 
-    // private static readonly DependencyProperty targetProperty =
-    //     DependencyProperty.Register("target", typeof(object), typeof(ActionBase), new PropertyMetadata(null, (d, e) =>
-    //     {
-    //         ((ActionBase)d).UpdateActionTarget(e.OldValue, e.NewValue);
-    //     }));
-
     private static readonly StyledProperty<object?> targetProperty;
 
 
@@ -55,7 +49,6 @@ public abstract class ActionBase : AvaloniaObject
         targetProperty = AvaloniaProperty.Register<ActionBase, object?>(nameof(Target));
         targetProperty.Changed.Subscribe(e =>
         {
-            // var type = e.NewValue.GetType();
             ((ActionBase)e.Sender).UpdateActionTarget(e.OldValue, e.NewValue);
         });
     }
@@ -87,32 +80,12 @@ public abstract class ActionBase : AvaloniaObject
 
         if (backupSubject == null)
         {
-            // BindingOperations.SetBinding(this, targetProperty, actionTargetBinding);
             this.Bind(targetProperty, actionTargetBinding);
-            // BindingOperations.Apply(this, ActionBase.targetProperty, actionBinding, null);
         }
         else
         {
-
-            //var multiBinding = new MultiBinding();
-            //multiBinding.Converter = new MultiBindingToActionTargetConverter();
-            //multiBinding.Bindings.Add(actionTargetBinding);
-            //multiBinding.Bindings.Add(new Binding()
-            //{
-            //    Path = "ActionTarget",
-            //    Mode = BindingMode.OneWay,
-            //    Source = backupSubject,
-            //});
-            //// BindingOperations.SetBinding(this, targetProperty, multiBinding);
-            //this.Bind(ActionBase.targetProperty, multiBinding);
-
             Subject.GetPropertyChangedObservable(View.ActionTargetProperty).Subscribe(e => Target = e.NewValue);
             backupSubject.GetPropertyChangedObservable(View.ActionTargetProperty).Subscribe(e => Target = e.NewValue);
-
-            //this.Bind(ActionBase.targetProperty, this.Subject.GetBindingObservable(View.ActionTargetProperty).ToBinding());
-            //this.Bind(ActionBase.targetProperty, backupSubject.GetBindingObservable(View.ActionTargetProperty));
-            //BindingOperations.Apply(this, ActionBase.targetProperty, new InstancedBinding(this.Subject.GetSubject(View.ActionTargetProperty), BindingMode.OneWay, BindingPriority.Unset), null);
-            //BindingOperations.Apply(this, ActionBase.targetProperty, new InstancedBinding(backupSubject.GetSubject(View.ActionTargetProperty), BindingMode.OneWay, BindingPriority.Unset), null);
         }
     }
 
