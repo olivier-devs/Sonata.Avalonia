@@ -288,6 +288,69 @@ public async Task ValidatePropertyAsync(string propertyName, CancellationToken c
 
 ---
 
+## ViewManager configuration migration
+
+### Before (Sonata.Avalonia 1.0.0)
+
+```csharp
+// Mutating the ViewManager after registration
+services.AddSonata(windowManagerConfig, new[] { typeof(App).Assembly });
+
+// Later, resolving and mutating the registered instance
+var manager = provider.GetRequiredService<IViewManager>() as ViewManager;
+manager!.ViewAssemblies = new[] { typeof(App).Assembly };
+manager.NamespaceTransformations = new Dictionary<string, string>
+{
+    ["MyApp.ViewModels"] = "MyApp.Views",
+};
+manager.ViewNameSuffix = "Screen";
+```
+
+### After (centralized configuration)
+
+```csharp
+// All configuration up-front through the options pattern
+services.ConfigureViewManager(options =>
+{
+    options
+        .AddViewAssembly<App>()
+        .MapNamespace("MyApp.ViewModels", "MyApp.Views")
+        .SetViewNameSuffix("Screen")
+        .AddView<CustomEditorControl, LegacyEditorViewModel>(); // explicit mapping
+});
+
+services.AddSonata(windowManagerConfig, new[] { typeof(App).Assembly });
+```
+
+> **Note:** `ConfigureViewManager` and `AddSonata` can be called in any order.
+> User configuration registered via `ConfigureViewManager` always takes precedence —
+> `AddSonata` uses `PostConfigure`, which runs after the user's configuration.
+
+### Key changes
+
+| Before | After |
+|--------|-------|
+| `new ViewManagerConfig { ViewFactory = ..., ViewAssemblies = ... }` | `ConfigureViewManager(options => { options.SetViewFactory(...).AddViewAssembly<...>(); })` |
+| `NamespaceTransformations = new Dictionary<...>` | `MapNamespace("FromNs", "ToNs")` |
+| `ViewManager` properties were public and mutable | Configuration lives in `ViewManagerConfig`; `ViewManager` exposes read-only accessors |
+| Explicit mappings required a custom `ViewManager` subclass | `AddView<TView, TViewModel>()` handles this declaratively |
+| Convention-only resolution | Explicit mappings (`AddView`) take priority over convention-based discovery |
+
+### ViewFactory is configured automatically
+
+`AddSonata` automatically sets `ViewFactory` via `PostConfigure` if it is still `null`.
+This means for most applications, `SetViewFactory` is only needed when replacing the default
+service-resolution behaviour with a custom factory (e.g., XAML loading):
+
+```csharp
+services.ConfigureViewManager(options =>
+{
+    options.SetViewFactory(type => AvaloniaXamlLoader.Load(type));
+});
+```
+
+---
+
 ## See also
 
 - [API Reference](docs/api/README.md) — full API documentation by domain

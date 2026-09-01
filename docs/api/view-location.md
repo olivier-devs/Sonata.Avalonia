@@ -8,8 +8,8 @@ Locates views for view models using naming conventions and namespace transformat
 |------|------|---------|
 | `IViewManager` | Interface for locating and creating views | `Sonata.Avalonia` |
 | `ViewManager` | Default implementation with caching and convention-based resolution | `Sonata.Avalonia` |
-| `ViewManagerConfig` | Configuration for `ViewManager` — requires `ViewFactory` and `ViewAssemblies` | `Sonata.Avalonia` |
-| `NamespaceTransformations` | Dictionary mapping namespace prefixes to replace | `ViewManager` |
+| `ViewManagerConfig` | Sealed fluent configuration object for `ViewManager` | `Sonata.Avalonia` |
+| `ConfigureViewManager` | DI extension registering `ViewManagerConfig` via `IOptions<ViewManagerConfig>` | `Sonata.Avalonia` |
 | `SonataViewLocationException` | Thrown when a view cannot be located | `Sonata.Avalonia` |
 | `SonataInvalidViewTypeException` | Thrown when located view is a `Window` (expected `UserControl`) | `Sonata.Avalonia` |
 | `View.Model` | Attached property identifying the view model for a container | `Sonata.Avalonia.Xaml` |
@@ -17,7 +17,27 @@ Locates views for view models using naming conventions and namespace transformat
 
 ## Use cases
 
-### Default convention: ViewModel → View name transformation
+### Configuring the ViewManager
+
+All configuration is performed through `ViewManagerConfig` using the `ConfigureViewManager` DI extension.
+Results are cached per view model type in `ViewManager.ViewTypeCache` — configure all conventions **before** the first lookup.
+
+```csharp
+// App.axaml.cs
+protected override void ConfigureServices(IServiceCollection services)
+{
+    services.ConfigureViewManager(options =>
+    {
+        options
+            .AddViewAssembly<App>()                       // scan App's assembly for views
+            .MapNamespace("MyApp.ViewModels", "MyApp.Views") // rewrite namespace prefix
+            .SetViewNameSuffix("View")                    // default: "View"
+            .SetViewModelNameSuffix("ViewModel");         // default: "ViewModel"
+    });
+}
+```
+
+### ViewModel → View name transformation (default convention)
 
 `ViewManager` resolves view types by transforming the view model's full type name:
 
@@ -28,37 +48,62 @@ Locates views for view models using naming conventions and namespace transformat
 // Given: MyApp.ViewModels.Customers.CustomerListViewModel
 // With defaults: MyApp.Views.Customers.CustomerListView
 
-// Transform happens in ViewManager.ViewTypeNameForModelTypeName (line 240-258)
-// NamespaceTransformations are applied first (prefix matching, line 244-250)
-// Then suffix replacement via regex (line 253-255):
+// Transform happens in ViewManager.ViewTypeNameForModelTypeName (line 167-185)
+// NamespaceTransformations are applied first (prefix matching, line 171-177)
+// Then suffix replacement via regex (line 180-182):
 //   "(?<=.)ViewModel(?=s?.)|ViewModel$" → "View"
 ```
 
-Results are cached per view model type in `ViewManager.ViewTypeCache`. Configure all conventions **before** the first lookup — the cache is never invalidated.
+### Explicit view mappings
 
-### Custom namespace transformations
+For view models that do not follow the naming convention, use `AddView<TView, TViewModel>()`.
+Explicit mappings always take priority over convention-based discovery.
 
 ```csharp
-// App.axaml.cs
-protected override void ConfigureSonataServices(IServiceCollection services)
+services.ConfigureViewManager(options =>
 {
-    var config = new ViewManagerConfig
-    {
-        ViewFactory = type => AvaloniaXamlLoader.Load(type),
-        ViewAssemblies = new List<Assembly> { GetType().Assembly },
-        ViewNameSuffix = "Screen",
-        ViewModelNameSuffix = "ViewModel"
-    };
-    var viewManager = new ViewManager(config, loggerFactory.CreateLogger<ViewManager>())
-    {
-        NamespaceTransformations = new Dictionary<string, string>
-        {
-            ["MyApp.Features.Customers"] = "MyApp.UI.Customers",
-            ["MyApp.Domain"] = "MyApp.Presentation",
-        },
-    };
-    services.AddSingleton<IViewManager>(viewManager);
-}
+    // MyApp.ViewModels.LegacyEditorViewModel → MyApp.Views.CustomEditorControl (explicit)
+    options.AddView<CustomEditorControl, LegacyEditorViewModel>();
+});
+```
+
+### Removing an inherited mapping
+
+Use `RemoveView<TViewModel>()` to remove a mapping that was registered earlier
+(e.g., by `AddSonata` convention scanning).
+
+```csharp
+services.ConfigureViewManager(options =>
+{
+    options.RemoveView<SomeViewModel>();
+});
+```
+
+### Custom ViewFactory
+
+By default, `AddSonata` sets `ViewFactory` to resolve types from the service provider.
+Replace it with a custom factory if views need special instantiation (e.g., XAML loading):
+
+```csharp
+services.ConfigureViewManager(options =>
+{
+    options.SetViewFactory(type => AvaloniaXamlLoader.Load(type));
+});
+```
+
+### Custom namespace transformation
+
+`MapNamespace` rewrites the namespace prefix in view model type names before suffix replacement:
+
+```csharp
+services.ConfigureViewManager(options =>
+{
+    options.MapNamespace(
+        "Sonata.Samples.ConfigureViewManager.ViewModels",
+        "Sonata.Samples.ConfigureViewManager.Views");
+});
+// Result: Sonata.Samples.ConfigureViewManager.ViewModels.MainViewModel
+//       → Sonata.Samples.ConfigureViewManager.Views.MainView
 ```
 
 ### Custom ViewManager with attribute-based mapping
@@ -77,7 +122,7 @@ public class CustomViewManager : ViewManager
 {
     private readonly Dictionary<Type, Type> _viewModelToViewMapping;
 
-    public CustomViewManager(ViewManagerConfig config, ILogger<ViewManager> logger)
+    public CustomViewManager(IOptions<ViewManagerConfig> config, ILogger<ViewManager> logger)
         : base(config, logger)
     {
         var mappings = from type in ViewAssemblies.SelectMany(x => x.GetExportedTypes())
@@ -116,14 +161,17 @@ Register with `services.AddSingleton<IViewManager, CustomViewManager>()` in `Con
 </DockPanel>
 ```
 
-When `View.Model` changes, `ViewManager.OnModelChanged` (line 165-187) resolves and instantiates the view, then sets the container's `Content`. The view's `DataContext` is set to the view model and `View.ActionTarget` is assigned for action resolution.
+When `View.Model` changes, `ViewManager.OnModelChanged` resolves and instantiates the view, then sets the container's `Content`. The view's `DataContext` is set to the view model and `View.ActionTarget` is assigned for action resolution.
 
 > **Important:** `s:View.Model` cannot target a `Window` — it throws `SonataInvalidViewTypeException`. Use `IWindowManager.ShowWindow` for windows.
 
 ## See also
 
 - [`src/Sonata.Avalonia/ViewManager.cs`](../../src/Sonata.Avalonia/ViewManager.cs) — `ViewManager` with `ViewTypeNameForModelTypeName` convention logic
+- [`src/Sonata.Avalonia/ViewManagerConfig.cs`](../../src/Sonata.Avalonia/ViewManagerConfig.cs) — fluent configuration object
+- [`src/Sonata.Avalonia/ViewManagerServiceCollectionExtensions.cs`](../../src/Sonata.Avalonia/ViewManagerServiceCollectionExtensions.cs) — `ConfigureViewManager` DI extension
 - [`src/Sonata.Avalonia/Xaml/View.cs`](../../src/Sonata.Avalonia/Xaml/View.cs) — `View.Model` and `View.ActionTarget` attached properties
+- [`samples/Sonata.Samples.ConfigureViewManager/App.axaml.cs`](../../samples/Sonata.Samples.ConfigureViewManager/App.axaml.cs) — full configuration API usage
 - [`samples/Sonata.Samples.OverridingViewManager/CustomViewManager.cs`](../../samples/Sonata.Samples.OverridingViewManager/CustomViewManager.cs) — attribute-based custom `ViewManager`
 - [`samples/Sonata.Samples.NavigationController/Pages/ShellView.axaml`](../../samples/Sonata.Samples.NavigationController/Pages/ShellView.axaml) — `s:View.Model` composition
 - [Bootstrappers](./bootstrappers.md) — wiring a custom `IViewManager` via `ConfigureServices`

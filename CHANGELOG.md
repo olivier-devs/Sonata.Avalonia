@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- New fluent `ViewManagerConfig` API (`AddViewAssembly`, `MapNamespace`, `AddView`, `RemoveView`, `SetViewFactory`, `SetViewNameSuffix`, `SetViewModelNameSuffix`).
+- New DI extension `services.ConfigureViewManager(options => ...)`, backed by `Microsoft.Extensions.Options`.
+- New sample `Sonata.Samples.ConfigureViewManager` demonstrating the full configuration API.
+- Explicit view mappings (`AddView`) take priority over convention-based discovery.
+
+### Changed
+
+- `ViewManager` now consumes `IOptions<ViewManagerConfig>` instead of a direct `ViewManagerConfig` reference.
+- `AddSonata` configures `ViewManagerConfig` through the options pipeline (`PostConfigure`) and respects user overrides from `ConfigureViewManager`.
+- `AddSonata` propagates its `viewModelNameSuffix` parameter to `ViewManagerConfig.ViewModelNameSuffix` only when the default value is still in place.
+
+### Removed
+
+- Public mutable configuration properties on `ViewManager` (`ViewFactory`, `ViewAssemblies`, `NamespaceTransformations`, `ViewNameSuffix`, `ViewModelNameSuffix`). Use `ViewManagerConfig` and `ConfigureViewManager` instead.
+- Object-initializer support on `ViewManagerConfig` — it is now a sealed fluent configuration object.
+- Constructor `ViewManager(ViewManagerConfig, ILogger<ViewManager>)` replaced by `ViewManager(IOptions<ViewManagerConfig>, ILogger<ViewManager>)`.
+
 ## [1.0.0] - 2026-08-30
 
 > First stable release of Sonata.Avalonia — a modernized, async-first MVVM framework
