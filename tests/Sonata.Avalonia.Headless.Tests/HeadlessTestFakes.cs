@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Sonata.Avalonia;
 using Sonata.Avalonia.Primitive;
 
@@ -58,17 +59,13 @@ namespace Sonata.Avalonia.Headless.Tests
     /// <summary>Builders for the framework pieces under test, wired to this assembly's conventions.</summary>
     internal static class TestHost
     {
-        public static ViewManager CreateViewManager(Action<ViewManager>? configure = null)
+        public static ViewManager CreateViewManager(Action<ViewManagerConfig>? configure = null)
         {
-            var manager = new ViewManager(
-                new ViewManagerConfig
-                {
-                    ViewFactory = type => Activator.CreateInstance(type)!,
-                    ViewAssemblies = [typeof(ShellViewModel).Assembly],
-                },
-                NullLogger<ViewManager>.Instance);
-            configure?.Invoke(manager);
-            return manager;
+            var config = new ViewManagerConfig()
+                .SetViewFactory(type => Activator.CreateInstance(type)!)
+                .AddViewAssembly(typeof(ShellViewModel).Assembly);
+            configure?.Invoke(config);
+            return new ViewManager(Options.Create(config), NullLogger<ViewManager>.Instance);
         }
 
         public static WindowManager CreateWindowManager(

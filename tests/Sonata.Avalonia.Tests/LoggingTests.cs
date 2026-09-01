@@ -1,6 +1,7 @@
 using System.Reflection;
 using Avalonia.Controls;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Sonata.Avalonia;
 using Sonata.Avalonia.Internal;
 using Xunit;
@@ -43,12 +44,10 @@ public class LoggingTests
     {
         var provider = new TestLoggerProvider();
         var factory = new LoggerFactory(new[] { provider });
-        var config = new ViewManagerConfig
-        {
-            ViewFactory = type => (Control)Activator.CreateInstance(type)!,
-            ViewAssemblies = new List<Assembly> { typeof(LoggingTests).Assembly },
-        };
-        var viewManager = new ViewManager(config, factory.CreateLogger<ViewManager>());
+        var config = new ViewManagerConfig()
+            .SetViewFactory(type => (Control)Activator.CreateInstance(type)!)
+            .AddViewAssembly(typeof(LoggingTests).Assembly);
+        var viewManager = new ViewManager(Options.Create(config), factory.CreateLogger<ViewManager>());
 
         viewManager.CreateAndBindViewForModelIfNecessary(new TestRootViewModel());
 
