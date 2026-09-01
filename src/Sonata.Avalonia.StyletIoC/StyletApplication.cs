@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Sonata.Avalonia.StyletIoC;
 
@@ -41,11 +42,9 @@ public abstract class StyletApplication<T> : SonataApplicationBase<T> where T : 
     {
         // Mark these as weak-bindings, so the user can replace them if they want
         var viewManagerConfig = new ViewManagerConfig()
-        {
-            ViewFactory = GetInstance,
-            ViewAssemblies = new List<Assembly>{ GetType().Assembly}
-        };
-        builder.Bind<ViewManagerConfig>().ToInstance(viewManagerConfig).AsWeakBinding();
+            .AddViewAssembly(GetType().Assembly)
+            .SetViewFactory(GetInstance);
+        builder.Bind<IOptions<ViewManagerConfig>>().ToInstance(Options.Create(viewManagerConfig)).AsWeakBinding();
 
         builder.Bind<IDispatcher>().ToInstance(new ApplicationDispatcher()).DisposeWithContainer(false).AsWeakBinding();
 

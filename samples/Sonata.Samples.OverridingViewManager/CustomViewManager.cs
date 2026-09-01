@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Sonata.Avalonia;
 using System.Reflection;
 
@@ -20,7 +21,7 @@ public class CustomViewManager : ViewManager
 {
     private readonly Dictionary<Type, Type> _viewModelToViewMapping;
 
-    public CustomViewManager(ViewManagerConfig config, ILogger<ViewManager> logger)
+    public CustomViewManager(IOptions<ViewManagerConfig> config, ILogger<ViewManager> logger)
         : base(config, logger)
     {
         var mappings = from type in ViewAssemblies.SelectMany(x => x.GetExportedTypes())

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using DryIoc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Sonata.Avalonia;
 using Sonata.Avalonia.Primitive;
 
@@ -28,12 +29,10 @@ public class DryIocSonataApplication<T> : SonataApplicationBase<T> where T : cla
 
     protected virtual void ConfigureIoC(IContainer container)
     {
-        var viewManagerConfig = new ViewManagerConfig
-        {
-            ViewFactory = GetInstance,
-            ViewAssemblies = new List<Assembly> { GetType().Assembly }
-        };
-        container.RegisterInstance(viewManagerConfig);
+        var viewManagerConfig = new ViewManagerConfig()
+            .AddViewAssembly(GetType().Assembly)
+            .SetViewFactory(GetInstance);
+        container.RegisterInstance<IOptions<ViewManagerConfig>>(Options.Create(viewManagerConfig));
         container.RegisterInstance<ILoggerFactory>(NullLoggerFactory.Instance);
         container.Register(typeof(ILogger<>), typeof(Logger<>));
         container.Register<IViewManager, ViewManager>();
