@@ -65,7 +65,7 @@ jobs:
             exit 1
           fi
           FAILED=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${SHA}/check-runs" \
-            --jq '[.check_runs[] | select(.conclusion != "success" and .conclusion != "neutral" and .conclusion != "skipping")] | length')
+            --jq '[.check_runs[] | select(.conclusion != "success" and .conclusion != "neutral" and .conclusion != "skipped")] | length')
           if [ "$FAILED" -ne 0 ]; then
             echo "::error::$FAILED check run(s) not successful on main HEAD — see https://github.com/${GITHUB_REPOSITORY}/actions"
             exit 1
