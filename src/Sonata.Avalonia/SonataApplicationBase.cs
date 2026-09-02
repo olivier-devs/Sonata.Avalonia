@@ -1,4 +1,6 @@
-﻿namespace Sonata.Avalonia;
+﻿using Sonata.Avalonia.Internal;
+
+namespace Sonata.Avalonia;
 
 /// <summary>
 /// Base class for Sonata applications which want to use their own IoC container.
@@ -90,7 +92,15 @@ public abstract class SonataApplicationBase<T> : Application, IWindowManagerConf
         var view = viewManager.CreateAndBindViewForModelIfNecessary(vm);
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
             desktop.MainWindow = view as Window;
+
+            // The root ViewModel must have its lifecycle tied to the main window.
+            // Without a WindowConductor, ActivateAsync is never called and Screen lifecycle hooks do not run.
+            if (view is Window window)
+                new WindowConductor(new WindowAdapter(window), vm, SonataLogManager.GetLogger(GetType()));
+        }
+
         if (ApplicationLifetime is ISingleViewApplicationLifetime single)
             single.MainView = view;
 
