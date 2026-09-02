@@ -4,6 +4,12 @@ on:
   push:
     tags: [ 'v*' ]
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Tag to publish (e.g. v1.0.1)'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -16,6 +22,9 @@ jobs:
       tag: ${{ steps.version.outputs.tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
@@ -24,7 +33,7 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          TAG="${GITHUB_REF_NAME#refs/tags/}"
+          TAG="${{ inputs.tag || github.ref_name }}"
           VERSION="${TAG#v}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
