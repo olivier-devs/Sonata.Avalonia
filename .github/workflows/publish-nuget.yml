@@ -102,3 +102,43 @@ jobs:
           --source https://api.nuget.org/v3/index.json
           --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
           --skip-duplicate
+
+  create-github-release:
+    needs: [build, publish-github, publish-nugetorg]
+    if: ${{ !cancelled() && needs.publish-github.result == 'success' && (needs.publish-nugetorg.result == 'success' || needs.publish-nugetorg.result == 'skipped') }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - name: Extract CHANGELOG section
+        id: notes
+        run: |
+          VERSION="${{ needs.build.outputs.version }}"
+          COUNT=$(grep -cF "## [$VERSION]" CHANGELOG.md || true)
+          if [ "$COUNT" != "1" ]; then
+            echo "CHANGELOG section '## [$VERSION]' found $COUNT time(s) — falling back to generated notes"
+            echo "body=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          {
+            echo "body<<NOTES_EOF"
+            awk -v header="## [$VERSION]" '
+              index($0, header) == 1 { insec = 1; next }
+              /^## \[/ { insec = 0 }
+              insec && NF { print }
+            ' CHANGELOG.md
+            echo "NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          name: Release ${{ needs.build.outputs.version }}
+          body: ${{ steps.notes.outputs.body }}
+          generate_release_notes: ${{ steps.notes.outputs.body == '' }}
+          prerelease: ${{ contains(needs.build.outputs.version, '-') }}
