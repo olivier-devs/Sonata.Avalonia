@@ -11,6 +11,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -18,22 +21,22 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Verify tag matches package version
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Extract version from tag
+        id: version
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          # grep -oP requires GNU grep (available on ubuntu runners); fallback: sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' Directory.Build.props
-          VERSION=$(grep -oP '(?<=<Version>)[^<]+' Directory.Build.props)
-          if [ "$TAG" != "$VERSION" ]; then
-            echo "::error::Tag v$TAG does not match Directory.Build.props version $VERSION"
-            exit 1
-          fi
+          TAG="${GITHUB_REF_NAME#refs/tags/}"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Tag     : $TAG"
+          echo "Version : $VERSION"
 
       - name: Restore
         run: dotnet restore Sonata.Avalonia.slnx
 
       - name: Build (Release)
         run: dotnet build Sonata.Avalonia.slnx -c Release -maxcpucount:1
+          /p:Version=${{ steps.version.outputs.version }}
 
       - name: Unit tests
         run: dotnet test tests/Sonata.Avalonia.Tests/Sonata.Avalonia.Tests.csproj -c Release --no-build
@@ -42,7 +45,8 @@ jobs:
         run: dotnet test tests/Sonata.Avalonia.Headless.Tests/Sonata.Avalonia.Headless.Tests.csproj -c Release --no-build
 
       - name: Pack
-        run: dotnet pack Sonata.Avalonia.slnx -c Release --no-build -o artifacts
+        run: dotnet pack Sonata.Avalonia.slnx -c Release --no-build
+          /p:Version=${{ steps.version.outputs.version }} -o artifacts
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
