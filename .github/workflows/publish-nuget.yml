@@ -80,6 +80,7 @@ jobs:
 
   publish-nugetorg:
     needs: build
+    if: ${{ !contains(needs.build.outputs.version, '-') }}
     environment: nuget-org
     permissions:
       contents: read
@@ -96,11 +97,12 @@ jobs:
         with:
           user: ${{ secrets.NUGET_USER }}
       - name: Push to nuget.org
-        if: ${{ !contains(needs.build.outputs.version, '-') }}
         run: dotnet nuget push "artifacts/*.nupkg"
           --source https://api.nuget.org/v3/index.json
-          --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
+          --api-key "$NUGET_KEY"
           --skip-duplicate
+        env:
+          NUGET_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
 
   create-github-release:
     needs: [build, publish-github, publish-nugetorg]
