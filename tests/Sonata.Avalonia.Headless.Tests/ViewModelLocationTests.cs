@@ -77,8 +77,8 @@ public class ViewModelLocationTests
         // Arrange — 'SuffixVm' should be located as 'SuffixPage' with these suffixes
         var manager = TestHost.CreateViewManager(m =>
         {
-            m.ViewModelNameSuffix = "Vm";
-            m.ViewNameSuffix = "Page";
+            m.SetViewModelNameSuffix("Vm");
+            m.SetViewNameSuffix("Page");
         });
         WithViewManagerIoC(manager, () =>
         {
@@ -100,10 +100,8 @@ public class ViewModelLocationTests
         // Arrange — ViewModels in 'VmLand' are looked up in 'ViewLand'
         var manager = TestHost.CreateViewManager(m =>
         {
-            m.NamespaceTransformations = new Dictionary<string, string>
-            {
-                ["Sonata.Avalonia.Headless.Tests.VmLand"] = "Sonata.Avalonia.Headless.Tests.ViewLand",
-            };
+            m.MapNamespace("Sonata.Avalonia.Headless.Tests.VmLand",
+                           "Sonata.Avalonia.Headless.Tests.ViewLand");
         });
         WithViewManagerIoC(manager, () =>
         {

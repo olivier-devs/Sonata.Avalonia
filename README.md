@@ -74,6 +74,7 @@ public partial class App : SonataApplication<ShellViewModel>
 | MasterDetail | Master-detail conductor, `BindableCollection`, selection | `samples/Sonata.Samples.MasterDetail/` |
 | TabNavigation | `Conductor<T>` + TabControl, `SonataConductorTabControl` | `samples/Sonata.Samples.TabNavigation/` |
 | NavigationController | Custom navigation controller, delegate injection | `samples/Sonata.Samples.NavigationController/` |
+| ConfigureViewManager | Fluent `ViewManagerConfig` API, `ConfigureViewManager`, explicit mappings | `samples/Sonata.Samples.ConfigureViewManager/` |
 | OverridingViewManager | Custom `IViewManager` (attribute-based mapping) | `samples/Sonata.Samples.OverridingViewManager/` |
 
 ## Documentation

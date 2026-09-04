@@ -36,123 +36,50 @@ public interface IViewManager
 }
 
 /// <summary>
-/// Configuration object consumed by <see cref="ViewManager"/>
-/// </summary>
-public class ViewManagerConfig
-{
-    /// <summary>
-    /// Gets the ViewFactory used to instantiate views.
-    /// </summary>
-    public required Func<Type, object> ViewFactory { get; init; }
-
-    /// <summary>
-    /// Gets the assemblies searched for views.
-    /// </summary>
-    public required List<Assembly> ViewAssemblies { get; init; }
-}
-
-/// <summary>
 /// Default implementation of ViewManager. Responsible for locating, creating, and settings up Views. Also owns the View.Model and View.ActionTarget attached properties.
 /// View location results are cached per ViewModel type: configure all conventions
 /// (ViewAssemblies, NamespaceTransformations, suffixes) before the first lookup.
 /// </summary>
 public class ViewManager : IViewManager
 {
+    private readonly ViewManagerConfig _config;
+    private readonly Func<Type, object> _viewFactory;
     private readonly ILogger _logger;
 
     internal readonly ConcurrentDictionary<Type, Type> ViewTypeCache = new();
 
-    // Assigned through the ViewFactory property setter in the constructor.
-    private Func<Type, object> _viewFactory = null!;
+    /// <summary>
+    /// Gets the assemblies which are used for IoC container auto-binding and searching for Views.
+    /// </summary>
+    protected IReadOnlyList<Assembly> ViewAssemblies => _config.ViewAssemblies;
 
     /// <summary>
-    /// Gets or sets the delegate used to retrieve an instance of a view
+    /// Gets a set of transformations to be applied to the ViewModel's namespace: string to find -> string to replace it with
     /// </summary>
-    public Func<Type, object> ViewFactory
-    {
-        get { return _viewFactory; }
-        set
-        {
-            if (value == null)
-                throw new ArgumentNullException();
-            _viewFactory = value;
-        }
-    }
-
-    // Assigned through the ViewAssemblies property setter in the constructor.
-    private List<Assembly> _viewAssemblies = null!;
+    protected IReadOnlyDictionary<string, string> NamespaceTransformations => _config.NamespaceTransformations;
 
     /// <summary>
-    /// Gets or sets the assemblies which are used for IoC container auto-binding and searching for Views.
+    /// Gets the suffix replacing 'ViewModel' (see <see cref="ViewModelNameSuffix"/>). Defaults to 'View'
     /// </summary>
-    public List<Assembly> ViewAssemblies
-    {
-        get { return _viewAssemblies; }
-        set
-        {
-            if (value == null)
-                throw new ArgumentNullException();
-            _viewAssemblies = value;
-        }
-    }
-
-    private Dictionary<string, string> _namespaceTransformations = new Dictionary<string, string>();
+    protected string ViewNameSuffix => _config.ViewNameSuffix;
 
     /// <summary>
-    /// Gets or sets a set of transformations to be applied to the ViewModel's namespace: string to find -> string to replace it with
+    /// Gets the suffix of ViewModel names, defaults to 'ViewModel'. This will be replaced by <see cref="ViewNameSuffix"/>
     /// </summary>
-    public Dictionary<string, string> NamespaceTransformations
-    {
-        get { return _namespaceTransformations; }
-        set
-        {
-            if (value == null)
-                throw new ArgumentNullException();
-            _namespaceTransformations = value;
-        }
-    }
-
-    private string _viewNameSuffix = "View";
+    protected string ViewModelNameSuffix => _config.ViewModelNameSuffix;
 
     /// <summary>
-    /// Gets or sets the suffix replacing 'ViewModel' (see <see cref="ViewModelNameSuffix"/>). Defaults to 'View'
+    /// Initialises a new instance of the <see cref="ViewManager"/> class, with the given configuration.
     /// </summary>
-    public string ViewNameSuffix
-    {
-        get { return _viewNameSuffix; }
-        set
-        {
-            if (value == null)
-                throw new ArgumentNullException();
-            _viewNameSuffix = value;
-        }
-    }
-
-    private string _viewModelNameSuffix = "ViewModel";
-
-    /// <summary>
-    /// Gets or sets the suffix of ViewModel names, defaults to 'ViewModel'. This will be replaced by <see cref="ViewNameSuffix"/>
-    /// </summary>
-    public string ViewModelNameSuffix
-    {
-        get { return _viewModelNameSuffix; }
-        set
-        {
-            if (value == null)
-                throw new ArgumentNullException();
-            _viewModelNameSuffix = value;
-        }
-    }
-
-    /// <summary>
-    /// Initialises a new instance of the <see cref="ViewManager"/> class, with the given viewFactory
-    /// </summary>
-    /// <param name="config">Configuration object</param>
+    /// <param name="config">Configuration options</param>
     /// <param name="logger">Logger to use</param>
-    public ViewManager(ViewManagerConfig config, ILogger<ViewManager> logger)
+    public ViewManager(IOptions<ViewManagerConfig> config, ILogger<ViewManager> logger)
     {
-        ViewFactory = config.ViewFactory;
-        ViewAssemblies = config.ViewAssemblies;
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(logger);
+        _config = config.Value;
+        _viewFactory = _config.ViewFactory ?? throw new InvalidOperationException(
+            "ViewManagerConfig.ViewFactory has not been configured. Set it via SetViewFactory or AddSonata.");
         _logger = logger;
     }
 
@@ -267,6 +194,12 @@ public class ViewManager : IViewManager
     {
         return ViewTypeCache.GetOrAdd(modelType, mt =>
         {
+            if (_config.ExplicitViewMappings.TryGetValue(mt, out var explicitView))
+            {
+                _logger.LogInformation("Located an explicit View mapping for {0}: {1}", mt, explicitView);
+                return explicitView;
+            }
+
             var modelName = mt.FullName ?? throw new SonataViewLocationException("Unable to determine the ViewModel's full name", string.Empty);
             var viewName = ViewTypeNameForModelTypeName(modelName);
             if (modelName == viewName)
@@ -298,7 +231,7 @@ public class ViewManager : IViewManager
             throw e;
         }
 
-        var view = (Control)ViewFactory(viewType);
+        var view = (Control)_viewFactory(viewType);
 
         return view;
     }

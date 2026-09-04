@@ -27,13 +27,21 @@ public static class SonataServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(windowManagerConfig);
         ArgumentNullException.ThrowIfNull(viewAssemblies);
 
+        if (string.IsNullOrWhiteSpace(viewModelNameSuffix))
+            throw new ArgumentException("Value cannot be null, empty or whitespace.", nameof(viewModelNameSuffix));
+
         var assemblies = viewAssemblies.Distinct().ToList();
 
-        services.TryAddSingleton(sp => new ViewManagerConfig
-        {
-            ViewFactory = type => sp.GetRequiredService(type),
-            ViewAssemblies = assemblies,
-        });
+        services.AddOptions<ViewManagerConfig>()
+            .PostConfigure<IServiceProvider>((config, sp) =>
+            {
+                if (config.ViewFactory is null)
+                    config.SetViewFactory(type => sp.GetRequiredService(type));
+                foreach (var assembly in assemblies)
+                    config.AddViewAssembly(assembly);
+                if (config.ViewModelNameSuffix == ViewManagerConfig.DefaultViewModelNameSuffix)
+                    config.SetViewModelNameSuffix(viewModelNameSuffix);
+            });
         services.TryAddSingleton<IDispatcher>(_ => new ApplicationDispatcher());
         services.TryAddSingleton<IViewManager, ViewManager>();
         services.TryAddSingleton<ViewManager>();

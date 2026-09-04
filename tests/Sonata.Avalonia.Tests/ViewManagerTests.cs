@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Sonata.Avalonia;
 using Xunit;
 
@@ -10,11 +11,10 @@ public class ViewManagerTests
     private class NoViewViewModel { }
 
     private static ViewManager CreateManager(List<Assembly> assemblies) =>
-        new(new ViewManagerConfig
-        {
-            ViewFactory = type => Activator.CreateInstance(type)!,
-            ViewAssemblies = assemblies,
-        }, NullLogger<ViewManager>.Instance);
+        new(Options.Create(new ViewManagerConfig()
+                .SetViewFactory(type => Activator.CreateInstance(type)!)
+                .AddViewAssembly(assemblies.Single())),
+            NullLogger<ViewManager>.Instance);
 
     [Fact]
     public void CreateViewForModel_LocatesAndInstantiatesView()

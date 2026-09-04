@@ -13,6 +13,7 @@ global using Avalonia.Data.Converters;
 global using Sonata.Avalonia.Extensions;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Options;
 global using Microsoft.Extensions.Logging.Abstractions;
 global using Sonata.Avalonia.Internal;
 global using System.ComponentModel;
