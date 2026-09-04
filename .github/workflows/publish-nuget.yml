@@ -1,0 +1,152 @@
+name: Publish
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Tag to publish (e.g. v1.0.1)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Extract version from tag
+        id: version
+        env:
+          REF_TAG: ${{ inputs.tag }}
+        run: |
+          TAG="$REF_TAG"
+          VERSION="${TAG#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Tag '$TAG' does not carry a valid SemVer version ('$VERSION')"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Tag     : $TAG"
+          echo "Version : $VERSION"
+
+      - name: Restore
+        run: dotnet restore Sonata.Avalonia.slnx
+
+      - name: Build (Release)
+        run: dotnet build Sonata.Avalonia.slnx -c Release -maxcpucount:1
+          /p:Version=${{ steps.version.outputs.version }}
+
+      - name: Unit tests
+        run: dotnet test tests/Sonata.Avalonia.Tests/Sonata.Avalonia.Tests.csproj -c Release --no-build
+
+      - name: Headless tests
+        run: dotnet test tests/Sonata.Avalonia.Headless.Tests/Sonata.Avalonia.Headless.Tests.csproj -c Release --no-build
+
+      - name: Pack
+        run: dotnet pack Sonata.Avalonia.slnx -c Release --no-build
+          /p:Version=${{ steps.version.outputs.version }} -o artifacts
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nupkgs
+          path: artifacts/*.nupkg
+
+  publish-github:
+    needs: build
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: nupkgs
+          path: artifacts
+      - name: Push to GitHub Packages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: dotnet nuget push "artifacts/*.nupkg"
+          --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+          --api-key "$GH_TOKEN"
+          --skip-duplicate
+
+  publish-nugetorg:
+    needs: build
+    if: ${{ !contains(needs.build.outputs.version, '-') }}
+    environment: nuget-org
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: nupkgs
+          path: artifacts
+      - name: NuGet login (OIDC -> temporary API key)
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+      - name: Push to nuget.org
+        run: dotnet nuget push "artifacts/*.nupkg"
+          --source https://api.nuget.org/v3/index.json
+          --api-key "$NUGET_KEY"
+          --skip-duplicate
+        env:
+          NUGET_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+
+  create-github-release:
+    needs: [build, publish-github, publish-nugetorg]
+    if: ${{ !cancelled() && needs.publish-github.result == 'success' && (needs.publish-nugetorg.result == 'success' || needs.publish-nugetorg.result == 'skipped') }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Extract CHANGELOG section
+        id: notes
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          COUNT=$(grep -cF "## [$VERSION]" CHANGELOG.md || true)
+          if [ "$COUNT" != "1" ]; then
+            echo "CHANGELOG section '## [$VERSION]' found $COUNT time(s) — falling back to generated notes"
+            echo "body=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          {
+            echo "body<<NOTES_EOF"
+            awk -v header="## [$VERSION]" '
+              index($0, header) == 1 { insec = 1; next }
+              /^## \[/ { insec = 0 }
+              insec && NF { print }
+            ' CHANGELOG.md
+            echo "NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          tag_name: ${{ inputs.tag }}
+          name: Release ${{ needs.build.outputs.version }}
+          body: ${{ steps.notes.outputs.body }}
+          generate_release_notes: ${{ steps.notes.outputs.body == '' }}
+          prerelease: ${{ contains(needs.build.outputs.version, '-') }}

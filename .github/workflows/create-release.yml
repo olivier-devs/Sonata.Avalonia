@@ -1,0 +1,95 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 1.2.3 or 1.2.3-beta.1)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  create-release-tag:
+    name: Validate and create release tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      checks: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Validate version (SemVer)
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Invalid version '$VERSION' — expected SemVer like 1.2.3 or 1.2.3-beta.1"
+            exit 1
+          fi
+
+      - name: Check tag does not exist
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          TAG="v$VERSION"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::Tag $TAG already exists"
+            exit 1
+          fi
+
+      - name: Check CHANGELOG has a section for this version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! grep -Fq "## [$VERSION]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [$VERSION]' section"
+            echo "Rename the [Unreleased] section to [$VERSION], commit (docs(changelog): release $VERSION), then rerun this workflow."
+            exit 1
+          fi
+
+      - name: Check CI is green on main HEAD
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA=$(git rev-parse origin/main)
+          echo "main HEAD: $SHA"
+          TOTAL=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${SHA}/check-runs" --jq '.total_count')
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "::error::No check runs found on main HEAD ($SHA) — CI has not run"
+            exit 1
+          fi
+          FAILED=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${SHA}/check-runs" \
+            --jq '[.check_runs[] | select(.conclusion != "success" and .conclusion != "neutral" and .conclusion != "skipped")] | length')
+          if [ "$FAILED" -ne 0 ]; then
+            echo "::error::$FAILED check run(s) not successful on main HEAD — see https://github.com/${GITHUB_REPOSITORY}/actions"
+            exit 1
+          fi
+          echo "All $TOTAL check runs successful."
+
+      - name: Create annotated tag
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          TAG="v$VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "Tag $TAG created."
+
+  publish:
+    name: Publish NuGet packages
+    needs: create-release-tag
+    uses: ./.github/workflows/publish-nuget.yml
+    with:
+      tag: v${{ inputs.version }}
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
