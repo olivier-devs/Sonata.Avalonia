@@ -5,8 +5,8 @@
         <Version Condition="'$(CI)' != 'true'">0.0.0-dev</Version>
         <Authors>Sonata Contributors</Authors>
         <Copyright>Copyright © Sonata Contributors — derived from Stylet.Avalonia (MIT, © sealoyal) and Stylet (MIT, © canton7)</Copyright>
-        <PackageProjectUrl>https://github.com/sonata-avalonia/Sonata.Avalonia</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/sonata-avalonia/Sonata.Avalonia.git</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/olivier-devs/Sonata.Avalonia</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/olivier-devs/Sonata.Avalonia.git</RepositoryUrl>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
         <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
         <PackageIcon>SonataIcon.png</PackageIcon>
