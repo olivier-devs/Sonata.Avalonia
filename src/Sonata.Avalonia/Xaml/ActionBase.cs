@@ -69,24 +69,15 @@ public abstract class ActionBase : AvaloniaObject
     {
         Subject = subject;
 
-        // If a 'backupSubject' was given, bind both that and 'subject' to this.Target (with a converter which picks the first
-        // one that isn't View.InitialActionTarget). If it wasn't given, just bind 'subject'.
+        // If a 'backupSubject' was given, observe both that and 'subject' for View.ActionTarget changes,
+        // picking the subject's target when available. If it wasn't given, just observe the subject.
 
-        var actionTargetBinding = new Binding()
-        {
-            Path = "ActionTarget",
-            Mode = BindingMode.OneWay,
-            Source = Subject,
-        };
+        Target = Subject.GetValue(View.ActionTargetProperty);
+        Subject.GetObservable(View.ActionTargetProperty).Subscribe(e => Target = e);
 
-        if (backupSubject == null)
+        if (backupSubject != null)
         {
-            this.Bind(targetProperty, actionTargetBinding);
-        }
-        else
-        {
-            Subject.GetPropertyChangedObservable(View.ActionTargetProperty).Subscribe(e => Target = e.NewValue);
-            backupSubject.GetPropertyChangedObservable(View.ActionTargetProperty).Subscribe(e => Target = e.NewValue);
+            backupSubject.GetObservable(View.ActionTargetProperty).Subscribe(e => Target = e);
         }
     }
 
@@ -216,6 +207,9 @@ public abstract class ActionBase : AvaloniaObject
             _logger.LogError(ex, "View.ActionTarget not set");
             throw ex;
         }
+
+        if (HasParameters)
+            return;
 
         if (TargetMethodInfo == null && ActionNonExistentBehaviour == ActionUnavailableBehaviour.Throw)
         {

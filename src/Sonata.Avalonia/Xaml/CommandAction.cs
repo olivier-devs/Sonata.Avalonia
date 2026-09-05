@@ -25,8 +25,8 @@ public class CommandAction : ActionBase, ICommand
     /// <param name="methodName">Method name. the MyMethod in Buttom Command="{s:Action MyMethod}".</param>
     /// <param name="targetNullBehaviour">Behaviour for it the relevant View.ActionTarget is null</param>
     /// <param name="actionNonExistentBehaviour">Behaviour for if the action doesn't exist on the View.ActionTarget</param>
-    public CommandAction(AvaloniaObject subject, AvaloniaObject? backupSubject, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour)
-        : base(subject, backupSubject, methodName, targetNullBehaviour, actionNonExistentBehaviour, Logger)
+    public CommandAction(AvaloniaObject subject, AvaloniaObject? backupSubject, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, IReadOnlyList<ActionParameter>? parameters = null)
+        : base(subject, backupSubject, methodName, targetNullBehaviour, actionNonExistentBehaviour, Logger, parameters)
     { }
 
     /// <summary>
@@ -36,8 +36,8 @@ public class CommandAction : ActionBase, ICommand
     /// <param name="methodName">Method name. the MyMethod in Buttom Command="{s:Action MyMethod}".</param>
     /// <param name="targetNullBehaviour">Behaviour for it the relevant View.ActionTarget is null</param>
     /// <param name="actionNonExistentBehaviour">Behaviour for if the action doesn't exist on the View.ActionTarget</param>
-    public CommandAction(object target, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour)
-        : base(target, methodName, targetNullBehaviour, actionNonExistentBehaviour, Logger)
+    public CommandAction(object target, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, IReadOnlyList<ActionParameter>? parameters = null)
+        : base(target, methodName, targetNullBehaviour, actionNonExistentBehaviour, Logger, parameters)
     { }
 
     private string GuardName => "Can" + MethodName;
@@ -124,27 +124,31 @@ public class CommandAction : ActionBase, ICommand
     /// <returns>true if this command can be executed; otherwise, false.</returns>
     public bool CanExecute(object? parameter)
     {
-        // This can happen if the ActionTarget hasn't been set from its default - 
-        // e.g. if the button/etc in question is in a ContextMenu/Popup, which attached properties
-        // aren't inherited by.
-        // Show the control as enabled, but throw if they try and click on it
         if (Target == View.InitialActionTarget)
             return true;
 
-        // It's enabled only if both the targetNull and actionNonExistent tests pass
-
-        // Throw is handled when the target is set
         if (Target == null)
             return TargetNullBehaviour != ActionUnavailableBehaviour.Disable;
 
-        // Throw is handled when the target is set
+        if (HasParameters)
+        {
+            var context = CreateExecutionContext(null);
+            var values = ResolveArguments(context) ?? Array.Empty<object?>();
+            var method = ResolveParameterizedMethod(values);
+            if (method == null)
+                return ActionNonExistentBehaviour != ActionUnavailableBehaviour.Disable;
+
+            var guardMethod = ResolveGuardMethod(method, values);
+            if (guardMethod != null)
+                return InvokeGuard(guardMethod, values);
+
+            return guardPropertyGetter?.Invoke() ?? true;
+        }
+
         if (TargetMethodInfo == null)
             return ActionNonExistentBehaviour != ActionUnavailableBehaviour.Disable;
 
-        if (guardPropertyGetter == null)
-            return true;
-
-        return guardPropertyGetter();
+        return guardPropertyGetter?.Invoke() ?? true;
     }
 
     /// <summary>
@@ -160,12 +164,63 @@ public class CommandAction : ActionBase, ICommand
     {
         AssertTargetSet();
 
-        // Any throwing would have been handled prior to this
-        if (Target == null || TargetMethodInfo == null)
+        if (Target == null)
             return;
 
-        // This is not going to be called very often, so don't bother to generate a delegate, in the way that we do for the method guard
+        if (HasParameters)
+        {
+            if (parameter != null)
+                throw new InvalidOperationException(
+                    string.Format("Cannot combine 'CommandParameter' with 's:Action.Parameters' on the same control (action '{0}'). Use one or the other.", MethodName));
+
+            var context = CreateExecutionContext(null);
+            var values = ResolveArguments(context) ?? Array.Empty<object?>();
+            var method = ResolveParameterizedMethod(values);
+            if (method == null)
+            {
+                if (ActionNonExistentBehaviour == ActionUnavailableBehaviour.Throw)
+                    throw new ActionNotFoundException(
+                        string.Format("Unable to find method {0} on {1} accepting the supplied parameter values", MethodName, Target.GetType().Name));
+                return;
+            }
+            InvokeParameterized(method, values);
+            return;
+        }
+
+        if (TargetMethodInfo == null)
+            return;
+
         var parameters = TargetMethodInfo.GetParameters().Length == 1 ? new[] { parameter } : null;
         InvokeTargetMethod(parameters);
+    }
+
+    private MethodInfo? ResolveGuardMethod(MethodInfo actionMethod, object?[] values)
+    {
+        if (Target == null)
+            return null;
+
+        var targetType = Target is Type t ? t : Target.GetType();
+        var guard = ActionMethodResolver.Instance.Resolve(targetType, GuardName, values, GetBindingFlags());
+        if (guard == null)
+            return null;
+        if (guard.ReturnType != typeof(bool))
+        {
+            Logger.LogWarning("Found guard method {0} for action {1}, but its return type wasn't bool. Ignoring.", GuardName, MethodName);
+            return null;
+        }
+        return guard;
+    }
+
+    private bool InvokeGuard(MethodInfo guard, object?[] values)
+    {
+        var parameters = guard.GetParameters();
+        var coerced = new object?[values.Length];
+        for (var i = 0; i < values.Length; i++)
+            coerced[i] = ActionMethodResolver.TryConvert(values[i], parameters[i].ParameterType, out var converted)
+                ? converted
+                : values[i];
+
+        var target = guard.IsStatic ? null : Target;
+        return (bool)guard.Invoke(target, coerced)!;
     }
 }
