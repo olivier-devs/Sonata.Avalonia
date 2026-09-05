@@ -62,9 +62,29 @@ namespace Sonata.Avalonia.Headless.Tests
 
         public string LastSave { get; private set; } = "";
 
+        public int ClickCount { get; private set; }
+
         public void Load(int id) => LastId = id;
 
         public void Save(string name, int age) => LastSave = $"{name}:{age}";
+
+        public void RecordClick() => ClickCount++;
+    }
+
+    /// <summary>Identifiable item rendered by the DataTemplate in the ActionParameters e2e tests.</summary>
+    public record Widget(int Id);
+
+    /// <summary>
+    /// Parent ViewModel for the spec §2 flagship scenario: the ActionTarget points here while
+    /// each templated button's DataContext is the current item.
+    /// </summary>
+    public class ParameterizedParentViewModel
+    {
+        public IReadOnlyList<Widget> Items { get; } = new[] { new Widget(1), new Widget(2), new Widget(3) };
+
+        public Widget? DeletedItem { get; private set; }
+
+        public void Delete(Widget widget) => DeletedItem = widget;
     }
 
     /// <summary>Builders for the framework pieces under test, wired to this assembly's conventions.</summary>
