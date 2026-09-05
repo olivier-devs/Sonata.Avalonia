@@ -110,21 +110,37 @@ public class ActionParametersXamlTests
     }
 
     [AvaloniaFact]
-    public void Action_XmlEndToEnd_CompactSyntax_MultipleArguments_InvokesMethod()
+    public void Action_XmlEndToEnd_CompactSyntax_QuotedString_ThrowsAtLoad()
     {
-        // Validates that Avalonia's markup extension parser keeps 'Save('Alice', 42)' as ONE
-        // constructor argument (nested parens/quotes) — critical for the compact syntax viability.
+        // Platform limitation (XamlX markup extension tokenizer): single quotes inside a markup
+        // extension argument are rejected as 'Quote characters out of place'. Quoted string
+        // literals are therefore unavailable in compact XAML syntax — use the declarative
+        // <s:Action.Parameters> syntax instead.
+        const string xaml = """
+            <Button xmlns="https://github.com/avaloniaui"
+                    xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
+                    Command="{s:Action Save('Draft')}" />
+            """;
+
+        var ex = Assert.ThrowsAny<Exception>(() => global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml));
+        Assert.Contains("Quote characters out of place", ex.Message);
+    }
+
+    [AvaloniaFact]
+    public void Action_XmlEndToEnd_CompactSyntax_MultipleArguments_ThrowsAtLoad()
+    {
+        // Platform limitation (XamlX markup extension tokenizer): nested quotes/commas inside a
+        // markup extension argument are not supported. Multi-argument compact syntax is therefore
+        // unavailable in XAML — use the declarative <s:Action.Parameters> syntax instead.
+        // This test pins the limitation: if Avalonia ever lifts it, this test will fail and
+        // surface the change.
         const string xaml = """
             <Button xmlns="https://github.com/avaloniaui"
                     xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
                     Command="{s:Action Save('Alice', 42)}" />
             """;
-        var button = (Button)global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml);
-        var vm = new ShellViewModelWithParameters();
-        View.SetActionTarget(button, vm);
 
-        button.Command!.Execute(null);
-
-        Assert.Equal("Alice:42", vm.LastSave);
+        var ex = Assert.ThrowsAny<Exception>(() => global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml));
+        Assert.Contains("Quote characters out of place", ex.Message);
     }
 }
