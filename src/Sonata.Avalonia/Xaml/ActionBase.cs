@@ -6,6 +6,7 @@
 public abstract class ActionBase : AvaloniaObject
 {
     private readonly ILogger _logger;
+    private readonly IReadOnlyList<ActionParameter>? _inlineParameters;
 
     /// <summary>
     /// Gets the View to grab the View.ActionTarget from
@@ -63,8 +64,8 @@ public abstract class ActionBase : AvaloniaObject
     /// <param name="targetNullBehaviour">Behaviour for it the relevant View.ActionTarget is null</param>
     /// <param name="actionNonExistentBehaviour">Behaviour for if the action doesn't exist on the View.ActionTarget</param>
     /// <param name="logger">Logger to use</param>
-    public ActionBase(AvaloniaObject subject, AvaloniaObject? backupSubject, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, ILogger logger)
-        : this(methodName, targetNullBehaviour, actionNonExistentBehaviour, logger)
+    public ActionBase(AvaloniaObject subject, AvaloniaObject? backupSubject, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, ILogger logger, IReadOnlyList<ActionParameter>? parameters = null)
+        : this(methodName, targetNullBehaviour, actionNonExistentBehaviour, logger, parameters)
     {
         Subject = subject;
 
@@ -97,18 +98,19 @@ public abstract class ActionBase : AvaloniaObject
     /// <param name="targetNullBehaviour">Behaviour for it the relevant View.ActionTarget is null</param>
     /// <param name="actionNonExistentBehaviour">Behaviour for if the action doesn't exist on the View.ActionTarget</param>
     /// <param name="logger">Logger to use</param>
-    public ActionBase(object target, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, ILogger logger)
-        : this(methodName, targetNullBehaviour, actionNonExistentBehaviour, logger)
+    public ActionBase(object target, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, ILogger logger, IReadOnlyList<ActionParameter>? parameters = null)
+        : this(methodName, targetNullBehaviour, actionNonExistentBehaviour, logger, parameters)
     {
         Target = target ?? throw new ArgumentNullException(nameof(target));
     }
 
-    private ActionBase(string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, ILogger logger)
+    private ActionBase(string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, ILogger logger, IReadOnlyList<ActionParameter>? parameters)
     {
         MethodName = methodName ?? throw new ArgumentNullException(nameof(methodName));
         TargetNullBehaviour = targetNullBehaviour;
         ActionNonExistentBehaviour = actionNonExistentBehaviour;
         _logger = logger;
+        _inlineParameters = parameters;
     }
 
     private void UpdateActionTarget(object? oldTarget, object? newTarget)
@@ -221,20 +223,96 @@ public abstract class ActionBase : AvaloniaObject
     }
 
     /// <summary>
+    /// Effective parameters: the attached <c>s:Action.Parameters</c> collection when present,
+    /// otherwise the inline parameters parsed from the compact syntax.
+    /// Reads the RAW attached value (not the lazy <see cref="Action.GetParameters"/>) to avoid
+    /// creating an empty collection as a side effect on the CanExecute hot path.
+    /// </summary>
+    private protected IReadOnlyList<ActionParameter> EffectiveParameters
+    {
+        get
+        {
+            if (Subject is Control c && c.GetValue(Action.ParametersProperty) is { Count: > 0 } attached)
+                return attached;
+            return _inlineParameters ?? Array.Empty<ActionParameter>();
+        }
+    }
+
+    /// <summary>True when the action should resolve and invoke with declared parameters.</summary>
+    private protected bool HasParameters => EffectiveParameters.Count > 0;
+
+    /// <summary>Computes the BindingFlags for the current target, mirroring the eager path.</summary>
+    private protected BindingFlags GetBindingFlags()
+        => Target is Type ? BindingFlags.Public | BindingFlags.Static : BindingFlags.Public | BindingFlags.Instance;
+
+    /// <summary>Builds an execution context from the current target and subject.</summary>
+    private protected ActionExecutionContext CreateExecutionContext(object? eventArgs)
+    {
+        return new ActionExecutionContext
+        {
+            Target = Target,
+            Source = Subject,
+            DataContext = Subject is Control c ? c.DataContext : null,
+            EventArgs = eventArgs,
+        };
+    }
+
+    /// <summary>Resolves the current argument values from the declared parameters, or null when parameterless.</summary>
+    private protected object?[]? ResolveArguments(ActionExecutionContext context)
+    {
+        var parameters = EffectiveParameters;
+        if (parameters.Count == 0)
+            return null;
+
+        var values = new object?[parameters.Count];
+        for (var i = 0; i < parameters.Count; i++)
+            values[i] = parameters[i].GetValue(context);
+
+        return values;
+    }
+
+    /// <summary>Resolves the method to invoke for the parameterized path, or null if not found.</summary>
+    private protected MethodInfo? ResolveParameterizedMethod(object?[] values)
+        => Target == null
+            ? null
+            : ActionMethodResolver.Instance.Resolve(
+                Target is Type t ? t : Target.GetType(), MethodName, values, GetBindingFlags());
+
+    /// <summary>
+    /// Coerces the resolved argument values to the method's parameter types (minimal literal
+    /// conversion) and invokes the method, observing any returned Task.
+    /// </summary>
+    private protected void InvokeParameterized(MethodInfo method, object?[] values)
+    {
+        var parameters = method.GetParameters();
+        var coerced = new object?[values.Length];
+        for (var i = 0; i < values.Length; i++)
+            coerced[i] = ActionMethodResolver.TryConvert(values[i], parameters[i].ParameterType, out var converted)
+                ? converted
+                : values[i];
+
+        InvokeTargetMethod(method, coerced);
+    }
+
+    /// <summary>
     /// Invoke the target method with the given parameters
     /// </summary>
     /// <param name="parameters">Parameters to pass to the target method</param>
     private protected void InvokeTargetMethod(object?[]? parameters)
     {
-        _logger.LogInformation("Invoking method {0} on {1} with parameters ({2})", MethodName, TargetName(), parameters == null ? "none" : string.Join(", ", parameters));
-
         if (TargetMethodInfo == null)
             return;
+        InvokeTargetMethod(TargetMethodInfo, parameters);
+    }
+
+    private protected void InvokeTargetMethod(MethodInfo method, object?[]? parameters)
+    {
+        _logger.LogInformation("Invoking method {0} on {1} with parameters ({2})", MethodName, TargetName(), parameters == null ? "none" : string.Join(", ", parameters));
 
         try
         {
-            var target = TargetMethodInfo.IsStatic ? null : Target;
-            var result = TargetMethodInfo.Invoke(target, parameters);
+            var target = method.IsStatic ? null : Target;
+            var result = method.Invoke(target, parameters);
             // Observe the task so exceptions are logged, not swallowed silently
             if (result is Task task)
             {
@@ -243,13 +321,9 @@ public abstract class ActionBase : AvaloniaObject
         }
         catch (TargetInvocationException e)
         {
-            // Be nice and unwrap this for them
-            // They want a stack track for their VM method, not us
             _logger.LogError(e.InnerException, string.Format("Failed to invoke method {0} on {1} with parameters ({2})", MethodName, TargetName(), parameters == null ? "none" : string.Join(", ", parameters)));
-            // http://stackoverflow.com/a/17091351/1086121
             ExceptionDispatchInfo.Capture(e.InnerException ?? e).Throw();
         }
-
     }
 
     private string TargetName()
