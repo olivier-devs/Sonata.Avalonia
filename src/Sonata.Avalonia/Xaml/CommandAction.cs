@@ -17,6 +17,8 @@ public class CommandAction : ActionBase, ICommand
     /// </summary>
     private Func<bool>? guardPropertyGetter;
 
+    private bool _parameterSubscriptionsCreated;
+
     /// <summary>
     /// Initialises a new instance of the <see cref="CommandAction"/> class to use <see cref="View.ActionTargetProperty"/> to get the target
     /// </summary>
@@ -99,7 +101,21 @@ public class CommandAction : ActionBase, ICommand
                 Logger.LogWarning("Found guard property {0} for action {1} on target {2}, but the target doesn't implement INotifyPropertyChanged, so changes won't be observed", GuardName, MethodName, newTarget);
         }
 
+        EnsureParameterSubscriptions();
         UpdateCanExecute();
+    }
+
+    private void EnsureParameterSubscriptions()
+    {
+        if (_parameterSubscriptionsCreated)
+            return;
+        _parameterSubscriptionsCreated = true;
+
+        if (EffectiveParameters is not { Count: > 0 } parameters)
+            return;
+
+        foreach (var parameter in parameters.OfType<Parameter>())
+            parameter.GetObservable(Parameter.ValueProperty).Subscribe(_ => UpdateCanExecute());
     }
 
     private void PropertyChangedHandler(object? sender, PropertyChangedEventArgs e)
