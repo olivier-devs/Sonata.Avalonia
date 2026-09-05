@@ -156,26 +156,29 @@ public abstract class ActionBase : AvaloniaObject
 
                 bindingFlags = BindingFlags.Public | BindingFlags.Instance;
             }
-            try
+            if (!HasParameters)
             {
-                targetMethodInfo = newTargetType.GetMethod(MethodName, bindingFlags);
-
-                if (targetMethodInfo == null)
+                try
                 {
-                    var target = Target ?? throw new InvalidOperationException("Target was unexpectedly null while resolving the action method");
-                    var t = target.GetType();
-                    targetMethodInfo = t.GetMethod(MethodName, bindingFlags);
+                    targetMethodInfo = newTargetType.GetMethod(MethodName, bindingFlags);
+
                     if (targetMethodInfo == null)
-                        _logger.LogWarning("Unable to find{0} method {1} on {2}", newTarget is Type ? " static" : "", MethodName, newTargetType.Name);
+                    {
+                        var target = Target ?? throw new InvalidOperationException("Target was unexpectedly null while resolving the action method");
+                        var t = target.GetType();
+                        targetMethodInfo = t.GetMethod(MethodName, bindingFlags);
+                        if (targetMethodInfo == null)
+                            _logger.LogWarning("Unable to find{0} method {1} on {2}", newTarget is Type ? " static" : "", MethodName, newTargetType.Name);
+                    }
+                    else
+                        AssertTargetMethodInfo(targetMethodInfo, newTargetType);
                 }
-                else
-                    AssertTargetMethodInfo(targetMethodInfo, newTargetType);
-            }
-            catch (AmbiguousMatchException e)
-            {
-                var ex = new AmbiguousMatchException(string.Format("Ambiguous match for {0} method on {1}", MethodName, newTargetType.Name), e);
-                _logger.LogError(ex, "Ambiguous method match");
-                throw ex;
+                catch (AmbiguousMatchException e)
+                {
+                    var ex = new AmbiguousMatchException(string.Format("Ambiguous match for {0} method on {1}", MethodName, newTargetType.Name), e);
+                    _logger.LogError(ex, "Ambiguous method match");
+                    throw ex;
+                }
             }
         }
 
