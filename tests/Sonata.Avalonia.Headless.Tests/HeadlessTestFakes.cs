@@ -59,7 +59,7 @@ namespace Sonata.Avalonia.Headless.Tests
     /// <summary>Builders for the framework pieces under test, wired to this assembly's conventions.</summary>
     internal static class TestHost
     {
-        public static ViewManager CreateViewManager(Action<ViewManagerConfig>? configure = null)
+        public static ViewManager CreateViewManager(System.Action<ViewManagerConfig>? configure = null)
         {
             var config = new ViewManagerConfig()
                 .SetViewFactory(type => Activator.CreateInstance(type)!)
