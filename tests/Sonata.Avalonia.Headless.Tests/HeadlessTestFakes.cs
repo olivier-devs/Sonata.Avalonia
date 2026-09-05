@@ -56,6 +56,17 @@ namespace Sonata.Avalonia.Headless.Tests
         public TopLevel? GetActiveWindow() => ActiveWindow;
     }
 
+    public class ShellViewModelWithParameters : Screen
+    {
+        public int LastId { get; private set; }
+
+        public string LastSave { get; private set; } = "";
+
+        public void Load(int id) => LastId = id;
+
+        public void Save(string name, int age) => LastSave = $"{name}:{age}";
+    }
+
     /// <summary>Builders for the framework pieces under test, wired to this assembly's conventions.</summary>
     internal static class TestHost
     {

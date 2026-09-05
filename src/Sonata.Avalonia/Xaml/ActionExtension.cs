@@ -152,23 +152,23 @@ public class ActionExtension : MarkupExtension
         if (targetObject == null)
             throw new InvalidOperationException("CommandAction requires a target control");
 
-        var methodName = Method ?? throw new InvalidOperationException("Method has not been set");
+        var (methodName, parameters) = ParseMethod(Method ?? throw new InvalidOperationException("Method has not been set"));
 
         if (Target == null)
         {
             var rootObjectProvider = serviceProvider.GetService(typeof(IRootObjectProvider)) as IRootObjectProvider;
             var rootObject = rootObjectProvider?.RootObject as AvaloniaObject;
-            return new CommandAction(targetObject, rootObject, methodName, CommandNullTargetBehaviour, CommandActionNotFoundBehaviour);
+            return new CommandAction(targetObject, rootObject, methodName, CommandNullTargetBehaviour, CommandActionNotFoundBehaviour, parameters);
         }
         else
         {
-            return new CommandAction(Target, methodName, CommandNullTargetBehaviour, CommandActionNotFoundBehaviour);
+            return new CommandAction(Target, methodName, CommandNullTargetBehaviour, CommandActionNotFoundBehaviour, parameters);
         }
     }
 
     private Delegate CreateEventAction(IServiceProvider serviceProvider, AvaloniaObject? targetObject, Type eventType, bool isCommandBinding = false)
     {
-        var methodName = Method ?? throw new InvalidOperationException("Method has not been set");
+        var (methodName, parameters) = ParseMethod(Method ?? throw new InvalidOperationException("Method has not been set"));
 
         EventAction ec;
         if (Target == null)
@@ -179,18 +179,18 @@ public class ActionExtension : MarkupExtension
             {
                 if (rootObject == null)
                     throw new InvalidOperationException("Action may only be used with CommandBinding from a XAML view (unable to retrieve IRootObjectProvider.RootObject)");
-                ec = new EventAction(rootObject, null, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour);
+                ec = new EventAction(rootObject, null, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour, parameters);
             }
             else
             {
                 if (targetObject == null)
                     throw new InvalidOperationException("EventAction requires a target control");
-                ec = new EventAction(targetObject, rootObject, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour);
+                ec = new EventAction(targetObject, rootObject, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour, parameters);
             }
         }
         else
         {
-            ec = new EventAction(Target, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour);
+            ec = new EventAction(Target, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour, parameters);
         }
 
         return ec.GetDelegate();

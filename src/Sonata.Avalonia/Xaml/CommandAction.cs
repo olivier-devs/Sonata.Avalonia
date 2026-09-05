@@ -185,6 +185,8 @@ public class CommandAction : ActionBase, ICommand
 
         if (HasParameters)
         {
+            AssertNoMixedParameters();
+
             if (parameter != null)
                 throw new InvalidOperationException(
                     string.Format("Cannot combine 'CommandParameter' with 's:Action.Parameters' on the same control (action '{0}'). Use one or the other.", MethodName));

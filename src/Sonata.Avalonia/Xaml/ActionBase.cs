@@ -238,6 +238,17 @@ public abstract class ActionBase : AvaloniaObject
     /// <summary>True when the action should resolve and invoke with declared parameters.</summary>
     private protected bool HasParameters => EffectiveParameters.Count > 0;
 
+    /// <summary>
+    /// Throws if both inline (compact syntax) and attached (s:Action.Parameters) parameters are
+    /// declared — the two declaration mechanisms are mutually exclusive.
+    /// </summary>
+    private protected void AssertNoMixedParameters()
+    {
+        if (Subject is Control c && c.GetValue(Action.ParametersProperty) is { Count: > 0 } && _inlineParameters is { Count: > 0 })
+            throw new InvalidOperationException(
+                string.Format("Cannot combine inline parameters 'Method(a, b)' with 's:Action.Parameters' (action '{0}'). Use one or the other.", MethodName));
+    }
+
     /// <summary>Computes the BindingFlags for the current target, mirroring the eager path.</summary>
     private protected BindingFlags GetBindingFlags()
         => Target is Type ? BindingFlags.Public | BindingFlags.Static : BindingFlags.Public | BindingFlags.Instance;
