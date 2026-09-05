@@ -18,6 +18,7 @@ public class CommandAction : ActionBase, ICommand
     private Func<bool>? guardPropertyGetter;
 
     private bool _parameterSubscriptionsCreated;
+    private bool _mixedGuardWarningLogged;
 
     /// <summary>
     /// Initialises a new instance of the <see cref="CommandAction"/> class to use <see cref="View.ActionTargetProperty"/> to get the target
@@ -74,6 +75,7 @@ public class CommandAction : ActionBase, ICommand
         }
 
         guardPropertyGetter = null;
+        _mixedGuardWarningLogged = false;
         newTarget = Target;
         var guardPropertyInfo = newTarget?.GetType().GetProperty(GuardName);
         if (guardPropertyInfo != null)
@@ -156,13 +158,34 @@ public class CommandAction : ActionBase, ICommand
 
             var guardMethod = ResolveGuardMethod(method, values);
             if (guardMethod != null)
+            {
+                if (guardPropertyGetter != null && !_mixedGuardWarningLogged)
+                {
+                    Logger.LogWarning("Found both a guard method {GuardMethod} and a guard property {GuardProperty} for action {Action}; the method guard wins", GuardName, GuardName, MethodName);
+                    _mixedGuardWarningLogged = true;
+                }
                 return InvokeGuard(guardMethod, values);
+            }
 
             return guardPropertyGetter?.Invoke() ?? true;
         }
 
         if (TargetMethodInfo == null)
             return ActionNonExistentBehaviour != ActionUnavailableBehaviour.Disable;
+
+        if (TargetMethodInfo.GetParameters().Length == 1)
+        {
+            var guardMethod = ResolveGuardMethod(TargetMethodInfo, new[] { parameter });
+            if (guardMethod != null)
+            {
+                if (guardPropertyGetter != null && !_mixedGuardWarningLogged)
+                {
+                    Logger.LogWarning("Found both a guard method {GuardMethod} and a guard property {GuardProperty} for action {Action}; the method guard wins", GuardName, GuardName, MethodName);
+                    _mixedGuardWarningLogged = true;
+                }
+                return InvokeGuard(guardMethod, new[] { parameter });
+            }
+        }
 
         return guardPropertyGetter?.Invoke() ?? true;
     }
@@ -223,8 +246,9 @@ public class CommandAction : ActionBase, ICommand
             return null;
         if (guard.ReturnType != typeof(bool))
         {
-            Logger.LogWarning("Found guard method {0} for action {1}, but its return type wasn't bool. Ignoring.", GuardName, MethodName);
-            return null;
+            var message = string.Format("Guard method {0} on {1} must return bool (action {2})", GuardName, targetType.Name, MethodName);
+            Logger.LogError(message);
+            throw new ActionSignatureInvalidException(message);
         }
         return guard;
     }
