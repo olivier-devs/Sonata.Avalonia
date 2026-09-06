@@ -37,4 +37,3 @@ global using Avalonia.Interactivity;
 global using System.Runtime.CompilerServices;
 global using System.Threading;
 global using System.Text.RegularExpressions;
-global using Sonata.Avalonia.Xaml;

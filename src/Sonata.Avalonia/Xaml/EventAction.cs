@@ -26,8 +26,8 @@ public class EventAction : ActionBase
     /// <param name="methodName">The MyMethod in {s:Action MyMethod}, this is what we call when the event's fired</param>
     /// <param name="targetNullBehaviour">Behaviour for it the relevant View.ActionTarget is null</param>
     /// <param name="actionNonExistentBehaviour">Behaviour for if the action doesn't exist on the View.ActionTarget</param>
-    public EventAction(AvaloniaObject subject, AvaloniaObject? backupSubject, Type eventHandlerType, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour)
-        : base(subject, backupSubject, methodName, targetNullBehaviour, actionNonExistentBehaviour, Logger)
+    public EventAction(AvaloniaObject subject, AvaloniaObject? backupSubject, Type eventHandlerType, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, IReadOnlyList<ActionParameter>? parameters = null)
+        : base(subject, backupSubject, methodName, targetNullBehaviour, actionNonExistentBehaviour, Logger, parameters)
     {
         AssertBehaviours(targetNullBehaviour, actionNonExistentBehaviour);
         this._eventHandlerType = eventHandlerType;
@@ -41,8 +41,8 @@ public class EventAction : ActionBase
     /// <param name="methodName">The MyMethod in {s:Action MyMethod}, this is what we call when the event's fired</param>
     /// <param name="targetNullBehaviour">Behaviour for it the relevant View.ActionTarget is null</param>
     /// <param name="actionNonExistentBehaviour">Behaviour for if the action doesn't exist on the View.ActionTarget</param>
-    public EventAction(object target, Type eventHandlerType, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour)
-        : base(target, methodName, targetNullBehaviour, actionNonExistentBehaviour, Logger)
+    public EventAction(object target, Type eventHandlerType, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, IReadOnlyList<ActionParameter>? parameters = null)
+        : base(target, methodName, targetNullBehaviour, actionNonExistentBehaviour, Logger, parameters)
     {
         AssertBehaviours(targetNullBehaviour, actionNonExistentBehaviour);
         _eventHandlerType = eventHandlerType;
@@ -117,8 +117,28 @@ public class EventAction : ActionBase
     {
         AssertTargetSet();
 
-        // Any throwing will have been handled above
-        if (Target == null || TargetMethodInfo == null)
+        if (Target == null)
+            return;
+
+        if (HasParameters)
+        {
+            AssertNoMixedParameters();
+
+            var context = CreateExecutionContext(e);
+            var values = ResolveArguments(context) ?? Array.Empty<object?>();
+            var method = ResolveParameterizedMethod(values);
+            if (method == null)
+            {
+                if (ActionNonExistentBehaviour == ActionUnavailableBehaviour.Throw)
+                    throw new ActionNotFoundException(
+                        string.Format("Unable to find method {0} on {1} accepting the supplied parameter values", MethodName, Target.GetType().Name));
+                return;
+            }
+            InvokeParameterized(method, values);
+            return;
+        }
+
+        if (TargetMethodInfo == null)
             return;
 
         object?[]? parameters;
@@ -127,11 +147,9 @@ public class EventAction : ActionBase
             case 1:
                 parameters = new object?[] { e };
                 break;
-
             case 2:
                 parameters = new[] { sender, e };
                 break;
-
             default:
                 parameters = null;
                 break;

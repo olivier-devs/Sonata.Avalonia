@@ -1,5 +1,7 @@
 ﻿namespace Sonata.Avalonia;
 
+using Sonata.Avalonia.Xaml;
+
 /// <summary>
 /// Responsible for managing views. Locates the correct view, instantiates it, attaches it to its ViewModel correctly, and handles the View.Model attached property
 /// </summary>

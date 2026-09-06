@@ -1,4 +1,6 @@
 ﻿using Avalonia.Metadata;
+using System.Collections.Generic;
+using System.Globalization;
 
 namespace Sonata.Avalonia.Xaml;
 
@@ -150,23 +152,23 @@ public class ActionExtension : MarkupExtension
         if (targetObject == null)
             throw new InvalidOperationException("CommandAction requires a target control");
 
-        var methodName = Method ?? throw new InvalidOperationException("Method has not been set");
+        var (methodName, parameters) = ParseMethod(Method ?? throw new InvalidOperationException("Method has not been set"));
 
         if (Target == null)
         {
             var rootObjectProvider = serviceProvider.GetService(typeof(IRootObjectProvider)) as IRootObjectProvider;
             var rootObject = rootObjectProvider?.RootObject as AvaloniaObject;
-            return new CommandAction(targetObject, rootObject, methodName, CommandNullTargetBehaviour, CommandActionNotFoundBehaviour);
+            return new CommandAction(targetObject, rootObject, methodName, CommandNullTargetBehaviour, CommandActionNotFoundBehaviour, parameters);
         }
         else
         {
-            return new CommandAction(Target, methodName, CommandNullTargetBehaviour, CommandActionNotFoundBehaviour);
+            return new CommandAction(Target, methodName, CommandNullTargetBehaviour, CommandActionNotFoundBehaviour, parameters);
         }
     }
 
     private Delegate CreateEventAction(IServiceProvider serviceProvider, AvaloniaObject? targetObject, Type eventType, bool isCommandBinding = false)
     {
-        var methodName = Method ?? throw new InvalidOperationException("Method has not been set");
+        var (methodName, parameters) = ParseMethod(Method ?? throw new InvalidOperationException("Method has not been set"));
 
         EventAction ec;
         if (Target == null)
@@ -177,21 +179,77 @@ public class ActionExtension : MarkupExtension
             {
                 if (rootObject == null)
                     throw new InvalidOperationException("Action may only be used with CommandBinding from a XAML view (unable to retrieve IRootObjectProvider.RootObject)");
-                ec = new EventAction(rootObject, null, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour);
+                ec = new EventAction(rootObject, null, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour, parameters);
             }
             else
             {
                 if (targetObject == null)
                     throw new InvalidOperationException("EventAction requires a target control");
-                ec = new EventAction(targetObject, rootObject, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour);
+                ec = new EventAction(targetObject, rootObject, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour, parameters);
             }
         }
         else
         {
-            ec = new EventAction(Target, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour);
+            ec = new EventAction(Target, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour, parameters);
         }
 
         return ec.GetDelegate();
+    }
+
+    internal static (string MethodName, IReadOnlyList<ActionParameter> Parameters) ParseMethod(string method)
+    {
+        var open = method.IndexOf('(');
+        if (open < 0)
+            return (method.Trim(), Array.Empty<ActionParameter>());
+
+        var close = method.LastIndexOf(')');
+        if (close < 0 || close < open)
+            throw new InvalidOperationException(string.Format("Malformed action syntax '{0}': missing closing parenthesis.", method));
+
+        var methodName = method.Substring(0, open).Trim();
+        if (methodName.Length == 0)
+            throw new InvalidOperationException(string.Format("Malformed action syntax '{0}': empty method name.", method));
+
+        var argsText = method.Substring(open + 1, close - open - 1);
+        var parameters = new List<ActionParameter>();
+
+        if (argsText.Trim().Length > 0)
+        {
+            foreach (var token in argsText.Split(','))
+                parameters.Add(ParseToken(token));
+        }
+
+        return (methodName, parameters);
+    }
+
+    private static ActionParameter ParseToken(string token)
+    {
+        token = token.Trim();
+
+        if (token == "$dataContext")
+            return new DataContextParameter();
+
+        if (token == "null")
+            return new Parameter { Value = null };
+
+        if (token.Length >= 2 && token[0] == '\'' && token[^1] == '\'')
+            return new Parameter { Value = token.Substring(1, token.Length - 2) };
+
+        if (bool.TryParse(token, out var b))
+            return new Parameter { Value = b };
+
+        if (int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var i))
+            return new Parameter { Value = i };
+
+        if (double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out var d))
+            return new Parameter { Value = d };
+
+        if (token.Contains('.'))
+            throw new InvalidOperationException(
+                string.Format("Parameter '{0}' uses a property path, which is not supported yet (named elements arrive in a later release). Use a binding parameter instead.", token));
+
+        // bare word = string literal
+        return new Parameter { Value = token };
     }
 }
 

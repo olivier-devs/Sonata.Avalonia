@@ -21,5 +21,6 @@
         <PackageVersion Include="Moq" Version="4.20.72" />
         <PackageVersion Include="Avalonia.Headless.XUnit" Version="12.1.1" />
         <PackageVersion Include="Avalonia.Skia" Version="12.1.1" />
+        <PackageVersion Include="Avalonia.Markup.Xaml.Loader" Version="12.1.1" />
     </ItemGroup>
 </Project>

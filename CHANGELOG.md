@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Multiple action parameters via the `s:Action.Parameters` attached collection (`<s:Parameter Value="{Binding ...}" />`, `<s:DataContextParameter />`).
+- Compact single-argument syntax `{s:Action Method(arg)}` with bare tokens (`42`, `true`, `null`, `$dataContext`, bare words).
+- Parameterized guards: `Can<Method>` methods with the same parameters as the action, re-evaluated when a bound parameter changes.
+- `ActionMethodResolver` for overload resolution (parameter count, type compatibility, minimal string-to-primitive coercion); `AmbiguousActionMethodException` on ambiguous matches.
+- `ActionExecutionContext` as the extension point for future parameter sources (named elements, event args).
+
 ## [2.0.0-beta.1] - 2026-09-02
 
 ### Added

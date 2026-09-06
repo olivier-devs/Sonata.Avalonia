@@ -67,6 +67,7 @@ public partial class App : SonataApplication<ShellViewModel>
 
 | Sample | Demonstrates | Path |
 |--------|-------------|------|
+| ActionParameters | Multiple parameters, `DataContextParameter`, compact syntax, parameterized guards | `samples/Sonata.Samples.ActionParameters/` |
 | Hello | `StyletApplication<T>` with StyletIoC container | `samples/Sonata.Samples.Hello/` |
 | MSIoC | `SonataApplication<T>` with Microsoft.Extensions.DI (recommended) | `samples/Sonata.Samples.MSIoC/` |
 | DryIoC | Custom DryIoc container integration | `samples/Sonata.Samples.DryIoC/` |

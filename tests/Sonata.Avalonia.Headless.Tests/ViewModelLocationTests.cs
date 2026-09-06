@@ -12,7 +12,7 @@ public class ViewModelLocationTests
     /// Wires <see cref="IoC"/> (used by the View.Model attached property) to the given
     /// ViewManager for the duration of the test, restoring the previous delegate afterwards.
     /// </summary>
-    private static void WithViewManagerIoC(ViewManager manager, Action test)
+    private static void WithViewManagerIoC(ViewManager manager, System.Action test)
     {
         var original = IoC.GetInstance;
         IoC.GetInstance = (service, key) =>
