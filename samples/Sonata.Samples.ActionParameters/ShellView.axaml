@@ -1,0 +1,72 @@
+<Window
+    Height="500" Title="ShellView" Width="500"
+    d:DesignHeight="500" d:DesignWidth="500" mc:Ignorable="d"
+    x:Class="Sonata.Samples.ActionParameters.ShellView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:s="https://github.com/sonata-avalonia/sonata.avalonia"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel LastChildFill="True" Margin="10">
+        <TextBlock DockPanel.Dock="Bottom" FontWeight="Bold" Margin="0,10,0,0" Text="{Binding Status}" TextWrapping="Wrap" />
+
+        <ScrollViewer>
+            <StackPanel Spacing="15">
+                <!-- Section 1 — Guard paramétré avec réévaluation en temps réel -->
+                <StackPanel>
+                    <TextBlock FontWeight="Bold" Text="1. Parameterized guard with live re-evaluation" />
+                    <TextBlock Margin="0,2,0,5" Text="Type a name and age — the Save button enables/disables automatically." TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Name" Width="150" />
+                        <TextBox Text="{Binding Age, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Age" Width="60" />
+                        <Button Command="{s:Action Save}">
+                            <s:Action.Parameters>
+                                <s:Parameter Value="{Binding Name}" />
+                                <s:Parameter Value="{Binding Age}" />
+                            </s:Action.Parameters>
+                            Save
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+
+                <Separator />
+
+                <!-- Section 2 — DataContextParameter : ActionTarget vs DataContext -->
+                <StackPanel>
+                    <TextBlock FontWeight="Bold" Text="2. DataContextParameter (ActionTarget ≠ DataContext)" />
+                    <TextBlock Margin="0,2,0,5" Text="ActionTarget = ShellViewModel (inherited). DataContext = the current Person row." TextWrapping="Wrap" />
+                    <ItemsControl ItemsSource="{Binding People}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                    <TextBlock Text="(" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Age}" VerticalAlignment="Center" />
+                                    <TextBlock Text=")" VerticalAlignment="Center" />
+                                    <Button Command="{s:Action Delete}">
+                                        <s:Action.Parameters>
+                                            <s:DataContextParameter />
+                                        </s:Action.Parameters>
+                                        Delete
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <Separator />
+
+                <!-- Section 3 — Syntaxe compacte (tokens nus) -->
+                <StackPanel>
+                    <TextBlock FontWeight="Bold" Text="3. Compact syntax (bare tokens)" />
+                    <TextBlock Margin="0,2,0,5" Text="Compact syntax supports 0-1 bare tokens (numbers, bools, null, $dataContext). Quoted strings and multiple args require the declarative form above." TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <Button Command="{s:Action Seed(3)}">Seed 3</Button>
+                        <Button Command="{s:Action Clear}">Clear</Button>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>
