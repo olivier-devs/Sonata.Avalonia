@@ -9,6 +9,7 @@ namespace Sonata.Avalonia.Xaml;
 public class NamedElementParameter : ActionParameter
 {
     private static ILogger Logger => SonataLogManager.GetLogger(typeof(NamedElementParameter));
+    private bool _missingElementWarningLogged;
 
     /// <summary>The name of the element (its <c>x:Name</c>) to read the property from. Required.</summary>
     public required string Name { get; set; }
@@ -38,7 +39,12 @@ public class NamedElementParameter : ActionParameter
         var element = FindElement(context.Source);
         if (element == null)
         {
-            Logger.LogWarning("Named element '{Name}' referenced by an action parameter was not found in the name scope; treating its value as null until the element is registered.", Name);
+            if (!_missingElementWarningLogged)
+            {
+                _missingElementWarningLogged = true;
+                Logger.LogWarning("Named element '{Name}' referenced by an action parameter was not found in the name scope; treating its value as null until the element is registered.", Name);
+            }
+
             return false;
         }
 
@@ -71,8 +77,8 @@ public class NamedElementParameter : ActionParameter
         if (property != null)
             return property;
 
-        // Fallback: reflection over the static 'XxxProperty' field — covers properties inherited
-        // from a base type (e.g. TextBlock.TextProperty resolved on a TextBox).
+        // Safety-net fallback (spec-required): the registry already walks the type hierarchy,
+        // but resolve via the static 'XxxProperty' field if a property ever escapes it.
         var field = element.GetType().GetField(Path + "Property", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
         if (field?.GetValue(null) is AvaloniaProperty fallback)
             return fallback;
