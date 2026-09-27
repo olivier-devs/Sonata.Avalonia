@@ -1,0 +1,8 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
+             x:Class="Sonata.Avalonia.Headless.Tests.ActionArgumentsCompiledView">
+    <StackPanel>
+        <Button x:Name="MultiArgButton" Command="{s:Action Add(40;2)}" />
+    </StackPanel>
+</UserControl>
