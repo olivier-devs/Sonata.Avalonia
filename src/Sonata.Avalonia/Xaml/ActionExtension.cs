@@ -249,6 +249,9 @@ public class ActionExtension : MarkupExtension
         }
         tokens.Add(argsText.Substring(start).Trim());
 
+        if (inQuotes)
+            throw new InvalidOperationException(string.Format("Malformed action argument list '{0}': unterminated quote.", argsText));
+
         if (tokens.Any(t => t.Length == 0))
             throw new InvalidOperationException(string.Format("Malformed action argument list '{0}': empty argument token.", argsText));
 

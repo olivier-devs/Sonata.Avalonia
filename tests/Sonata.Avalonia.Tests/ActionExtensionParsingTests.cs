@@ -110,4 +110,19 @@ public class ActionExtensionParsingTests
         Assert.Throws<InvalidOperationException>(() => Parse("Save($datacontext)"));
         Assert.Throws<InvalidOperationException>(() => Parse("Save($foo)"));
     }
+
+    [Fact]
+    public void Parse_UnterminatedQuote_Throws()
+    {
+        // Fail-fast on malformed input, consistent with the empty-token and unknown-$ errors.
+        Assert.Throws<InvalidOperationException>(() => Parse("Save('a,b)"));
+    }
+
+    [Fact]
+    public void Parse_EmptyParentheses_ReturnsEmptyParameters()
+    {
+        var (name, parameters) = Parse("Save()");
+        Assert.Equal("Save", name);
+        Assert.Empty(parameters);
+    }
 }
