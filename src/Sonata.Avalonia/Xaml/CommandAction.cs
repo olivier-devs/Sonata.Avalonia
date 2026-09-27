@@ -215,7 +215,7 @@ public class CommandAction : ActionBase, ICommand
                     string.Format("Cannot combine 'CommandParameter' with 's:Action.Parameters' on the same control (action '{0}'). Use one or the other.", MethodName));
 
             var context = CreateExecutionContext(null);
-            var values = ResolveArguments(context) ?? Array.Empty<object?>();
+            var values = ResolveArguments(context, strict: true) ?? Array.Empty<object?>();
             var method = ResolveParameterizedMethod(values);
             if (method == null)
             {

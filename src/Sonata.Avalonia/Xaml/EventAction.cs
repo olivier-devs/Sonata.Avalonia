@@ -125,7 +125,7 @@ public class EventAction : ActionBase
             AssertNoMixedParameters();
 
             var context = CreateExecutionContext(e);
-            var values = ResolveArguments(context) ?? Array.Empty<object?>();
+            var values = ResolveArguments(context, strict: true) ?? Array.Empty<object?>();
             var method = ResolveParameterizedMethod(values);
             if (method == null)
             {

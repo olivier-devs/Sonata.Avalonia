@@ -37,7 +37,9 @@ public class ActionExtensionParsingTests
     [Fact]
     public void Parse_PropertyPath_Throws()
     {
-        Assert.Throws<InvalidOperationException>(() => Parse("Save(NameTextBox.Text)"));
+        // Property paths are now named-element references (single dot) — superseded by
+        // Parse_NamedElement_* tests. What still throws is a multi-dot path.
+        Assert.Throws<InvalidOperationException>(() => Parse("Save(NameTextBox.Text.Suffix)"));
     }
 
     [Fact]
@@ -124,5 +126,26 @@ public class ActionExtensionParsingTests
         var (name, parameters) = Parse("Save()");
         Assert.Equal("Save", name);
         Assert.Empty(parameters);
+    }
+
+    [Fact]
+    public void Parse_NamedElement_SingleDot_ProducesNamedElementParameter()
+    {
+        var (_, parameters) = Parse("Save(NameTextBox.Text)");
+        var p = Assert.IsType<NamedElementParameter>(Assert.Single(parameters));
+        Assert.Equal("NameTextBox", p.Name);
+        Assert.Equal("Text", p.Path);
+    }
+
+    [Fact]
+    public void Parse_NamedElement_MultiDot_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() => Parse("Save(A.B.C)"));
+    }
+
+    [Fact]
+    public void Parse_DollarTokenWithDot_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() => Parse("Save($x.y)"));
     }
 }

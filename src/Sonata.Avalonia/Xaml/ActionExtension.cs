@@ -287,8 +287,14 @@ public class ActionExtension : MarkupExtension
             return new Parameter { Value = d };
 
         if (token.Contains('.'))
-            throw new InvalidOperationException(
-                string.Format("Parameter '{0}' uses a property path, which is not supported yet (named elements arrive in a later release). Use a binding parameter instead.", token));
+        {
+            var parts = token.Split('.');
+            if (parts.Length != 2 || parts[0].Length == 0 || parts[1].Length == 0)
+                throw new InvalidOperationException(
+                    string.Format("Parameter '{0}' is not a valid named-element reference: expected a single 'Name.Path' (e.g. 'NameTextBox.Text').", token));
+
+            return new NamedElementParameter { Name = parts[0], Path = parts[1] };
+        }
 
         // bare word = string literal
         return new Parameter { Value = token };

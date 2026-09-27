@@ -267,6 +267,14 @@ public abstract class ActionBase : AvaloniaObject
 
     /// <summary>Resolves the current argument values from the declared parameters, or null when parameterless.</summary>
     private protected object?[]? ResolveArguments(ActionExecutionContext context)
+        => ResolveArguments(context, strict: false);
+
+    /// <summary>
+    /// Resolves the current argument values. When <paramref name="strict"/> is true, a
+    /// <see cref="NamedElementParameter"/> that cannot resolve its element throws instead of
+    /// yielding null — used on the Execute path (loading is complete, a missing element is a typo).
+    /// </summary>
+    private protected object?[]? ResolveArguments(ActionExecutionContext context, bool strict)
     {
         var parameters = EffectiveParameters;
         if (parameters.Count == 0)
@@ -274,7 +282,12 @@ public abstract class ActionBase : AvaloniaObject
 
         var values = new object?[parameters.Count];
         for (var i = 0; i < parameters.Count; i++)
-            values[i] = parameters[i].GetValue(context);
+        {
+            var parameter = parameters[i];
+            values[i] = strict && parameter is NamedElementParameter named
+                ? named.GetValueStrict(context)
+                : parameter.GetValue(context);
+        }
 
         return values;
     }
