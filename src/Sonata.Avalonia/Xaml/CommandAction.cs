@@ -116,8 +116,8 @@ public class CommandAction : ActionBase, ICommand
         if (EffectiveParameters is not { Count: > 0 } parameters)
             return;
 
-        foreach (var parameter in parameters.OfType<Parameter>())
-            parameter.GetObservable(Parameter.ValueProperty).Subscribe(_ => UpdateCanExecute());
+        foreach (var parameter in parameters)
+            parameter.GetChanges().Subscribe(_ => UpdateCanExecute());
     }
 
     private void PropertyChangedHandler(object? sender, PropertyChangedEventArgs e)
