@@ -215,19 +215,58 @@ public class ActionExtension : MarkupExtension
 
         if (argsText.Trim().Length > 0)
         {
-            foreach (var token in argsText.Split(','))
+            foreach (var token in SplitArguments(argsText))
                 parameters.Add(ParseToken(token));
         }
 
         return (methodName, parameters);
     }
 
+    /// <summary>
+    /// Splits an argument string on ',' and ';' (both are separators, mixable), honoring
+    /// single-quoted spans so that separators inside '...' are preserved. The XamlX tokenizer has
+    /// already removed the backslash escapes (so \' → ' and \, → ,) before we see the string. Any
+    /// token that is empty after trimming signals a malformed argument list and throws.
+    /// </summary>
+    private static IReadOnlyList<string> SplitArguments(string argsText)
+    {
+        var tokens = new List<string>();
+        var start = 0;
+        var inQuotes = false;
+
+        for (var i = 0; i < argsText.Length; i++)
+        {
+            var c = argsText[i];
+            if (c == '\'')
+            {
+                inQuotes = !inQuotes;
+            }
+            else if (!inQuotes && (c == ',' || c == ';'))
+            {
+                tokens.Add(argsText.Substring(start, i - start).Trim());
+                start = i + 1;
+            }
+        }
+        tokens.Add(argsText.Substring(start).Trim());
+
+        if (tokens.Any(t => t.Length == 0))
+            throw new InvalidOperationException(string.Format("Malformed action argument list '{0}': empty argument token.", argsText));
+
+        return tokens;
+    }
+
     private static ActionParameter ParseToken(string token)
     {
         token = token.Trim();
 
-        if (token == "$dataContext")
-            return new DataContextParameter();
+        if (token.StartsWith('$'))
+        {
+            return token switch
+            {
+                "$dataContext" => new DataContextParameter(),
+                _ => throw new InvalidOperationException(string.Format("Unknown special token '{0}'. Recognized tokens: $dataContext.", token)),
+            };
+        }
 
         if (token == "null")
             return new Parameter { Value = null };

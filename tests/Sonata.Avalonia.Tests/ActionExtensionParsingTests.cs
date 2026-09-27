@@ -39,4 +39,75 @@ public class ActionExtensionParsingTests
     {
         Assert.Throws<InvalidOperationException>(() => Parse("Save(NameTextBox.Text)"));
     }
+
+    [Fact]
+    public void Parse_SemicolonSeparator_SplitsMultipleArgs()
+    {
+        var (name, parameters) = Parse("Save(42;43)");
+        Assert.Equal("Save", name);
+        Assert.Equal(2, parameters.Count);
+        Assert.Equal(42, Assert.IsType<Parameter>(parameters[0]).Value);
+        Assert.Equal(43, Assert.IsType<Parameter>(parameters[1]).Value);
+    }
+
+    [Fact]
+    public void Parse_MixedSeparators_SplitsAll()
+    {
+        var (_, parameters) = Parse("Save(42;43,44)");
+        Assert.Equal(3, parameters.Count);
+        Assert.Equal(42, Assert.IsType<Parameter>(parameters[0]).Value);
+        Assert.Equal(43, Assert.IsType<Parameter>(parameters[1]).Value);
+        Assert.Equal(44, Assert.IsType<Parameter>(parameters[2]).Value);
+    }
+
+    [Fact]
+    public void Parse_QuotedString_WithCommaInside_PreservesIt()
+    {
+        // Pins the latent V1 bug: ParseMethod("Save('a,b')") used to split inside the string.
+        var (_, parameters) = Parse("Save('a,b')");
+        var p = Assert.IsType<Parameter>(Assert.Single(parameters));
+        Assert.Equal("a,b", p.Value);
+    }
+
+    [Fact]
+    public void Parse_QuotedString_WithSemicolonInside_PreservesIt()
+    {
+        var (_, parameters) = Parse("Save('a;b')");
+        var p = Assert.IsType<Parameter>(Assert.Single(parameters));
+        Assert.Equal("a;b", p.Value);
+    }
+
+    [Fact]
+    public void Parse_QuotedString_MixedWithOtherArgs()
+    {
+        var (_, parameters) = Parse("Save('Alice Smith';42)");
+        Assert.Equal(2, parameters.Count);
+        Assert.Equal("Alice Smith", Assert.IsType<Parameter>(parameters[0]).Value);
+        Assert.Equal(42, Assert.IsType<Parameter>(parameters[1]).Value);
+    }
+
+    [Fact]
+    public void Parse_TrailingSeparator_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() => Parse("Save(42;)"));
+    }
+
+    [Fact]
+    public void Parse_LeadingSeparator_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() => Parse("Save(;42)"));
+    }
+
+    [Fact]
+    public void Parse_DoubleSeparator_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() => Parse("Save(42; ;43)"));
+    }
+
+    [Fact]
+    public void Parse_UnknownDollarToken_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() => Parse("Save($datacontext)"));
+        Assert.Throws<InvalidOperationException>(() => Parse("Save($foo)"));
+    }
 }
