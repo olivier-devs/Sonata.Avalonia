@@ -64,11 +64,19 @@ namespace Sonata.Avalonia.Headless.Tests
 
         public int ClickCount { get; private set; }
 
+        public int LastSum { get; private set; }
+
+        public string LastGreeting { get; private set; } = "";
+
         public void Load(int id) => LastId = id;
 
         public void Save(string name, int age) => LastSave = $"{name}:{age}";
 
         public void RecordClick() => ClickCount++;
+
+        public void Add(int a, int b) => LastSum = a + b;
+
+        public void Greet(string name, int times) => LastGreeting = $"{name}x{times}";
     }
 
     /// <summary>Identifiable item rendered by the DataTemplate in the ActionParameters e2e tests.</summary>

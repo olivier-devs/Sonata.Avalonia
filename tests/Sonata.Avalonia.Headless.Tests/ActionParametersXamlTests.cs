@@ -221,4 +221,55 @@ public class ActionParametersXamlTests
 
         Assert.Same(item, parentVm.DeletedItem);
     }
+
+    [AvaloniaFact]
+    public void Action_XmlEndToEnd_SemicolonMultiArgs_InvokesMethod()
+    {
+        const string xaml = """
+            <Button xmlns="https://github.com/avaloniaui"
+                    xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
+                    Command="{s:Action Add(40;2)}" />
+            """;
+        var button = (Button)global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml);
+        var vm = new ShellViewModelWithParameters();
+        View.SetActionTarget(button, vm);
+
+        button.Command!.Execute(null);
+
+        Assert.Equal(42, vm.LastSum);
+    }
+
+    [AvaloniaFact]
+    public void Action_XmlEndToEnd_EscapedQuoteAndSemicolon_InvokesMethod()
+    {
+        // \' is cleaned by the XamlX tokenizer to ', so ParseMethod sees Greet('Alice';3).
+        const string xaml = """
+            <Button xmlns="https://github.com/avaloniaui"
+                    xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
+                    Command="{s:Action Greet(\'Alice\';3)}" />
+            """;
+        var button = (Button)global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml);
+        var vm = new ShellViewModelWithParameters();
+        View.SetActionTarget(button, vm);
+
+        button.Command!.Execute(null);
+
+        Assert.Equal("Alicex3", vm.LastGreeting);
+    }
+
+    [AvaloniaFact]
+    public void Action_CompiledXaml_SemicolonMultiArgs_InvokesMethod()
+    {
+        // Compiled path (XamlIl at build time): the compiled view from the Task-1 spike,
+        // executed end-to-end — ActionTarget set on the root, button command executed.
+        var view = new ActionArgumentsCompiledView();
+        var vm = new ShellViewModelWithParameters();
+        View.SetActionTarget(view, vm);
+
+        var button = view.FindControl<Button>("MultiArgButton");
+        Assert.NotNull(button);
+        button.Command!.Execute(null);
+
+        Assert.Equal(42, vm.LastSum);
+    }
 }
