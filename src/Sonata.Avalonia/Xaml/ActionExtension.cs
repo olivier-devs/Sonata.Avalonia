@@ -179,7 +179,8 @@ public class ActionExtension : MarkupExtension
             {
                 if (rootObject == null)
                     throw new InvalidOperationException("Action may only be used with CommandBinding from a XAML view (unable to retrieve IRootObjectProvider.RootObject)");
-                ec = new EventAction(rootObject, null, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour, parameters);
+                // The root is both the subject and the backup subject here — capturing it also exposes it as '$view'.
+                ec = new EventAction(rootObject, rootObject, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour, parameters);
             }
             else
             {
@@ -267,7 +268,10 @@ public class ActionExtension : MarkupExtension
             return token switch
             {
                 "$dataContext" => new DataContextParameter(),
-                _ => throw new InvalidOperationException(string.Format("Unknown special token '{0}'. Recognized tokens: $dataContext.", token)),
+                "$eventArgs" => new EventArgsParameter(),
+                "$source" => new SourceParameter(),
+                "$view" => new ViewParameter(),
+                _ => throw new InvalidOperationException(string.Format("Unknown special token '{0}'. Recognized tokens: $dataContext, $eventArgs, $source, $view.", token)),
             };
         }
 

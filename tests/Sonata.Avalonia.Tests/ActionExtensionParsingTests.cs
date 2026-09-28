@@ -148,4 +148,25 @@ public class ActionExtensionParsingTests
     {
         Assert.Throws<InvalidOperationException>(() => Parse("Save($x.y)"));
     }
+
+    [Fact]
+    public void Parse_EventArgsToken_ProducesEventArgsParameter()
+    {
+        var (_, parameters) = Parse("Save($eventArgs)");
+        Assert.IsType<EventArgsParameter>(Assert.Single(parameters));
+    }
+
+    [Fact]
+    public void Parse_SourceToken_ProducesSourceParameter()
+    {
+        var (_, parameters) = Parse("Save($source)");
+        Assert.IsType<SourceParameter>(Assert.Single(parameters));
+    }
+
+    [Fact]
+    public void Parse_ViewToken_ProducesViewParameter()
+    {
+        var (_, parameters) = Parse("Save($view)");
+        Assert.IsType<ViewParameter>(Assert.Single(parameters));
+    }
 }

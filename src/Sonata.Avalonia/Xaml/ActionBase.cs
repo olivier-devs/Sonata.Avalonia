@@ -60,7 +60,7 @@ public abstract class ActionBase : AvaloniaObject
     /// Initialises a new instance of the <see cref="ActionBase"/> class to use <see cref="View.ActionTargetProperty"/> to get the target
     /// </summary>
     /// <param name="subject">View to grab the View.ActionTarget from</param>
-    /// <param name="backupSubject">Backup subject to use if no ActionTarget could be retrieved from the subject</param>
+    /// <param name="backupSubject">Backup subject to use if no ActionTarget could be retrieved from the subject. ActionExtension passes the XAML root object here, which is also captured as the '$view' root.</param>
     /// <param name="methodName">Method name. the MyMethod in Buttom Command="{s:Action MyMethod}".</param>
     /// <param name="targetNullBehaviour">Behaviour for it the relevant View.ActionTarget is null</param>
     /// <param name="actionNonExistentBehaviour">Behaviour for if the action doesn't exist on the View.ActionTarget</param>

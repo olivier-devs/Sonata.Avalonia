@@ -96,4 +96,53 @@ public class ActionParameterTests
 
         Assert.Null(vm.ReceivedView);
     }
+
+    [Fact]
+    public void EventArgsParameter_GetValue_ReturnsContextEventArgs()
+    {
+        var args = EventArgs.Empty;
+        var context = new ActionExecutionContext { Target = new object(), Source = null, EventArgs = args };
+
+        var value = new EventArgsParameter().GetValue(context);
+
+        Assert.Same(args, value);
+    }
+
+    [Fact]
+    public void EventArgsParameter_GetValue_WhenNoEventArgs_Throws()
+    {
+        var context = new ActionExecutionContext { Target = new object(), Source = null };
+
+        Assert.Throws<InvalidOperationException>(() => new EventArgsParameter().GetValue(context));
+    }
+
+    [Fact]
+    public void SourceParameter_GetValue_ReturnsContextSource()
+    {
+        var source = new Button();
+        var context = new ActionExecutionContext { Target = new object(), Source = source };
+
+        var value = new SourceParameter().GetValue(context);
+
+        Assert.Same(source, value);
+    }
+
+    [Fact]
+    public void ViewParameter_GetValue_ReturnsContextView()
+    {
+        var view = new object();
+        var context = new ActionExecutionContext { Target = new object(), Source = null, View = view };
+
+        var value = new ViewParameter().GetValue(context);
+
+        Assert.Same(view, value);
+    }
+
+    [Fact]
+    public void ViewParameter_GetValue_WhenNoView_Throws()
+    {
+        var context = new ActionExecutionContext { Target = new object(), Source = null };
+
+        Assert.Throws<InvalidOperationException>(() => new ViewParameter().GetValue(context));
+    }
 }
