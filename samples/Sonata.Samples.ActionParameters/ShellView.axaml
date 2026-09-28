@@ -66,6 +66,19 @@
                         <Button Command="{s:Action Clear}">Clear</Button>
                     </StackPanel>
                 </StackPanel>
+
+                <Separator />
+
+                <!-- Section 4 — V2 : multi-args compact, élément nommé, $eventArgs -->
+                <StackPanel>
+                    <TextBlock FontWeight="Bold" Text="4. Compact multi-args, named element, $eventArgs" />
+                    <TextBlock Margin="0,2,0,5" Text="Multi-args with ';' and escapes, a named element with live guard, and $eventArgs on an event." TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <Button Command="{s:Action SeedRange(3;2)}">Seed 3 + 2</Button>
+                        <TextBox x:Name="GreetingBox" PlaceholderText="Greeting" Width="150" />
+                        <Button Command="{s:Action Greet(GreetingBox.Text)}">Greet</Button>
+                    </StackPanel>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </DockPanel>
