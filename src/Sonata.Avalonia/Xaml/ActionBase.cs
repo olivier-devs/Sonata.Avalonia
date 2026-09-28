@@ -7,6 +7,7 @@ public abstract class ActionBase : AvaloniaObject
 {
     private readonly ILogger _logger;
     private readonly IReadOnlyList<ActionParameter>? _inlineParameters;
+    private readonly AvaloniaObject? _viewRoot;
 
     /// <summary>
     /// Gets the View to grab the View.ActionTarget from
@@ -67,6 +68,7 @@ public abstract class ActionBase : AvaloniaObject
     public ActionBase(AvaloniaObject subject, AvaloniaObject? backupSubject, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, ILogger logger, IReadOnlyList<ActionParameter>? parameters = null)
         : this(methodName, targetNullBehaviour, actionNonExistentBehaviour, logger, parameters)
     {
+        _viewRoot = backupSubject;
         Subject = subject;
 
         // If a 'backupSubject' was given, observe both that and 'subject' for View.ActionTarget changes,
@@ -262,6 +264,7 @@ public abstract class ActionBase : AvaloniaObject
             Source = Subject,
             DataContext = Subject is Control c ? c.DataContext : null,
             EventArgs = eventArgs,
+            View = _viewRoot,
         };
     }
 

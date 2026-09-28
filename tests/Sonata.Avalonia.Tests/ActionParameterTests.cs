@@ -50,4 +50,50 @@ public class ActionParameterTests
 
         Assert.False(emitted);
     }
+
+    /// <summary>Test parameter source that resolves the context's View — exercises the root capture.</summary>
+    private sealed class ViewCapturingParameter : ActionParameter
+    {
+        public override object? GetValue(ActionExecutionContext context) => context.View;
+    }
+
+    private class ViewCaptureViewModel
+    {
+        public object? ReceivedView { get; private set; }
+
+        public void Capture(object? view) => ReceivedView = view;
+    }
+
+    [Fact]
+    public void CreateExecutionContext_PopulatesView_FromCapturedRoot()
+    {
+        // ActionExtension passes IRootObjectProvider.RootObject as the backupSubject — the
+        // subject-based constructor must capture it and expose it as context.View.
+        var subject = new Button();
+        var root = new UserControl();
+        var vm = new ViewCaptureViewModel();
+        View.SetActionTarget(root, vm);
+
+        var action = new CommandAction(subject, root, "Capture", ActionUnavailableBehaviour.Throw, ActionUnavailableBehaviour.Throw,
+            new ActionParameter[] { new ViewCapturingParameter() });
+
+        action.Execute(null);
+
+        Assert.Same(root, vm.ReceivedView);
+    }
+
+    [Fact]
+    public void CreateExecutionContext_ExplicitTarget_ViewIsNull()
+    {
+        // The explicit-target constructor has no root object — context.View stays null
+        // (the $view token will throw on resolution in a later task; here it resolves to null).
+        var vm = new ViewCaptureViewModel();
+
+        var action = new CommandAction(vm, "Capture", ActionUnavailableBehaviour.Throw, ActionUnavailableBehaviour.Throw,
+            new ActionParameter[] { new ViewCapturingParameter() });
+
+        action.Execute(null);
+
+        Assert.Null(vm.ReceivedView);
+    }
 }

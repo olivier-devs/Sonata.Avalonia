@@ -17,4 +17,10 @@ public sealed class ActionExecutionContext
 
     /// <summary>Event arguments when the action was raised by an event; otherwise null.</summary>
     public object? EventArgs { get; init; }
+
+    /// <summary>
+    /// The root object of the XAML file the action was declared in, when it could be captured at
+    /// construction; otherwise null. Optional (not <c>required</c>) to stay source-compatible.
+    /// </summary>
+    public object? View { get; init; }
 }
