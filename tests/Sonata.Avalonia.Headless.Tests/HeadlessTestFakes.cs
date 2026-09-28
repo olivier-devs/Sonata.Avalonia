@@ -105,6 +105,20 @@ namespace Sonata.Avalonia.Headless.Tests
         public void Save(string name) => LastSaved = name;
     }
 
+    /// <summary>ViewModel capturing the raw values passed to special-token actions.</summary>
+    public class SpecialTokenViewModel
+    {
+        public object? ReceivedEventArgs { get; private set; }
+        public object? ReceivedSource { get; private set; }
+        public object? ReceivedView { get; private set; }
+
+        public void OnArgs(EventArgs args) => ReceivedEventArgs = args;
+
+        public void OnSource(Control source) => ReceivedSource = source;
+
+        public void OnView(object view) => ReceivedView = view;
+    }
+
     /// <summary>Builders for the framework pieces under test, wired to this assembly's conventions.</summary>
     internal static class TestHost
     {
