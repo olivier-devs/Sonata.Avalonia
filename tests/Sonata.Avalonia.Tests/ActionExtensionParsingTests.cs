@@ -169,4 +169,14 @@ public class ActionExtensionParsingTests
         var (_, parameters) = Parse("Save($view)");
         Assert.IsType<ViewParameter>(Assert.Single(parameters));
     }
+
+    [Fact]
+    public void Parse_MixedArgsWithSpecialToken_Splits()
+    {
+        var (name, parameters) = Parse("Save(42;$eventArgs)");
+        Assert.Equal("Save", name);
+        Assert.Equal(2, parameters.Count);
+        Assert.Equal(42, Assert.IsType<Parameter>(parameters[0]).Value);
+        Assert.IsType<EventArgsParameter>(parameters[1]);
+    }
 }

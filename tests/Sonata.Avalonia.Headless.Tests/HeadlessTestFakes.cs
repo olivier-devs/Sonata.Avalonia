@@ -68,7 +68,11 @@ namespace Sonata.Avalonia.Headless.Tests
 
         public string LastGreeting { get; private set; } = "";
 
+        public string LastRecord { get; private set; } = "";
+
         public void Load(int id) => LastId = id;
+
+        public void Record(int id, string name) => LastRecord = $"{id}:{name}";
 
         public void Save(string name, int age) => LastSave = $"{name}:{age}";
 

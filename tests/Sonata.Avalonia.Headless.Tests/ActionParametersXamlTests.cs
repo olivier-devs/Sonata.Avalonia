@@ -272,4 +272,54 @@ public class ActionParametersXamlTests
 
         Assert.Equal(42, vm.LastSum);
     }
+
+    [AvaloniaFact]
+    public void Action_XmlEndToEnd_EscapedComma_InvokesMethod()
+    {
+        // \, is cleaned by the XamlX tokenizer to ',' — the parser then splits on it.
+        const string xaml = """
+            <Button xmlns="https://github.com/avaloniaui"
+                    xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
+                    Command="{s:Action Add(40\,2)}" />
+            """;
+        var button = (Button)global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml);
+        var vm = new ShellViewModelWithParameters();
+        View.SetActionTarget(button, vm);
+
+        button.Command!.Execute(null);
+
+        Assert.Equal(42, vm.LastSum);
+    }
+
+    [AvaloniaFact]
+    public void Action_XmlEndToEnd_IntThenStringArgs_InvokesMethod()
+    {
+        // Spec §5.1 grammar row 5: Save(42;\'Alice Smith\') → Save(42, "Alice Smith").
+        const string xaml = """
+            <Button xmlns="https://github.com/avaloniaui"
+                    xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
+                    Command="{s:Action Record(42;\'Alice Smith\')}" />
+            """;
+        var button = (Button)global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml);
+        var vm = new ShellViewModelWithParameters();
+        View.SetActionTarget(button, vm);
+
+        button.Command!.Execute(null);
+
+        Assert.Equal("42:Alice Smith", vm.LastRecord);
+    }
+
+    [AvaloniaFact]
+    public void Action_XmlEndToEnd_EmptyToken_ThrowsAtLoad()
+    {
+        // Pins the error-matrix row "empty token → parse error at XAML load".
+        const string xaml = """
+            <Button xmlns="https://github.com/avaloniaui"
+                    xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
+                    Command="{s:Action Save(42;)}" />
+            """;
+
+        var ex = Assert.ThrowsAny<Exception>(() => global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml));
+        Assert.Contains("empty argument token", ex.ToString());
+    }
 }
