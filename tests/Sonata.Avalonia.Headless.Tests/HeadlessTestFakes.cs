@@ -95,6 +95,16 @@ namespace Sonata.Avalonia.Headless.Tests
         public void Delete(Widget widget) => DeletedItem = widget;
     }
 
+    /// <summary>ViewModel for the named-element flagship test: parameterized guard on a TextBox.Text.</summary>
+    public class NamedElementViewModel
+    {
+        public string LastSaved { get; private set; } = "";
+
+        public bool CanSave(string name) => !string.IsNullOrWhiteSpace(name);
+
+        public void Save(string name) => LastSaved = name;
+    }
+
     /// <summary>Builders for the framework pieces under test, wired to this assembly's conventions.</summary>
     internal static class TestHost
     {

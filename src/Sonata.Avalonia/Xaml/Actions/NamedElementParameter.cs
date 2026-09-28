@@ -1,3 +1,5 @@
+using System.Reactive.Subjects;
+
 namespace Sonata.Avalonia.Xaml;
 
 /// <summary>
@@ -9,6 +11,9 @@ namespace Sonata.Avalonia.Xaml;
 public class NamedElementParameter : ActionParameter
 {
     private static ILogger Logger => SonataLogManager.GetLogger(typeof(NamedElementParameter));
+    private readonly Subject<object?> _changes = new();
+    private IDisposable? _elementSubscription;
+    private bool _elementSubscriptionCreated;
     private bool _missingElementWarningLogged;
 
     /// <summary>The name of the element (its <c>x:Name</c>) to read the property from. Required.</summary>
@@ -16,6 +21,9 @@ public class NamedElementParameter : ActionParameter
 
     /// <summary>The name of the <see cref="AvaloniaProperty"/> to read on the element. Required.</summary>
     public required string Path { get; set; }
+
+    /// <inheritdoc />
+    public override IObservable<object?> GetChanges() => _changes;
 
     /// <inheritdoc />
     public override object? GetValue(ActionExecutionContext context)
@@ -49,8 +57,21 @@ public class NamedElementParameter : ActionParameter
         }
 
         var property = ResolveProperty(element);
+        EnsureElementSubscription(element, property);
         value = element.GetValue(property);
         return true;
+    }
+
+    private void EnsureElementSubscription(AvaloniaObject element, AvaloniaProperty property)
+    {
+        // First successful resolution wires the element's property observable into the change
+        // subject, so a CommandAction re-evaluates its guard when the property changes.
+        // The flag guards against re-entrancy: Avalonia's GetObservable emits the current value
+        // synchronously on subscribe, and that emission must not recurse back into Resolve.
+        if (_elementSubscriptionCreated)
+            return;
+        _elementSubscriptionCreated = true;
+        _elementSubscription = element.GetObservable(property).Subscribe(_changes);
     }
 
     /// <summary>
