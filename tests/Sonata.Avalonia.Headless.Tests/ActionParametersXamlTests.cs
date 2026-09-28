@@ -115,10 +115,10 @@ public class ActionParametersXamlTests
     [AvaloniaFact]
     public void Action_XmlEndToEnd_CompactSyntax_QuotedString_ThrowsAtLoad()
     {
-        // Platform limitation (XamlX markup extension tokenizer): single quotes inside a markup
-        // extension argument are rejected as 'Quote characters out of place'. Quoted string
-        // literals are therefore unavailable in compact XAML syntax — use the declarative
-        // <s:Action.Parameters> syntax instead.
+        // Platform limitation (XamlX markup extension tokenizer): unescaped quotes/commas inside a
+        // markup extension argument are rejected. Escape them with \' and \, (or use ';' as a
+        // separator), or use the declarative <s:Action.Parameters> syntax. This tripwire fails if
+        // Avalonia ever lifts the constraint.
         const string xaml = """
             <Button xmlns="https://github.com/avaloniaui"
                     xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
@@ -132,11 +132,10 @@ public class ActionParametersXamlTests
     [AvaloniaFact]
     public void Action_XmlEndToEnd_CompactSyntax_MultipleArguments_ThrowsAtLoad()
     {
-        // Platform limitation (XamlX markup extension tokenizer): nested quotes/commas inside a
-        // markup extension argument are not supported. Multi-argument compact syntax is therefore
-        // unavailable in XAML — use the declarative <s:Action.Parameters> syntax instead.
-        // This test pins the limitation: if Avalonia ever lifts it, this test will fail and
-        // surface the change.
+        // Platform limitation (XamlX markup extension tokenizer): unescaped quotes/commas inside a
+        // markup extension argument are rejected. Escape them with \' and \, (or use ';' as a
+        // separator), or use the declarative <s:Action.Parameters> syntax. This tripwire fails if
+        // Avalonia ever lifts the constraint.
         const string xaml = """
             <Button xmlns="https://github.com/avaloniaui"
                     xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"

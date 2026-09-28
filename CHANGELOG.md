@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parameterized guards: `Can<Method>` methods with the same parameters as the action, re-evaluated when a bound parameter changes.
 - `ActionMethodResolver` for overload resolution (parameter count, type compatibility, minimal string-to-primitive coercion); `AmbiguousActionMethodException` on ambiguous matches.
 - `ActionExecutionContext` as the extension point for future parameter sources (named elements, event args).
+- Compact multi-argument syntax `{s:Action Method(42;43)}` (`;`/`,` separators, mixable) with `\'`/`\,` escapes.
+- Named-element compact syntax `{s:Action Save(NameTextBox.Text)}` with lazy name-scope resolution and live guard re-evaluation.
+- Special tokens `$eventArgs`, `$source`, `$view` (and their declarative `<s:EventArgsParameter />`, `<s:SourceParameter />`, `<s:ViewParameter />` equivalents).
+- `ActionExecutionContext.View` (the XAML root object) and `ActionParameter.GetChanges()` observation hook.
+
+### Changed
+
+- Compact-syntax hardening (pre-release): empty argument tokens (`Save(42;)`), unterminated quotes, and unknown `$` tokens now throw parse errors at XAML load instead of silently producing string literals; bare words containing apostrophes are rejected (no escape mechanism exists for them in markup extensions).
 
 ## [2.0.0-beta.1] - 2026-09-02
 

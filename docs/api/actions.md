@@ -200,36 +200,50 @@ Each entry in `<s:Action.Parameters>` is an `ActionParameter` — a self-contain
 public void Delete(Customer customer) { /* ... */ }
 ```
 
-#### Compact syntax (single argument, bare tokens only)
+#### Compact syntax (V2)
 
-`ActionExtension` also accepts a compact inline form `Method(arg)` as a sugar for the common single-argument case:
+`{s:Action Method}` or `{s:Action Method(args)}`, where `args` are separated by `;` or `,` (mixable):
 
-```xml
-<Button Command="{s:Action Save}" />
-<Button Command="{s:Action Delete(42)}" />
-<Button Command="{s:Action Delete($dataContext)}" />
-```
+| XAML form | Equivalent C# |
+|---|---|
+| `{s:Action Save}` | `Save()` |
+| `{s:Action Load(42)}` | `Load(42)` |
+| `{s:Action Save(42;43)}` | `Save(42, 43)` |
+| `{s:Action Save(42\,43)}` | `Save(42, 43)` |
+| `{s:Action Save(42;\'Alice Smith\')}` | `Save(42, "Alice Smith")` |
 
-The XAML surface for the compact form is **intentionally narrow**: Avalonia's XamlX markup extension tokenizer does not support quotes or commas inside a single markup extension argument. The following therefore fail to load with `XamlX.XamlParseException: Quote characters out of place`:
+The backslash escapes (`\'`, `\,`) are a XAML-surface concern only: the tokenizer strips them before
+the parser sees the string. Quoted strings and `;` inside quotes are preserved. Recognized tokens:
+`$dataContext`, `$eventArgs`, `$source`, `$view`; literals `42`, `42.5`, `true`, `false`, `null`; a
+bare word is a string literal; a single `Name.Path` is a named-element reference. Empty tokens
+(`Save(42;)`), unterminated quotes, and unknown `$` tokens are parse errors at XAML load.
 
-- `{s:Action Save('Draft')}` — quoted strings are not expressible in compact XAML.
-- `{s:Action Save('Alice', 42)}` — multi-argument compact syntax is not expressible in compact XAML.
+### Named elements
 
-Two headless tests pin this platform limitation: `Action_XmlEndToEnd_CompactSyntax_QuotedString_ThrowsAtLoad` and `Action_XmlEndToEnd_CompactSyntax_MultipleArguments_ThrowsAtLoad`. The internal `ParseMethod` / `ParseToken` helpers still accept quoted strings and multiple arguments when invoked programmatically (e.g. from `ParseMethod` unit tests); only the XAML surface is restricted.
+`{s:Action Save(NameTextBox.Text)}` passes the current value of the `Text` property of the
+`x:Name="NameTextBox"` control. The declarative equivalent — the canonical form — is a plain binding:
+`<s:Parameter Value="{Binding #NameTextBox.Text}" />`.
 
-Tokens recognised in compact XAML:
+- Scope rules match `{Binding #Name}`: the element is looked up from the action subject's name scope,
+  walking up to the host scope. No cross-scope visibility (e.g. ContextMenu/Popup).
+- Resolution is lazy and retried on every call. During `CanExecute`, a missing element yields `null`
+  (the guard evaluates against null). At `Execute`, a missing element throws
+  `InvalidOperationException` (the view has loaded; a typo is deterministic).
+- The property name is matched exactly (case-sensitive) against the element's AvaloniaProperties; a
+  plain CLR property is not supported.
+- When the element's property changes, the guard is re-evaluated automatically
+  (`CanExecuteChanged` → `IsEnabled`).
 
-| Token | Resolves to |
-|-------|-------------|
-| `$dataContext` | `DataContextParameter` (trigger control's `DataContext`) |
-| `42`, `3.14` | `Parameter` whose `Value` is `int` / `double` (invariant culture) |
-| `true` / `false` | `Parameter` whose `Value` is `bool` |
-| `null` | `Parameter` whose `Value` is `null` |
-| Any bare word (no dot, no quotes, no comma) | `Parameter` whose `Value` is the word as a `string` |
+### Special tokens
 
-A token containing a dot (`Foo.Bar`) is rejected with `InvalidOperationException` at load time — property paths are reserved for named elements in a later release. To pass a string literal that contains spaces or punctuation, or to pass more than one argument, declare the parameters declaratively with `<s:Action.Parameters>`.
+| Compact | Declarative | Resolves to |
+|---|---|---|
+| `$eventArgs` | `<s:EventArgsParameter />` | the event's arguments (event actions only) |
+| `$source` | `<s:SourceParameter />` | the triggering control |
+| `$view` | `<s:ViewParameter />` | the XAML root object |
 
-To pass the literal string `"$dataContext"`, also use the declarative form — the `$` prefix is only meaningful as a bare token in compact syntax.
+`$eventArgs` on a command (or in a guard) throws `InvalidOperationException` at resolution.
+`$view` throws when no XAML root object was captured (e.g. programmatically constructed actions).
 
 #### Conflicts (fail at Execute)
 
