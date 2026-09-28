@@ -238,6 +238,7 @@ bare word is a string literal; a single `Name.Path` is a named-element reference
 
 | Compact | Declarative | Resolves to |
 |---|---|---|
+| `$dataContext` | `<s:DataContextParameter />` | the triggering control's `DataContext` |
 | `$eventArgs` | `<s:EventArgsParameter />` | the event's arguments (event actions only) |
 | `$source` | `<s:SourceParameter />` | the triggering control |
 | `$view` | `<s:ViewParameter />` | the XAML root object |
@@ -245,7 +246,7 @@ bare word is a string literal; a single `Name.Path` is a named-element reference
 `$eventArgs` on a command (or in a guard) throws `InvalidOperationException` at resolution.
 `$view` throws when no XAML root object was captured (e.g. programmatically constructed actions).
 
-#### Conflicts (fail at Execute)
+### Conflicts (fail at Execute)
 
 Both of these combinations are rejected at `Execute` time with `InvalidOperationException` (the XAML compiler processes `Command` before the property element, so the check cannot happen at load time):
 

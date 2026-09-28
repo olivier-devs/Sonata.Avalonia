@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compact multi-argument syntax `{s:Action Method(42;43)}` (`;`/`,` separators, mixable) with `\'`/`\,` escapes.
 - Named-element compact syntax `{s:Action Save(NameTextBox.Text)}` with lazy name-scope resolution and live guard re-evaluation.
 - Special tokens `$eventArgs`, `$source`, `$view` (and their declarative `<s:EventArgsParameter />`, `<s:SourceParameter />`, `<s:ViewParameter />` equivalents).
-- `ActionExecutionContext.View` (the XAML root object) and `ActionParameter.GetChanges()` observation hook.
+- Public extension points for custom parameter sources: `ActionExecutionContext.View` and `ActionParameter.GetChanges()`.
 
 ### Changed
 
