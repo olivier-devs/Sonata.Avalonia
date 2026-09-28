@@ -36,10 +36,16 @@ public class NamedElementActionTests
         // Empty text → guard false.
         Assert.False(command.CanExecute(null));
 
-        // Typing must re-evaluate the guard via the named-element change subject.
+        // The flagship: changing the element's property must fire CanExecuteChanged
+        // (Text change → GetChanges → UpdateCanExecute → CanExecuteChanged) — with no
+        // manual CanExecute call in between, only the observation chain can fire it.
+        var canExecuteChangedFired = false;
+        command.CanExecuteChanged += (_, _) => canExecuteChangedFired = true;
+
         textBox.Text = "hello";
         Dispatcher.UIThread.RunJobs();
 
+        Assert.True(canExecuteChangedFired);
         Assert.True(command.CanExecute(null));
 
         command.Execute(null);
