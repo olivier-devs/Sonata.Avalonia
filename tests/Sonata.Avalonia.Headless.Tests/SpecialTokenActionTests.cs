@@ -145,7 +145,45 @@ public class SpecialTokenActionTests
 
         var button = window.FindControl<Button>("B")!;
 
-        var ex = Assert.Throws<TargetInvocationException>(() => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
-        Assert.IsType<InvalidOperationException>(ex.InnerException);
+        // Avalonia's event routing invokes handlers via DynamicInvoke, which wraps the
+        // resolution error in TargetInvocationException — assert the inner error robustly
+        // (works whether or not a wrapper is present).
+        var ex = Assert.ThrowsAny<Exception>(() => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+        var invalidOp = ex is TargetInvocationException tie ? tie.InnerException : ex;
+        var invalidOperationException = Assert.IsType<InvalidOperationException>(invalidOp);
+        Assert.Contains("Named element 'Missing'", invalidOperationException.Message);
+    }
+
+    [AvaloniaFact]
+    public void DeclarativeSourceAndViewParameters_LoadFromXaml()
+    {
+        // Spec §11 Wave 3: "les 3 éléments déclaratifs chargent depuis XAML" — SourceParameter
+        // and ViewParameter complete the set (EventArgsParameter is pinned above). No
+        // ActionTarget needed: the load assertion only reads the attached collection.
+        const string xaml = """
+            <Window xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia">
+                <StackPanel>
+                    <Button x:Name="SourceButton" Command="{s:Action OnSource}">
+                        <s:Action.Parameters>
+                            <s:SourceParameter />
+                        </s:Action.Parameters>
+                    </Button>
+                    <Button x:Name="ViewButton" Command="{s:Action OnView}">
+                        <s:Action.Parameters>
+                            <s:ViewParameter />
+                        </s:Action.Parameters>
+                    </Button>
+                </StackPanel>
+            </Window>
+            """;
+        var window = (Window)AvaloniaRuntimeXamlLoader.Load(xaml);
+
+        var sourceButton = window.FindControl<Button>("SourceButton")!;
+        var viewButton = window.FindControl<Button>("ViewButton")!;
+
+        Assert.IsType<SourceParameter>(Sonata.Avalonia.Xaml.Action.GetParameters(sourceButton)[0]);
+        Assert.IsType<ViewParameter>(Sonata.Avalonia.Xaml.Action.GetParameters(viewButton)[0]);
     }
 }

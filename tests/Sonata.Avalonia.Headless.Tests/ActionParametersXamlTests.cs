@@ -320,6 +320,10 @@ public class ActionParametersXamlTests
             """;
 
         var ex = Assert.ThrowsAny<Exception>(() => global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml));
-        Assert.Contains("empty argument token", ex.ToString());
+        // The parse error may surface directly or wrapped by the loader — walk the message chain only.
+        var message = ex.Message;
+        for (var inner = ex.InnerException; inner != null; inner = inner.InnerException)
+            message += " " + inner.Message;
+        Assert.Contains("empty argument token", message);
     }
 }
