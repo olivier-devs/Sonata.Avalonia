@@ -96,7 +96,6 @@ public class ActionExtension : MarkupExtension
         {
             case AvaloniaObject targetObject:
                 return HandleDependencyObject(serviceProvider, valueService, targetObject);
-            // TODO: case CommandBinding commandBinding:
             case RoutedCommandBinding commandBinding:
                 {
                     var eventInfo = valueService.TargetProperty as EventInfo
