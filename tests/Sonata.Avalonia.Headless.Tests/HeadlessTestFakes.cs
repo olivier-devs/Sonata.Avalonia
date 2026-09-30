@@ -64,11 +64,23 @@ namespace Sonata.Avalonia.Headless.Tests
 
         public int ClickCount { get; private set; }
 
+        public int LastSum { get; private set; }
+
+        public string LastGreeting { get; private set; } = "";
+
+        public string LastRecord { get; private set; } = "";
+
         public void Load(int id) => LastId = id;
+
+        public void Record(int id, string name) => LastRecord = $"{id}:{name}";
 
         public void Save(string name, int age) => LastSave = $"{name}:{age}";
 
         public void RecordClick() => ClickCount++;
+
+        public void Add(int a, int b) => LastSum = a + b;
+
+        public void Greet(string name, int times) => LastGreeting = $"{name}x{times}";
     }
 
     /// <summary>Identifiable item rendered by the DataTemplate in the ActionParameters e2e tests.</summary>
@@ -85,6 +97,30 @@ namespace Sonata.Avalonia.Headless.Tests
         public Widget? DeletedItem { get; private set; }
 
         public void Delete(Widget widget) => DeletedItem = widget;
+    }
+
+    /// <summary>ViewModel for the named-element flagship test: parameterized guard on a TextBox.Text.</summary>
+    public class NamedElementViewModel
+    {
+        public string LastSaved { get; private set; } = "";
+
+        public bool CanSave(string name) => !string.IsNullOrWhiteSpace(name);
+
+        public void Save(string name) => LastSaved = name;
+    }
+
+    /// <summary>ViewModel capturing the raw values passed to special-token actions.</summary>
+    public class SpecialTokenViewModel
+    {
+        public object? ReceivedEventArgs { get; private set; }
+        public object? ReceivedSource { get; private set; }
+        public object? ReceivedView { get; private set; }
+
+        public void OnArgs(EventArgs args) => ReceivedEventArgs = args;
+
+        public void OnSource(Control source) => ReceivedSource = source;
+
+        public void OnView(object view) => ReceivedView = view;
     }
 
     /// <summary>Builders for the framework pieces under test, wired to this assembly's conventions.</summary>

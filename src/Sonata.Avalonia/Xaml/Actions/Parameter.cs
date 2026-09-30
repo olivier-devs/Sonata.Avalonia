@@ -19,4 +19,7 @@ public class Parameter : ActionParameter
 
     /// <inheritdoc />
     public override object? GetValue(ActionExecutionContext context) => Value;
+
+    /// <inheritdoc />
+    public override IObservable<object?> GetChanges() => this.GetObservable(ValueProperty);
 }

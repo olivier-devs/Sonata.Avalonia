@@ -115,10 +115,10 @@ public class ActionParametersXamlTests
     [AvaloniaFact]
     public void Action_XmlEndToEnd_CompactSyntax_QuotedString_ThrowsAtLoad()
     {
-        // Platform limitation (XamlX markup extension tokenizer): single quotes inside a markup
-        // extension argument are rejected as 'Quote characters out of place'. Quoted string
-        // literals are therefore unavailable in compact XAML syntax — use the declarative
-        // <s:Action.Parameters> syntax instead.
+        // Platform limitation (XamlX markup extension tokenizer): unescaped quotes/commas inside a
+        // markup extension argument are rejected. Escape them with \' and \, (or use ';' as a
+        // separator), or use the declarative <s:Action.Parameters> syntax. This tripwire fails if
+        // Avalonia ever lifts the constraint.
         const string xaml = """
             <Button xmlns="https://github.com/avaloniaui"
                     xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
@@ -132,11 +132,10 @@ public class ActionParametersXamlTests
     [AvaloniaFact]
     public void Action_XmlEndToEnd_CompactSyntax_MultipleArguments_ThrowsAtLoad()
     {
-        // Platform limitation (XamlX markup extension tokenizer): nested quotes/commas inside a
-        // markup extension argument are not supported. Multi-argument compact syntax is therefore
-        // unavailable in XAML — use the declarative <s:Action.Parameters> syntax instead.
-        // This test pins the limitation: if Avalonia ever lifts it, this test will fail and
-        // surface the change.
+        // Platform limitation (XamlX markup extension tokenizer): unescaped quotes/commas inside a
+        // markup extension argument are rejected. Escape them with \' and \, (or use ';' as a
+        // separator), or use the declarative <s:Action.Parameters> syntax. This tripwire fails if
+        // Avalonia ever lifts the constraint.
         const string xaml = """
             <Button xmlns="https://github.com/avaloniaui"
                     xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
@@ -220,5 +219,110 @@ public class ActionParametersXamlTests
         button.Command!.Execute(null);
 
         Assert.Same(item, parentVm.DeletedItem);
+    }
+
+    [AvaloniaFact]
+    public void Action_XmlEndToEnd_SemicolonMultiArgs_InvokesMethod()
+    {
+        const string xaml = """
+            <Button xmlns="https://github.com/avaloniaui"
+                    xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
+                    Command="{s:Action Add(40;2)}" />
+            """;
+        var button = (Button)global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml);
+        var vm = new ShellViewModelWithParameters();
+        View.SetActionTarget(button, vm);
+
+        button.Command!.Execute(null);
+
+        Assert.Equal(42, vm.LastSum);
+    }
+
+    [AvaloniaFact]
+    public void Action_XmlEndToEnd_EscapedQuoteAndSemicolon_InvokesMethod()
+    {
+        // \' is cleaned by the XamlX tokenizer to ', so ParseMethod sees Greet('Alice';3).
+        const string xaml = """
+            <Button xmlns="https://github.com/avaloniaui"
+                    xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
+                    Command="{s:Action Greet(\'Alice\';3)}" />
+            """;
+        var button = (Button)global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml);
+        var vm = new ShellViewModelWithParameters();
+        View.SetActionTarget(button, vm);
+
+        button.Command!.Execute(null);
+
+        Assert.Equal("Alicex3", vm.LastGreeting);
+    }
+
+    [AvaloniaFact]
+    public void Action_CompiledXaml_SemicolonMultiArgs_InvokesMethod()
+    {
+        // Compiled path (XamlIl at build time): the compiled view from the Task-1 spike,
+        // executed end-to-end — ActionTarget set on the root, button command executed.
+        var view = new ActionArgumentsCompiledView();
+        var vm = new ShellViewModelWithParameters();
+        View.SetActionTarget(view, vm);
+
+        var button = view.FindControl<Button>("MultiArgButton");
+        Assert.NotNull(button);
+        button.Command!.Execute(null);
+
+        Assert.Equal(42, vm.LastSum);
+    }
+
+    [AvaloniaFact]
+    public void Action_XmlEndToEnd_EscapedComma_InvokesMethod()
+    {
+        // \, is cleaned by the XamlX tokenizer to ',' — the parser then splits on it.
+        const string xaml = """
+            <Button xmlns="https://github.com/avaloniaui"
+                    xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
+                    Command="{s:Action Add(40\,2)}" />
+            """;
+        var button = (Button)global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml);
+        var vm = new ShellViewModelWithParameters();
+        View.SetActionTarget(button, vm);
+
+        button.Command!.Execute(null);
+
+        Assert.Equal(42, vm.LastSum);
+    }
+
+    [AvaloniaFact]
+    public void Action_XmlEndToEnd_IntThenStringArgs_InvokesMethod()
+    {
+        // Spec §5.1 grammar row 5: Save(42;\'Alice Smith\') → Save(42, "Alice Smith").
+        const string xaml = """
+            <Button xmlns="https://github.com/avaloniaui"
+                    xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
+                    Command="{s:Action Record(42;\'Alice Smith\')}" />
+            """;
+        var button = (Button)global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml);
+        var vm = new ShellViewModelWithParameters();
+        View.SetActionTarget(button, vm);
+
+        button.Command!.Execute(null);
+
+        Assert.Equal("42:Alice Smith", vm.LastRecord);
+    }
+
+    [AvaloniaFact]
+    public void Action_XmlEndToEnd_EmptyToken_ThrowsAtLoad()
+    {
+        // Pins the error-matrix row "empty token → parse error at XAML load".
+        const string xaml = """
+            <Button xmlns="https://github.com/avaloniaui"
+                    xmlns:s="clr-namespace:Sonata.Avalonia.Xaml;assembly=Sonata.Avalonia"
+                    Command="{s:Action Save(42;)}" />
+            """;
+
+        var ex = Assert.ThrowsAny<Exception>(() => global::Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(xaml));
+        // The parse error may surface directly or wrapped by the loader — walk the message chain only.
+        var message = ex.Message;
+        for (var inner = ex.InnerException; inner != null; inner = inner.InnerException)
+            message += " " + inner.Message;
+        Assert.Contains("empty argument token", message);
     }
 }

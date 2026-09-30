@@ -70,4 +70,24 @@ public class ShellViewModel : Screen
         People.Clear();
         Status = "Cleared all people";
     }
+
+    public void SeedRange(int count, int startAge)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            People.Add(new Person($"Person {People.Count + 1}", startAge + i));
+        }
+        Status = $"Seeded {count} people from age {startAge}";
+    }
+
+    public void Greet(string name)
+    {
+        Status = string.IsNullOrWhiteSpace(name) ? "Greeting is empty" : $"Hello, {name}!";
+    }
+
+    public bool CanGreet(string name) => !string.IsNullOrWhiteSpace(name);
+
+    public void Note(int number, string label) => Status = $"{label}: {number}";
+
+    public void RecordClick(EventArgs e) => Status = $"Click raised: {e.GetType().Name}";
 }

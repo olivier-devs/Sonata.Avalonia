@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Sonata.Avalonia.Xaml;
+using System.Reactive.Linq;
 using Xunit;
 
 namespace Sonata.Avalonia.Tests;
@@ -26,5 +27,122 @@ public class ActionParameterTests
         var value = new DataContextParameter().GetValue(context);
 
         Assert.Same(dataContext, value);
+    }
+
+    [Fact]
+    public void Parameter_GetChanges_EmitsOnValueChange()
+    {
+        var parameter = new Parameter { Value = 1 };
+        object? received = null;
+        parameter.GetChanges().Subscribe(v => received = v);
+
+        parameter.Value = 2;
+
+        Assert.Equal(2, received);
+    }
+
+    [Fact]
+    public void DataContextParameter_GetChanges_NeverEmits()
+    {
+        var parameter = new DataContextParameter();
+        var emitted = false;
+        parameter.GetChanges().Subscribe(_ => emitted = true);
+
+        Assert.False(emitted);
+    }
+
+    /// <summary>Test parameter source that resolves the context's View — exercises the root capture.</summary>
+    private sealed class ViewCapturingParameter : ActionParameter
+    {
+        public override object? GetValue(ActionExecutionContext context) => context.View;
+    }
+
+    private class ViewCaptureViewModel
+    {
+        public object? ReceivedView { get; private set; }
+
+        public void Capture(object? view) => ReceivedView = view;
+    }
+
+    [Fact]
+    public void CreateExecutionContext_PopulatesView_FromCapturedRoot()
+    {
+        // ActionExtension passes IRootObjectProvider.RootObject as the backupSubject — the
+        // subject-based constructor must capture it and expose it as context.View.
+        var subject = new Button();
+        var root = new UserControl();
+        var vm = new ViewCaptureViewModel();
+        View.SetActionTarget(root, vm);
+
+        var action = new CommandAction(subject, root, "Capture", ActionUnavailableBehaviour.Throw, ActionUnavailableBehaviour.Throw,
+            new ActionParameter[] { new ViewCapturingParameter() });
+
+        action.Execute(null);
+
+        Assert.Same(root, vm.ReceivedView);
+    }
+
+    [Fact]
+    public void CreateExecutionContext_ExplicitTarget_ViewIsNull()
+    {
+        // The explicit-target constructor has no root object — context.View stays null
+        // (the $view token will throw on resolution in a later task; here it resolves to null).
+        var vm = new ViewCaptureViewModel();
+
+        var action = new CommandAction(vm, "Capture", ActionUnavailableBehaviour.Throw, ActionUnavailableBehaviour.Throw,
+            new ActionParameter[] { new ViewCapturingParameter() });
+
+        action.Execute(null);
+
+        Assert.Null(vm.ReceivedView);
+    }
+
+    [Fact]
+    public void EventArgsParameter_GetValue_ReturnsContextEventArgs()
+    {
+        var args = EventArgs.Empty;
+        var context = new ActionExecutionContext { Target = new object(), Source = null, EventArgs = args };
+
+        var value = new EventArgsParameter().GetValue(context);
+
+        Assert.Same(args, value);
+    }
+
+    [Fact]
+    public void EventArgsParameter_GetValue_WhenNoEventArgs_Throws()
+    {
+        var context = new ActionExecutionContext { Target = new object(), Source = null };
+
+        Assert.Throws<InvalidOperationException>(() => new EventArgsParameter().GetValue(context));
+    }
+
+    [Fact]
+    public void SourceParameter_GetValue_ReturnsContextSource()
+    {
+        var source = new Button();
+        var context = new ActionExecutionContext { Target = new object(), Source = source };
+
+        var value = new SourceParameter().GetValue(context);
+
+        Assert.Same(source, value);
+    }
+
+    [Fact]
+    public void ViewParameter_GetValue_ReturnsContextView()
+    {
+        var view = new object();
+        var context = new ActionExecutionContext { Target = new object(), Source = null, View = view };
+
+        var value = new ViewParameter().GetValue(context);
+
+        Assert.Same(view, value);
+    }
+
+    [Fact]
+    public void ViewParameter_GetValue_WhenNoView_Throws()
+    {
+        var context = new ActionExecutionContext { Target = new object(), Source = null };
+
+        Assert.Throws<InvalidOperationException>(() => new ViewParameter().GetValue(context));
     }
 }

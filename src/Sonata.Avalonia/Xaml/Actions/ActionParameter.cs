@@ -1,3 +1,5 @@
+using System.Reactive.Linq;
+
 namespace Sonata.Avalonia.Xaml;
 
 /// <summary>
@@ -11,4 +13,12 @@ public abstract class ActionParameter : AvaloniaObject
     /// Resolves the current value of this parameter for the given execution context.
     /// </summary>
     public abstract object? GetValue(ActionExecutionContext context);
+
+    /// <summary>
+    /// Returns an observable that emits whenever this parameter's resolved value changes, so a
+    /// <c>CommandAction</c> can re-evaluate its <c>CanExecute</c> state. The default is an empty
+    /// observable (never emits): static sources such as <see cref="DataContextParameter"/> do not
+    /// notify. Mutable sources (<see cref="Parameter"/>, <c>NamedElementParameter</c>) override this.
+    /// </summary>
+    public virtual IObservable<object?> GetChanges() => Observable.Empty<object?>();
 }

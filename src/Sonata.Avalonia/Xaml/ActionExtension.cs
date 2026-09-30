@@ -96,7 +96,6 @@ public class ActionExtension : MarkupExtension
         {
             case AvaloniaObject targetObject:
                 return HandleDependencyObject(serviceProvider, valueService, targetObject);
-            // TODO: case CommandBinding commandBinding:
             case RoutedCommandBinding commandBinding:
                 {
                     var eventInfo = valueService.TargetProperty as EventInfo
@@ -179,7 +178,8 @@ public class ActionExtension : MarkupExtension
             {
                 if (rootObject == null)
                     throw new InvalidOperationException("Action may only be used with CommandBinding from a XAML view (unable to retrieve IRootObjectProvider.RootObject)");
-                ec = new EventAction(rootObject, null, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour, parameters);
+                // The root is both the subject and the backup subject here — capturing it also exposes it as '$view'.
+                ec = new EventAction(rootObject, rootObject, eventType, methodName, EventNullTargetBehaviour, EventActionNotFoundBehaviour, parameters);
             }
             else
             {
@@ -215,19 +215,64 @@ public class ActionExtension : MarkupExtension
 
         if (argsText.Trim().Length > 0)
         {
-            foreach (var token in argsText.Split(','))
+            foreach (var token in SplitArguments(argsText))
                 parameters.Add(ParseToken(token));
         }
 
         return (methodName, parameters);
     }
 
+    /// <summary>
+    /// Splits an argument string on ',' and ';' (both are separators, mixable), honoring
+    /// single-quoted spans so that separators inside '...' are preserved. The XamlX tokenizer has
+    /// already removed the backslash escapes (so \' → ' and \, → ,) before we see the string. Any
+    /// token that is empty after trimming signals a malformed argument list and throws.
+    /// </summary>
+    private static IReadOnlyList<string> SplitArguments(string argsText)
+    {
+        var tokens = new List<string>();
+        var start = 0;
+        var inQuotes = false;
+
+        for (var i = 0; i < argsText.Length; i++)
+        {
+            var c = argsText[i];
+            if (c == '\'')
+            {
+                inQuotes = !inQuotes;
+            }
+            else if (!inQuotes && (c == ',' || c == ';'))
+            {
+                tokens.Add(argsText.Substring(start, i - start).Trim());
+                start = i + 1;
+            }
+        }
+        tokens.Add(argsText.Substring(start).Trim());
+
+        if (inQuotes)
+            throw new InvalidOperationException(string.Format("Malformed action argument list '{0}': unterminated quote.", argsText));
+
+        if (tokens.Any(t => t.Length == 0))
+            throw new InvalidOperationException(string.Format("Malformed action argument list '{0}': empty argument token.", argsText));
+
+        return tokens;
+    }
+
     private static ActionParameter ParseToken(string token)
     {
         token = token.Trim();
 
-        if (token == "$dataContext")
-            return new DataContextParameter();
+        if (token.StartsWith('$'))
+        {
+            return token switch
+            {
+                "$dataContext" => new DataContextParameter(),
+                "$eventArgs" => new EventArgsParameter(),
+                "$source" => new SourceParameter(),
+                "$view" => new ViewParameter(),
+                _ => throw new InvalidOperationException(string.Format("Unknown special token '{0}'. Recognized tokens: $dataContext, $eventArgs, $source, $view.", token)),
+            };
+        }
 
         if (token == "null")
             return new Parameter { Value = null };
@@ -245,8 +290,14 @@ public class ActionExtension : MarkupExtension
             return new Parameter { Value = d };
 
         if (token.Contains('.'))
-            throw new InvalidOperationException(
-                string.Format("Parameter '{0}' uses a property path, which is not supported yet (named elements arrive in a later release). Use a binding parameter instead.", token));
+        {
+            var parts = token.Split('.');
+            if (parts.Length != 2 || parts[0].Length == 0 || parts[1].Length == 0)
+                throw new InvalidOperationException(
+                    string.Format("Parameter '{0}' is not a valid named-element reference: expected a single 'Name.Path' (e.g. 'NameTextBox.Text').", token));
+
+            return new NamedElementParameter { Name = parts[0], Path = parts[1] };
+        }
 
         // bare word = string literal
         return new Parameter { Value = token };

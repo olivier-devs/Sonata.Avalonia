@@ -60,10 +60,27 @@
                 <!-- Section 3 — Syntaxe compacte (tokens nus) -->
                 <StackPanel>
                     <TextBlock FontWeight="Bold" Text="3. Compact syntax (bare tokens)" />
-                    <TextBlock Margin="0,2,0,5" Text="Compact syntax supports 0-1 bare tokens (numbers, bools, null, $dataContext). Quoted strings and multiple args require the declarative form above." TextWrapping="Wrap" />
+                    <TextBlock Margin="0,2,0,5" Text="Compact syntax basics (bare tokens). Section 4 shows multi-args, escapes, named elements, and special tokens." TextWrapping="Wrap" />
                     <StackPanel Orientation="Horizontal" Spacing="5">
                         <Button Command="{s:Action Seed(3)}">Seed 3</Button>
                         <Button Command="{s:Action Clear}">Clear</Button>
+                    </StackPanel>
+                </StackPanel>
+
+                <Separator />
+
+                <!-- Section 4 — V2 : multi-args compact, élément nommé, $eventArgs -->
+                <StackPanel>
+                    <TextBlock FontWeight="Bold" Text="4. Compact multi-args, named element, $eventArgs" />
+                    <TextBlock Margin="0,2,0,5" Text="Multi-args with ';' and \' escapes, a named element with a live guard, and $eventArgs on an event." TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <Button Command="{s:Action SeedRange(3;2)}">Seed 3 + 2</Button>
+                        <Button Command="{s:Action Note(42;\'V2\')}">Note 42, 'V2'</Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="5" Margin="0,5,0,0">
+                        <TextBox x:Name="GreetingBox" PlaceholderText="Greeting" Width="150" />
+                        <Button Command="{s:Action Greet(GreetingBox.Text)}">Greet</Button>
+                        <Button Click="{s:Action RecordClick($eventArgs)}">Click ($eventArgs)</Button>
                     </StackPanel>
                 </StackPanel>
             </StackPanel>

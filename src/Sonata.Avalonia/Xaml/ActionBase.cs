@@ -7,6 +7,7 @@ public abstract class ActionBase : AvaloniaObject
 {
     private readonly ILogger _logger;
     private readonly IReadOnlyList<ActionParameter>? _inlineParameters;
+    private readonly AvaloniaObject? _viewRoot;
 
     /// <summary>
     /// Gets the View to grab the View.ActionTarget from
@@ -59,7 +60,7 @@ public abstract class ActionBase : AvaloniaObject
     /// Initialises a new instance of the <see cref="ActionBase"/> class to use <see cref="View.ActionTargetProperty"/> to get the target
     /// </summary>
     /// <param name="subject">View to grab the View.ActionTarget from</param>
-    /// <param name="backupSubject">Backup subject to use if no ActionTarget could be retrieved from the subject</param>
+    /// <param name="backupSubject">Backup subject to use if no ActionTarget could be retrieved from the subject. ActionExtension passes the XAML root object here, which is also captured as the '$view' root.</param>
     /// <param name="methodName">Method name. the MyMethod in Buttom Command="{s:Action MyMethod}".</param>
     /// <param name="targetNullBehaviour">Behaviour for it the relevant View.ActionTarget is null</param>
     /// <param name="actionNonExistentBehaviour">Behaviour for if the action doesn't exist on the View.ActionTarget</param>
@@ -67,6 +68,7 @@ public abstract class ActionBase : AvaloniaObject
     public ActionBase(AvaloniaObject subject, AvaloniaObject? backupSubject, string methodName, ActionUnavailableBehaviour targetNullBehaviour, ActionUnavailableBehaviour actionNonExistentBehaviour, ILogger logger, IReadOnlyList<ActionParameter>? parameters = null)
         : this(methodName, targetNullBehaviour, actionNonExistentBehaviour, logger, parameters)
     {
+        _viewRoot = backupSubject;
         Subject = subject;
 
         // If a 'backupSubject' was given, observe both that and 'subject' for View.ActionTarget changes,
@@ -262,11 +264,20 @@ public abstract class ActionBase : AvaloniaObject
             Source = Subject,
             DataContext = Subject is Control c ? c.DataContext : null,
             EventArgs = eventArgs,
+            View = _viewRoot,
         };
     }
 
     /// <summary>Resolves the current argument values from the declared parameters, or null when parameterless.</summary>
     private protected object?[]? ResolveArguments(ActionExecutionContext context)
+        => ResolveArguments(context, strict: false);
+
+    /// <summary>
+    /// Resolves the current argument values. When <paramref name="strict"/> is true, a
+    /// <see cref="NamedElementParameter"/> that cannot resolve its element throws instead of
+    /// yielding null — used on the Execute path (loading is complete, a missing element is a typo).
+    /// </summary>
+    private protected object?[]? ResolveArguments(ActionExecutionContext context, bool strict)
     {
         var parameters = EffectiveParameters;
         if (parameters.Count == 0)
@@ -274,7 +285,12 @@ public abstract class ActionBase : AvaloniaObject
 
         var values = new object?[parameters.Count];
         for (var i = 0; i < parameters.Count; i++)
-            values[i] = parameters[i].GetValue(context);
+        {
+            var parameter = parameters[i];
+            values[i] = strict && parameter is NamedElementParameter named
+                ? named.GetValueStrict(context)
+                : parameter.GetValue(context);
+        }
 
         return values;
     }
